@@ -13,19 +13,20 @@ export function initStory() {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const track = document.getElementById('sceneTrack');
   const frame = document.getElementById('sceneFrame');
+  const stage = document.getElementById('sceneStage');
   const truck = document.getElementById('heroTruck');
   const awning = document.getElementById('heroAwning');
   const barista = document.getElementById('barista');
   const footer = document.getElementById('siteFooter');
   const footerTruck = document.getElementById('footerTruck');
-  if (!track || !frame || !truck || !awning || !barista) return;
+  if (!track || !frame || !stage || !truck || !awning || !barista) return;
 
   document.documentElement.classList.add('story');
 
   const sizeTrack = () => track.style.setProperty('--frame-h', frame.offsetHeight + 'px');
 
   function hero() {
-    const fw = frame!.clientWidth, sp = fw / 180; // one scene pixel in CSS px
+    const fw = stage!.clientWidth, sp = fw / 180; // one scene pixel in CSS px (the stage can be wider than the screen)
     const snap = (v: number) => Math.round(v / sp) * sp;
     const stickyTop = parseFloat(getComputedStyle(frame!).top) || 0;
     const r = track!.getBoundingClientRect();
@@ -53,7 +54,8 @@ export function initStory() {
     truck!.classList.toggle('idling', p >= 0.7 && p < 0.8);
     const d = seg(p, 0.8, 1);
     const ease = d * d * (3 - 2 * d); // smoothstep: gentle start, steady exit
-    const tx = -ease * (0.256 + 0.389 + 0.03) * fw;
+    const exit = stage!.offsetLeft + truck!.offsetLeft + truck!.offsetWidth + 0.03 * fw; // distance to clear the left edge
+    const tx = -ease * exit;
     truck!.style.transform = `translateX(${tx}px)`;
   }
 

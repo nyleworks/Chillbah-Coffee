@@ -2,24 +2,23 @@
 import Ticker from './Ticker.astro';
 ---
 <section class="hero">
-  <div class="wrap">
-    <span class="label badge">Mobile coffee kiosk · Sabah</span>
-    <h1 class="title">CHILLBAH</h1>
-    <div class="tagline">Brew . Drive . Chill</div>
-    <p class="lede">Hand-pulled coffee served from the back of our 4x4 Toyota Hilux. New spot, same good cup. Pull over and take it slow.</p>
-    <div class="ctas">
-      <a class="cb-btn" href="#find">Find the truck</a>
-      <a class="cb-btn cb-btn--ghost" href="#menu">See menu</a>
-    </div>
-    <!-- Scroll story: the frame pins while you scroll this track; scripts/story.ts drives it. -->
-    <div class="scene-track" id="sceneTrack">
-      <div class="scene-frame" id="sceneFrame">
-        <canvas id="scene" width="180" height="98" aria-hidden="true"></canvas>
-        <div class="hilux" id="heroTruck" role="img" aria-label="Pixel art of the white Chillbah Hilux with its black side awning, parked on grass with mountains behind">
-          <img class="body" src="/hilux-body.webp" width="1200" height="455" alt="" />
-          <img class="awning" id="heroAwning" src="/hilux-awning.webp" width="1200" height="455" alt="" />
+  <!-- Scroll story: the scene pins under the header while you scroll this track; scripts/story.ts drives it. -->
+  <div class="scene-track" id="sceneTrack">
+    <div class="scene-frame" id="sceneFrame">
+      <div class="stage" id="sceneStage">
+      <canvas id="scene" width="180" height="98" aria-hidden="true"></canvas>
+      <div class="hilux" id="heroTruck" role="img" aria-label="Pixel art of the white Chillbah Hilux with its black side awning, parked on grass with mountains behind">
+        <img class="body" src="/hilux-body.webp" width="1200" height="455" alt="" />
+        <img class="awning" id="heroAwning" src="/hilux-awning.webp" width="1200" height="455" alt="" />
+      </div>
+      <img class="barista" id="barista" src="/barista.png" width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
+      </div>
+      <div class="hero-copy">
+        <h1 class="title">CHILLBAH</h1>
+        <div class="ctas">
+          <a class="cb-btn" href="#find">Find the truck</a>
+          <a class="cb-btn cb-btn--ghost" href="#menu">See menu</a>
         </div>
-        <img class="barista" id="barista" src="/barista.png" width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
       </div>
     </div>
   </div>
@@ -27,26 +26,35 @@ import Ticker from './Ticker.astro';
 </section>
 
 <style>
-  .hero { padding: var(--space-12) 0 0; text-align: center; }
-  .badge { display: inline-block; padding: 6px 10px; border: 2px solid var(--line); background: var(--surface-200); }
-  .title { margin: 18px 0 6px; font: 700 clamp(64px, 14vw, 156px)/.9 var(--font-display); color: var(--ember-600); letter-spacing: .03em;
-    text-shadow: 3px 3px 0 var(--brick), 6px 6px 0 var(--brick); }
-  .tagline { font: 700 clamp(14px, 2.4vw, 20px)/1.3 var(--font-pixel); color: var(--tagline); text-transform: uppercase; letter-spacing: .04em; }
-  .lede { max-width: 560px; margin: 16px auto 24px; color: var(--muted); }
-  .ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+  .hero { padding: 0; text-align: center; }
   .scene-track { position: relative; }
-  .scene-frame { position: relative; border: 4px solid var(--line); border-radius: var(--radius-frame); overflow: hidden; background: var(--sky); box-shadow: var(--shadow-px-lg); }
-  /* While the story runs, the track is taller than the frame and the frame sticks under the header. */
+  /* Full-bleed scene filling the screen under the header. The 180×98 art is pinned to the bottom at full width:
+     on tall screens plain sky fills the space above it, on wide screens the top of the sky is trimmed. */
+  .scene-frame { position: relative; width: 100%; height: calc(100svh - 64px); min-height: 360px; overflow: hidden;
+    background: var(--sky); border-bottom: 3px solid var(--line); container-type: size; }
   :global(html.story) .scene-track { height: calc(var(--frame-h, 60vw) + 130vh); }
-  :global(html.story) .scene-frame { position: sticky; top: 80px; }
-  .scene-frame canvas { width: 100%; height: auto; aspect-ratio: 180 / 98; }
-  /* Truck sits on the road: canvas x 46–116 of 180, wheels on y≈93 of 98. */
-  .hilux { position: absolute; left: 25.6%; width: 38.9%; bottom: 2.5%; will-change: transform; }
+  :global(html.story) .scene-frame { position: sticky; top: 64px; }
+    /* The stage holds the art, truck and barista. Full width on most screens; on tall phones it grows so the scene fills
+     about half the height, centred on the truck (the sign and stools drop off the sides). */
+  .stage { position: absolute; bottom: 0; width: max(100cqw, 92cqh); aspect-ratio: 180 / 98; left: calc(50% - 0.48 * max(100cqw, 92cqh)); container-type: inline-size; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  /* Sizes are in cqw (stage width) so the truck and barista stay on the road. */
+  .hilux { position: absolute; left: 25.6%; width: 38.9%; bottom: 1.36cqw; will-change: transform; }
   .hilux img { display: block; width: 100%; height: auto; }
+  .hilux .awning { position: absolute; inset: 0; transform-origin: 43% 11%; }
   /* Engine idle shake while the barista starts the truck (class set by story.ts). */
   .hilux.idling .body { animation: idle .14s linear infinite; }
   @keyframes idle { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-1px, -2px) rotate(-.3deg); } 50% { transform: translate(1px, 0); } 75% { transform: translate(0, -1px) rotate(.3deg); } }
-  .hilux .awning { position: absolute; inset: 0; transform-origin: 43% 11%; }
-  /* Barista stands just right of the truck, feet on the road. Stored at 32×64 and scaled up for chunky pixels. */
-  .barista { position: absolute; left: 65%; width: 6.1%; height: auto; bottom: 3%; image-rendering: pixelated; will-change: transform; }
+  .barista { position: absolute; left: 65%; width: 6.1%; height: auto; bottom: 1.63cqw; image-rendering: pixelated; will-change: transform; }
+
+  /* Wordmark and buttons sit in the sky, over the art. */
+  .hero-copy { position: absolute; z-index: 2; left: 0; right: 0; top: max(16px, calc((100cqh - max(54.4cqw, 50cqh)) * 0.4 + 4cqw)); display: grid; justify-items: center; gap: clamp(12px, 2.4cqw, 28px); padding: 0 16px; }
+  .title { margin: 0; font: 700 clamp(44px, 12cqw, 156px)/.9 var(--font-display); color: var(--ember-600); letter-spacing: .03em;
+    text-shadow: 3px 3px 0 var(--brick), 6px 6px 0 var(--brick); }
+  .ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  @media (max-width: 560px) {
+    .title { text-shadow: 2px 2px 0 var(--brick), 4px 4px 0 var(--brick); }
+    .ctas { gap: 10px; }
+    .ctas .cb-btn { padding: 8px 10px; font-size: 11px; box-shadow: 3px 3px 0 var(--line); }
+  }
 </style>

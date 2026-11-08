@@ -7,7 +7,7 @@ const run = Array.from({ length: 6 }, () => site.ticker).flat();
 </div>
 
 <style>
-  .ticker { margin-top: var(--space-12); background: var(--forest); color: var(--on-forest); border-block: 3px solid var(--line); overflow: hidden; white-space: nowrap; }
+  .ticker { background: var(--forest); color: var(--on-forest); border-bottom: 3px solid var(--line); overflow: hidden; white-space: nowrap; }
   .ticker div { display: inline-block; padding: 12px 0; font: 700 16px/1 var(--font-pixel); text-transform: uppercase; letter-spacing: .08em; animation: tick 28s steps(140) infinite; }
   span { margin: 0 20px; color: var(--sun); }
   @keyframes tick { to { transform: translateX(-50%); } }
