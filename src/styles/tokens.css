@@ -21,6 +21,7 @@
   --shadow-px: 4px 4px 0 var(--line);
   --shadow-px-lg: 6px 6px 0 var(--line);
   --tagline: var(--brick);
+  --road: #c9a27a; --road-dash: #b08560;
   color-scheme: light;
 }
 
@@ -31,6 +32,7 @@
     --forest: #96b04f; --forest-hi: #b7cc72; --ember-600: #f08a5d; --brick: #6e2414;
     --sky: #1f2b45; --slate: #3c4c68; --cloud: #c9d3d9;
     --on-forest: #12120d; --tagline: var(--ember-600);
+    --road: #5a4632; --road-dash: #4a3a2a;
     color-scheme: dark;
   }
 }
@@ -40,5 +42,6 @@
   --forest: #96b04f; --forest-hi: #b7cc72; --ember-600: #f08a5d; --brick: #6e2414;
   --sky: #1f2b45; --slate: #3c4c68; --cloud: #c9d3d9;
   --on-forest: #12120d; --tagline: var(--ember-600);
+  --road: #5a4632; --road-dash: #4a3a2a;
   color-scheme: dark;
 }

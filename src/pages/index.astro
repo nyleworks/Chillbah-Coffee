@@ -22,9 +22,11 @@ import Footer from '../components/Footer.astro';
   import { initScene } from '../scripts/scene';
   import { drawArt } from '../scripts/art';
   import { initThemeToggle, onThemeChange } from '../scripts/theme';
+  import { initStory } from '../scripts/story';
 
   const scene = initScene(document.getElementById('scene') as HTMLCanvasElement | null);
   drawArt();
   initThemeToggle(document.getElementById('themeBtn'));
   onThemeChange(() => { scene.redraw(); drawArt(); });
+  initStory();
 </script>
