@@ -1,6 +1,6 @@
-// The hero scene: Hilux parked on grass under Kinabalu, day or night. 180×98 canvas, 140ms stepped frames.
+// The hero scene: grass, road and Kinabalu (the Hilux itself is an <img> over the canvas, see Hero.astro), day or night. 180×98 canvas, 140ms stepped frames.
 import { Grid } from '../lib/pixel';
-import { cup, pine, truck } from '../lib/sprites';
+import { cup, pine } from '../lib/sprites';
 import { css, isNight } from './theme';
 
 const ridge = [[52, 92], [70, 72], [84, 58], [94, 60], [102, 44], [110, 48], [116, 34], [122, 40], [128, 28], [134, 36], [140, 26], [146, 33], [152, 30], [160, 42], [170, 38], [180, 52], [196, 58], [214, 70], [240, 76]];
@@ -18,7 +18,6 @@ export function initScene(canvas: HTMLCanvasElement | null) {
   const sx = canvas?.getContext('2d');
   if (!canvas || !sx) return { redraw() {} };
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const T = truck();
   const p1 = pine(12, '#2b5615', '#244a12'), p2 = pine(9, '#4f7a2c', '#2b5615');
   p1.outline('#12120d'); p2.outline('#12120d');
   const sign = Grid(10, 14); sign.rect(1, 0, 8, 9, '#2a2620'); sign.rect(2, 2, 6, 1, '#e66f46'); sign.rect(2, 4, 5, 1, '#f4ebcd'); sign.rect(2, 6, 4, 1, '#f4ebcd'); sign.rect(1, 9, 1, 4, '#715542'); sign.rect(8, 9, 1, 4, '#715542'); sign.outline('#12120d');
@@ -62,16 +61,6 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     ctx.fillStyle = night ? '#5a4632' : '#c9a27a'; ctx.fillRect(0, 108, W, 6);
     ctx.fillStyle = night ? '#4a3a2a' : '#b08560'; for (let x = 0; x < W; x += 9) ctx.fillRect(x, 110, 4, 1);
     ctx.fillStyle = '#12120d'; ctx.fillRect(0, 92, W, 1);
-    // truck, with a little idle bob
-    const bob = reduce ? 0 : (frame >> 3) % 2;
-    const tx = 88, ty = 86;
-    T.draw(ctx, tx, ty + bob);
-    // steam rising from the espresso machine, past the awning
-    ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < 4; i++) {
-      const t = (frame + i * 9) % 36; const y = ty - 1 - t / 2 + bob; const x = tx + 48 + Math.round(Math.sin((t + i) / 4) * 1.5);
-      if (t < 30) ctx.fillRect(x, Math.round(y), 1, 1);
-    }
     sign.draw(ctx, 70, 96);
     stool.draw(ctx, 160, 99); stool.draw(ctx, 174, 101);
     icedCup.draw(ctx, 186, 94);

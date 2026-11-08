@@ -3,67 +3,6 @@ import { Grid, place } from './pixel';
 const INK = '#12120d';
 const CREAM = '#f4ebcd';
 
-/** The white double-cab Hilux with a dark side awning over the tray. Faces left. 66×27. */
-export function truck(): Grid {
-  const g = Grid(66, 27);
-  const W = '#eef0ec', Ws = '#d3d7d6', seam = '#7b8186', glass = '#2e3138', glassHi = '#4a5060',
-    trim = '#26282b', flare = '#44474c', tire = '#1b1c1e', rim = '#5a5e63', hub = '#6d7278', awn = '#33363b', awnHi = '#4c5058',
-    S = '#9aa0a6', red = '#c8442a', lamp = '#e8f4f6';
-
-  // awning: tent-like panel, peak near the middle, flap hangs lower at the back
-  for (let x = 29; x <= 65; x++) {
-    const top = x <= 47 ? Math.round(3 - (x - 29) / 9) : Math.round(1 + (x - 47) / 8);
-    g.rect(x, top, 1, 4 - top, awn);
-    g.set(x, top, awnHi);
-  }
-  g.rect(29, 4, 34, 1, awnHi); g.rect(60, 4, 6, 2, awn);
-  // antenna
-  g.set(25, 1, trim); g.set(26, 2, trim);
-
-  // body silhouette: nose, hood rising to the windscreen, A-pillar, roof, tray
-  const topAt = (x: number) =>
-    x <= 3 ? 10 : x <= 16 ? Math.round(10 - (x - 4) / 6) : x <= 28 ? Math.round(8 - ((x - 17) * 5) / 11) : x <= 42 ? 3 : 9;
-  for (let x = 2; x <= 62; x++) g.rect(x, topAt(x), 1, 19 - topAt(x), W);
-  g.rect(2, 15, 61, 3, Ws); // lower body shade band
-  g.rect(43, 9, 20, 1, Ws); // tray rail
-
-  // espresso machine peeking over the tray, under the awning
-  g.rect(46, 6, 5, 3, S); g.rect(46, 6, 5, 1, '#6d7278'); g.rect(52, 7, 2, 2, '#715542');
-
-  // side windows, B-pillar, mirror
-  for (let x = 18; x <= 41; x++) { const t = Math.max(topAt(x) + 1, 4); g.rect(x, t, 1, 10 - t, glass); }
-  g.rect(33, 4, 1, 6, trim); g.rect(42, 4, 1, 6, W);
-  g.set(30, 4, glassHi); g.set(29, 5, glassHi); g.set(37, 4, glassHi); g.set(36, 5, glassHi);
-  g.rect(19, 7, 3, 2, trim);
-
-  // door seams and handles
-  g.rect(17, 9, 1, 9, seam); g.rect(32, 9, 1, 9, seam); g.rect(41, 9, 1, 9, seam);
-  g.rect(28, 11, 3, 1, trim); g.rect(38, 11, 3, 1, trim);
-
-  // front: grille, bumper, headlight
-  g.rect(2, 12, 2, 7, trim); g.rect(3, 10, 6, 2, trim); g.rect(4, 11, 3, 1, lamp); g.set(7, 11, '#f2c94c'); g.rect(4, 15, 2, 2, '#44474c');
-  // rear: tail light, bumper
-  g.rect(61, 10, 2, 5, red); g.rect(61, 16, 3, 3, '#4a4e55');
-  // side step
-  g.rect(19, 19, 25, 1, trim);
-
-  // fender flares and wheels
-  ([11, 49] as const).forEach((cx) => {
-    const cy = 20;
-    for (let j = -6; j <= 1; j++) for (let i = -7; i <= 7; i++) { const d = i * i + j * j; if (d <= 46 && d > 28) g.set(cx + i, cy + j, flare); }
-    g.disc(cx, cy, 5, tire); g.disc(cx, cy, 3, rim);
-    [[0, -2], [0, 2], [-2, 0], [2, 0]].forEach(([i, j]) => g.set(cx + i, cy + j, tire));
-    g.set(cx, cy, hub);
-  });
-
-  // awning poles down to the tray
-  g.rect(44, 5, 1, 5, S);
-  g.rect(57, 6, 1, 4, S);
-
-  g.outline(INK);
-  return g;
-}
-
 export function pine(h: number, c1: string, c2: string): Grid {
   const g = Grid(h, h + 3); const cx = h >> 1;
   for (let y = 0; y < h; y++) { const w = Math.floor(y * 0.5 + 1) - (y % 4 === 3 ? 1 : 0); g.rect(cx - w + 1, y, w * 2 - 1, 1, y % 4 < 2 ? c1 : c2); }

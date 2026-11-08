@@ -12,7 +12,8 @@ import Ticker from './Ticker.astro';
       <a class="cb-btn cb-btn--ghost" href="#menu">See menu</a>
     </div>
     <div class="scene-frame">
-      <canvas id="scene" width="180" height="98" role="img" aria-label="Pixel art of the white Chillbah Hilux parked on grass, a black awning over the coffee bar on its tray, mountains behind"></canvas>
+      <canvas id="scene" width="180" height="98" aria-hidden="true"></canvas>
+      <img class="hilux" src="/hilux.webp" width="1200" height="455" alt="Pixel art of the white Chillbah Hilux with its black side awning, parked on grass with mountains behind" />
     </div>
   </div>
   <Ticker />
@@ -26,6 +27,8 @@ import Ticker from './Ticker.astro';
   .tagline { font: 700 clamp(14px, 2.4vw, 20px)/1.3 var(--font-pixel); color: var(--tagline); text-transform: uppercase; letter-spacing: .04em; }
   .lede { max-width: 560px; margin: 16px auto 24px; color: var(--muted); }
   .ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
-  .scene-frame { border: 4px solid var(--line); border-radius: var(--radius-frame); overflow: hidden; background: var(--sky); box-shadow: var(--shadow-px-lg); }
+  .scene-frame { position: relative; border: 4px solid var(--line); border-radius: var(--radius-frame); overflow: hidden; background: var(--sky); box-shadow: var(--shadow-px-lg); }
   .scene-frame canvas { width: 100%; height: auto; aspect-ratio: 180 / 98; }
+  /* Truck sits on the road: canvas x 46–116 of 180, wheels on y≈93 of 98. */
+  .hilux { position: absolute; left: 25.6%; width: 38.9%; height: auto; bottom: 2.5%; }
 </style>
