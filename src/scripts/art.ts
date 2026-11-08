@@ -2,6 +2,7 @@
 import { paint } from '../lib/pixel';
 import { cup, icons, themeIcon, type CupKind, type IconName } from '../lib/sprites';
 import { css, isNight } from './theme';
+import { drawTown, drawVillage } from '../lib/scenery';
 
 export function drawArt() {
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-cup]').forEach((cv) =>
@@ -20,5 +21,14 @@ export function drawArt() {
       ctx.fillStyle = x % 6 < 3 ? '#7fae45' : '#66882d';
       ctx.fillRect(x, cv.height - h, 1, h);
     }
+  });
+
+  // Lane backdrops: one art pixel per 4 CSS px, sized to the lane so they run edge to edge.
+  document.querySelectorAll<HTMLCanvasElement>('canvas[data-scenery]').forEach((cv) => {
+    const w = Math.max(1, Math.round(cv.clientWidth / 4)), h = Math.max(1, Math.round(cv.clientHeight / 4));
+    if (cv.width !== w) cv.width = w;
+    if (cv.height !== h) cv.height = h;
+    const ctx = cv.getContext('2d'); if (!ctx) return;
+    (cv.dataset.scenery === 'town' ? drawTown : drawVillage)(ctx, w, h, isNight());
   });
 }

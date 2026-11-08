@@ -28,5 +28,7 @@ import Footer from '../components/Footer.astro';
   drawArt();
   initThemeToggle(document.getElementById('themeBtn'));
   onThemeChange(() => { scene.redraw(); drawArt(); });
+  let artTimer = 0;
+  addEventListener('resize', () => { clearTimeout(artTimer); artTimer = window.setTimeout(drawArt, 120); });
   initStory();
 </script>

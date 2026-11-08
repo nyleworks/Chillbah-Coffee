@@ -1,21 +1,29 @@
 ---
 // A strip of road the Hilux drives along as you scroll (scripts/story.ts).
 // dir: which way it drives. mode "pass" drives right across; "arrive" rolls in and parks in the middle.
-interface Props { dir: 'ltr' | 'rtl'; mode?: 'pass' | 'arrive' }
+// scenery: a pixel backdrop (town or kampung) whose lights come on at night. road: dirt or asphalt.
 import Truck from './Truck.astro';
-const { dir, mode = 'pass' } = Astro.props;
+interface Props { dir: 'ltr' | 'rtl'; mode?: 'pass' | 'arrive'; scenery?: 'town' | 'village'; road?: 'dirt' | 'asphalt' }
+const { dir, mode = 'pass', scenery, road = 'dirt' } = Astro.props;
 ---
-<div class="lane" data-dir={dir} data-mode={mode} aria-hidden="true">
-  <canvas data-grass width="320" height="8"></canvas>
+<div class="lane" data-dir={dir} data-mode={mode} data-road={road} data-has-scenery={scenery ? '' : undefined} aria-hidden="true">
+  {scenery && <canvas class="scenery" data-scenery={scenery} width="320" height="40"></canvas>}
+  {road === 'dirt' && <canvas class="grass" data-grass width="320" height="8"></canvas>}
   <Truck class="lane-truck" />
 </div>
 
 <style>
   .lane { position: relative; height: clamp(130px, 18vw, 190px); overflow: hidden; }
+  .lane[data-has-scenery] { height: clamp(190px, 24vw, 280px); }
   .lane::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; border-top: 3px solid var(--line);
     background: repeating-linear-gradient(90deg, var(--road-dash) 0 24px, transparent 24px 52px) 0 50% / 100% 4px no-repeat, var(--road); }
-  canvas { position: absolute; left: 0; bottom: 43px; width: 100%; height: 32px; }
-  .lane :global(.lane-truck) { position: absolute; z-index: 1; left: 50%; bottom: 8px; width: clamp(220px, 30vw, 360px); height: auto; transform: translateX(-50%); will-change: transform; }
+  /* Town road: asphalt with a white centre line. */
+  .lane[data-road="asphalt"]::after { border-top-width: 0;
+    background: repeating-linear-gradient(90deg, var(--asphalt-line) 0 28px, transparent 28px 56px) 0 55% / 100% 4px no-repeat, var(--asphalt); }
+  .scenery { position: absolute; left: 0; bottom: 40px; width: 100%; height: calc(100% - 40px); image-rendering: pixelated; }
+  .lane[data-road="dirt"] .scenery { bottom: 43px; height: calc(100% - 43px); }
+  .grass { position: absolute; left: 0; bottom: 43px; width: 100%; height: 32px; }
+  .lane :global(.lane-truck) { position: absolute; z-index: 1; left: 50%; bottom: 8px; width: clamp(220px, 30vw, 360px); height: auto; transform: translateX(-50%); }
   /* The art faces left; mirror it when driving right. */
   .lane[data-dir="ltr"] :global(.lane-truck) { transform: translateX(-50%) scaleX(-1); }
 </style>
