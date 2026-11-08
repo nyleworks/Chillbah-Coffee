@@ -31,13 +31,13 @@ const { id, class: className, awning = false, label } = Astro.props;
 
   /* Headlights: a warm cone from the lamp (≈3%, 44% of the art) down onto the road ahead, plus a pool of light.
      Only at night, and only once the engine is on (story.ts adds .lights). */
-  .beam { position: absolute; z-index: 0; right: 96.5%; top: 41%; width: 75%; height: 59%; opacity: 0; pointer-events: none;
+  .beam { position: absolute; z-index: 0; right: 96.5%; top: 41%; width: 105%; height: 59%; opacity: 0; pointer-events: none;
     background: linear-gradient(to left, rgba(255, 236, 130, .95), rgba(255, 220, 90, .45) 55%, rgba(255, 214, 90, 0));
     clip-path: polygon(100% 0%, 100% 14%, 0% 100%, 0% 38%);
     mix-blend-mode: screen; transition: opacity .25s steps(3); }
   /* Bright pool where the beam hits the road. */
-  .pool { position: absolute; z-index: 0; right: 88%; bottom: -2%; width: 85%; height: 26%; opacity: 0; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(255, 230, 110, .85), rgba(255, 214, 80, .35) 60%, rgba(255, 214, 80, 0));
+  .pool { position: absolute; z-index: 0; right: 86%; bottom: -2%; width: 130%; height: 26%; opacity: 0; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255, 230, 110, .85), rgba(255, 214, 80, .4) 65%, rgba(255, 214, 80, 0));
     mix-blend-mode: screen; transition: opacity .25s steps(3); }
   .truck::after { content: ""; position: absolute; left: 1.5%; top: 40%; width: 6%; height: 12%; border-radius: 50%; opacity: 0; pointer-events: none;
     background: radial-gradient(closest-side, rgba(255, 245, 190, .95), rgba(255, 220, 100, 0)); mix-blend-mode: screen; transition: opacity .25s steps(3); }
