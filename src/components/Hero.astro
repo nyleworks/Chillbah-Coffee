@@ -35,8 +35,8 @@ import Ticker from './Ticker.astro';
   :global(html.story) .scene-track { height: calc(var(--frame-h, 60vw) + 130vh); }
   :global(html.story) .scene-frame { position: sticky; top: 64px; }
     /* The stage holds the art, truck and barista. Full width on most screens; on tall phones it grows so the scene fills
-     about half the height, centred on the truck (the sign and stools drop off the sides). */
-  .stage { position: absolute; bottom: 0; width: max(100cqw, 92cqh); aspect-ratio: 180 / 98; left: calc(50% - 0.48 * max(100cqw, 92cqh)); container-type: inline-size; }
+     about half the height, centred on the truck (the sign and stools drop off the sides), never leaving a gap at either edge. */
+  .stage { position: absolute; bottom: 0; width: max(100cqw, 92cqh); aspect-ratio: 180 / 98; left: clamp(calc(100% - max(100cqw, 92cqh)), calc(50% - 0.48 * max(100cqw, 92cqh)), 0px); container-type: inline-size; }
   .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   /* Sizes are in cqw (stage width) so the truck and barista stay on the road. */
   .hilux { position: absolute; left: 25.6%; width: 38.9%; bottom: 1.36cqw; will-change: transform; }
