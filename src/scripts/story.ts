@@ -36,7 +36,11 @@ export function initStory() {
     const snap = (v: number) => Math.round(v / sp) * sp;
     const stickyTop = parseFloat(getComputedStyle(frame!).top) || 0;
     const r = track!.getBoundingClientRect();
-    const p = clamp((stickyTop - r.top) / Math.max(1, r.height - frame!.offsetHeight));
+    const raw = clamp((stickyTop - r.top) / Math.max(1, r.height - frame!.offsetHeight));
+    // The track is 156vh: the first 104vh run the barista/awning/engine timeline below (p 0→0.8),
+    // the last 52vh are the drive-off, so the truck leaves at an unhurried pace.
+    const DRIVE = 104 / 156;
+    const p = raw < DRIVE ? (raw / DRIVE) * 0.8 : 0.8 + ((raw - DRIVE) / (1 - DRIVE)) * 0.2;
 
     // Barista: start 65% → tray 58% → front door 37%, then climbs in.
     const walk1 = seg(p, 0, 0.12), walk2 = seg(p, 0.42, 0.62), getIn = seg(p, 0.62, 0.7);
