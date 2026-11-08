@@ -9,14 +9,25 @@ export function isNight(): boolean {
 
 export function onThemeChange(fn: () => void) { listeners.push(fn); }
 
+// Turn on the page-wide colour transition *before* the theme flips, so every section fades across.
+let fadeTimer = 0;
+function startFade() {
+  const root = document.documentElement;
+  root.classList.add('theme-fade');
+  void getComputedStyle(root).color; // apply the transition rules before colours change
+  clearTimeout(fadeTimer);
+  fadeTimer = window.setTimeout(() => root.classList.remove('theme-fade'), 1600);
+}
+
 export function initThemeToggle(btn: HTMLElement | null) {
   btn?.addEventListener('click', () => {
     const next = isNight() ? 'light' : 'dark';
+    startFade();
     document.documentElement.dataset.theme = next;
     try { localStorage.setItem(KEY, next); } catch { /* storage blocked: still switches for this visit */ }
     listeners.forEach((fn) => fn());
   });
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => listeners.forEach((fn) => fn()));
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { startFade(); listeners.forEach((fn) => fn()); });
 }
 
 export const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue('--' + name).trim();

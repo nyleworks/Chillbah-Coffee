@@ -32,3 +32,36 @@ export function drawArt() {
     (cv.dataset.scenery === 'town' ? drawTown : drawVillage)(ctx, w, h, isNight());
   });
 }
+
+// Theme switch: repaint every sprite, then cross-fade each canvas from its old picture to the new one
+// so section scenery (shop lights, house windows) and icons ease across instead of snapping.
+let fadeToken = 0;
+export function drawArtFaded(dur = 1400) {
+  const cvs = [...document.querySelectorAll<HTMLCanvasElement>('canvas[data-cup], canvas[data-icon], canvas[data-theme-icon], canvas[data-grass], canvas[data-scenery]')];
+  const snap = (cv: HTMLCanvasElement) => {
+    const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height;
+    if (cv.width && cv.height) c.getContext('2d')!.drawImage(cv, 0, 0);
+    return c;
+  };
+  const olds = cvs.map(snap);
+  drawArt();
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const news = cvs.map(snap);
+  const token = ++fadeToken, start = performance.now();
+  const step = (now: number) => {
+    if (token !== fadeToken) return;
+    const k = Math.min(1, (now - start) / dur), e = k * k * (3 - 2 * k);
+    cvs.forEach((cv, i) => {
+      const ctx = cv.getContext('2d'); if (!ctx || !cv.width || !cv.height) return;
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.globalAlpha = 1; ctx.drawImage(news[i], 0, 0, cv.width, cv.height);
+      if (k < 1 && olds[i].width) { ctx.globalAlpha = 1 - e; ctx.drawImage(olds[i], 0, 0, cv.width, cv.height); }
+      ctx.restore();
+    });
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+/** Stop any running cross-fade (e.g. before a resize repaint). */
+export function stopArtFade() { fadeToken++; }

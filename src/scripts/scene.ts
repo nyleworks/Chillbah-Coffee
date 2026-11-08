@@ -88,7 +88,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     const target = night ? 1 : 0;
     cancelAnimationFrame(anim);
     if (reduce) { t = target; draw(); return; }
-    const from = t, start = performance.now(), dur = 1600 * Math.abs(target - from);
+    const from = t, start = performance.now(), dur = 1400 * Math.abs(target - from);
     const step = (now: number) => {
       const k = Math.min(1, (now - start) / Math.max(1, dur));
       t = from + (target - from) * k; draw();

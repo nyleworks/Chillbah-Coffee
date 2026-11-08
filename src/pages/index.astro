@@ -20,7 +20,7 @@ import Footer from '../components/Footer.astro';
 
 <script>
   import { initScene } from '../scripts/scene';
-  import { drawArt } from '../scripts/art';
+  import { drawArt, drawArtFaded, stopArtFade } from '../scripts/art';
   import { initThemeToggle, onThemeChange, isNight } from '../scripts/theme';
   import { initStory } from '../scripts/story';
 
@@ -29,13 +29,9 @@ import Footer from '../components/Footer.astro';
   initThemeToggle(document.getElementById('themeBtn'));
   onThemeChange(() => {
     scene.setNight(isNight());
-    drawArt();
-    // let the page colours fade across with the sky
-    document.documentElement.classList.add('theme-fade');
-    clearTimeout(fadeTimer); fadeTimer = window.setTimeout(() => document.documentElement.classList.remove('theme-fade'), 1200);
+    drawArtFaded();
   });
-  let fadeTimer = 0;
   let artTimer = 0;
-  addEventListener('resize', () => { clearTimeout(artTimer); artTimer = window.setTimeout(drawArt, 120); });
+  addEventListener('resize', () => { clearTimeout(artTimer); artTimer = window.setTimeout(() => { stopArtFade(); drawArt(); }, 120); });
   initStory();
 </script>
