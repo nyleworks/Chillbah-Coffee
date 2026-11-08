@@ -6,7 +6,7 @@ import Truck from './Truck.astro';
 interface Props { dir: 'ltr' | 'rtl'; mode?: 'pass' | 'arrive'; scenery?: 'town' | 'village'; road?: 'dirt' | 'asphalt' }
 const { dir, mode = 'pass', scenery, road = 'dirt' } = Astro.props;
 ---
-<div class="lane" data-dir={dir} data-mode={mode} data-road={road} data-has-scenery={scenery ? '' : undefined} aria-hidden="true">
+<div class="lane" data-dir={dir} data-mode={mode} data-road={road} data-has-scenery={scenery ? '' : undefined} data-scenery-kind={scenery} aria-hidden="true">
   {scenery && <canvas class="scenery" data-scenery={scenery} width="320" height="40"></canvas>}
   {road === 'dirt' && <canvas class="grass" data-grass width="320" height="8"></canvas>}
   <Truck class="lane-truck" />
@@ -15,6 +15,8 @@ const { dir, mode = 'pass', scenery, road = 'dirt' } = Astro.props;
 <style>
   .lane { position: relative; height: clamp(130px, 18vw, 190px); overflow: hidden; }
   .lane[data-has-scenery] { height: clamp(240px, 24vw, 280px); }
+  /* The town needs room for buildings of different heights above the shopfronts. */
+  .lane[data-scenery-kind="town"] { height: clamp(320px, 34vw, 440px); }
   .lane::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; border-top: 3px solid var(--line);
     background: repeating-linear-gradient(90deg, var(--road-dash) 0 24px, transparent 24px 52px) 0 50% / 100% 4px no-repeat, var(--road); }
   /* Town road: asphalt with a white centre line. */
