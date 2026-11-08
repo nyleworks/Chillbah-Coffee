@@ -16,7 +16,7 @@ import Ticker from './Ticker.astro';
       <div class="scene-frame" id="sceneFrame">
         <canvas id="scene" width="180" height="98" aria-hidden="true"></canvas>
         <div class="hilux" id="heroTruck" role="img" aria-label="Pixel art of the white Chillbah Hilux with its black side awning, parked on grass with mountains behind">
-          <img src="/hilux-body.webp" width="1200" height="455" alt="" />
+          <img class="body" src="/hilux-body.webp" width="1200" height="455" alt="" />
           <img class="awning" id="heroAwning" src="/hilux-awning.webp" width="1200" height="455" alt="" />
         </div>
         <img class="barista" id="barista" src="/barista.png" width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
@@ -43,6 +43,9 @@ import Ticker from './Ticker.astro';
   /* Truck sits on the road: canvas x 46–116 of 180, wheels on y≈93 of 98. */
   .hilux { position: absolute; left: 25.6%; width: 38.9%; bottom: 2.5%; will-change: transform; }
   .hilux img { display: block; width: 100%; height: auto; }
+  /* Engine idle shake while the barista starts the truck (class set by story.ts). */
+  .hilux.idling .body { animation: idle .14s linear infinite; }
+  @keyframes idle { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-1px, -2px) rotate(-.3deg); } 50% { transform: translate(1px, 0); } 75% { transform: translate(0, -1px) rotate(.3deg); } }
   .hilux .awning { position: absolute; inset: 0; transform-origin: 43% 11%; }
   /* Barista stands just right of the truck, feet on the road. Stored at 32×64 and scaled up for chunky pixels. */
   .barista { position: absolute; left: 65%; width: 6.1%; height: auto; bottom: 3%; image-rendering: pixelated; will-change: transform; }

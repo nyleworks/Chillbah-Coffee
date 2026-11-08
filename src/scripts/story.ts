@@ -2,7 +2,8 @@
 // Hero (pinned while you scroll its track): the barista steps to the tray and folds the awning,
 // walks to the front door and gets in, then the Hilux drives off to the left.
 // Footer: as it scrolls into view the same Hilux rolls in from the right and parks in the middle.
-// Every movement snaps to whole scene pixels so it stays chunky. Off under reduced motion.
+// The barista moves in whole scene pixels; the truck shakes as the engine starts, then glides smoothly.
+// Off under reduced motion.
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 /** 0→1 progress of p inside [a, b]. */
@@ -48,11 +49,12 @@ export function initStory() {
     awning!.style.transform = `scale(${1 - 0.95 * k}, ${1 - 0.75 * k})`;
     awning!.style.opacity = k >= 1 ? '0' : '1';
 
-    // Truck drives off to the left, easing in from a standstill.
-    const d = seg(p, 0.72, 1);
-    const tx = snap(-(d * d) * (0.256 + 0.389 + 0.03) * fw);
-    const rumble = d > 0 && d < 1 ? (Math.floor(Math.abs(tx) / (sp * 3)) % 2) * sp : 0;
-    truck!.style.transform = `translate(${tx}px, ${-rumble}px)`;
+    // Engine starts: the truck idles with a shake once the barista is in, then pulls away smoothly.
+    truck!.classList.toggle('idling', p >= 0.7 && p < 0.8);
+    const d = seg(p, 0.8, 1);
+    const ease = d * d * (3 - 2 * d); // smoothstep: gentle start, steady exit
+    const tx = -ease * (0.256 + 0.389 + 0.03) * fw;
+    truck!.style.transform = `translateX(${tx}px)`;
   }
 
   function foot() {
@@ -62,9 +64,8 @@ export function initStory() {
     const lane = footer.clientWidth, tw = footerTruck.offsetWidth;
     const e = 1 - (1 - q) * (1 - q); // roll in and brake to a stop
     const start = lane / 2 + tw / 2 + 8; // just past the right edge
-    const x = Math.round(((1 - e) * start) / 4) * 4;
-    const rumble = q > 0 && q < 1 ? (Math.floor(x / 12) % 2) * 4 : 0;
-    footerTruck.style.transform = `translate(calc(-50% + ${x}px), ${-rumble}px)`;
+    const x = (1 - e) * start;
+    footerTruck.style.transform = `translateX(calc(-50% + ${x}px))`;
   }
 
   let queued = false;
