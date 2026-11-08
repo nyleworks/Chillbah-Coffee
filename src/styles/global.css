@@ -24,3 +24,9 @@ section { padding: var(--space-20) 0; }
    truck drives across its road, then the page carries on (scripts/story.ts sets the sizes). */
 html.story .pin-track { height: calc(var(--sec-h, 0px) + var(--pin, 0px)); }
 html.story .pin-track > section { position: sticky; top: var(--pin-top, 0px); }
+
+/* Theme switch: colours fade for a moment while the hero sky animates (index.astro adds .theme-fade). */
+html.theme-fade, html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
+  transition: background-color 1s ease, color 1s ease, border-color 1s ease, fill 1s ease !important;
+}
+@media (prefers-reduced-motion: reduce) { html.theme-fade, html.theme-fade * { transition: none !important; } }
