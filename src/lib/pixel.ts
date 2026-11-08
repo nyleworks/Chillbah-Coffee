@@ -39,11 +39,10 @@ export function Grid(w: number, h: number): Grid {
   return g;
 }
 
-export function paint(cv: HTMLCanvasElement, g: Grid, bg?: string) {
+export function paint(cv: HTMLCanvasElement, g: Grid) {
   const ctx = cv.getContext('2d');
   if (!ctx) return;
   ctx.clearRect(0, 0, cv.width, cv.height);
-  if (bg) { ctx.fillStyle = bg; ctx.fillRect(0, 0, cv.width, cv.height); }
   g.draw(ctx);
 }
 

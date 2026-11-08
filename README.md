@@ -6,7 +6,7 @@ The site for Chillbah, a mobile coffee kiosk run from the back of a 4x4 Toyota H
 
 - [Astro](https://astro.build) 5, static output (no server needed). Deploy `dist/` to Netlify, Vercel, Cloudflare Pages or GitHub Pages.
 - Plain CSS with design tokens (`src/styles/tokens.css`), day/night theme.
-- Pixel art is drawn in code (`src/lib/sprites.ts`), no image files.
+- Pixel art scenes and icons are drawn in code (`src/lib/`, `src/scripts/`). The Hilux and barista are image files in `public/`.
 
 ## Run it
 
@@ -26,6 +26,8 @@ npm run build    # outputs dist/
 | Buttons, menu card, badge | `src/styles/components.css` |
 | Page sections | `src/components/*.astro` |
 | Hero scene and sprites | `src/scripts/scene.ts`, `src/lib/sprites.ts` |
+| Section scenery (town, kampung) | `src/lib/scenery.ts` |
+| Scroll animation | `src/scripts/story.ts` |
 
 ## Open items
 

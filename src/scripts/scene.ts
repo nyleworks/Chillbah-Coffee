@@ -16,7 +16,7 @@ const stars = Array.from({ length: 40 }, (_, i) => [(i * 53) % 240, 18 + ((i * 2
 
 export function initScene(canvas: HTMLCanvasElement | null) {
   const sx = canvas?.getContext('2d');
-  if (!canvas || !sx) return { redraw() {}, setNight(_n: boolean) {} };
+  if (!canvas || !sx) return { setNight(_n: boolean) {} };
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const p1 = pine(12, '#2b5615', '#244a12'), p2 = pine(9, '#4f7a2c', '#2b5615');
   p1.outline('#12120d'); p2.outline('#12120d');
@@ -100,5 +100,5 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     };
     anim = requestAnimationFrame(step);
   }
-  return { redraw: draw, setNight };
+  return { setNight };
 }
