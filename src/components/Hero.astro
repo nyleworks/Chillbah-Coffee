@@ -14,6 +14,7 @@ import Ticker from './Ticker.astro';
     <div class="scene-frame">
       <canvas id="scene" width="180" height="98" aria-hidden="true"></canvas>
       <img class="hilux" src="/hilux.webp" width="1200" height="455" alt="Pixel art of the white Chillbah Hilux with its black side awning, parked on grass with mountains behind" />
+      <img class="barista" src="/barista.webp" width="238" height="480" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
     </div>
   </div>
   <Ticker />
@@ -31,4 +32,6 @@ import Ticker from './Ticker.astro';
   .scene-frame canvas { width: 100%; height: auto; aspect-ratio: 180 / 98; }
   /* Truck sits on the road: canvas x 46–116 of 180, wheels on y≈93 of 98. */
   .hilux { position: absolute; left: 25.6%; width: 38.9%; height: auto; bottom: 2.5%; }
+  /* Barista stands just right of the truck, feet on the road. */
+  .barista { position: absolute; left: 65%; width: 6.1%; height: auto; bottom: 3%; }
 </style>

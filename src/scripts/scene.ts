@@ -62,8 +62,8 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     ctx.fillStyle = night ? '#4a3a2a' : '#b08560'; for (let x = 0; x < W; x += 9) ctx.fillRect(x, 110, 4, 1);
     ctx.fillStyle = '#12120d'; ctx.fillRect(0, 92, W, 1);
     sign.draw(ctx, 70, 96);
-    stool.draw(ctx, 160, 99); stool.draw(ctx, 174, 101);
-    icedCup.draw(ctx, 186, 94);
+    stool.draw(ctx, 172, 99); stool.draw(ctx, 186, 101);
+    icedCup.draw(ctx, 198, 94);
   }
 
   draw();
