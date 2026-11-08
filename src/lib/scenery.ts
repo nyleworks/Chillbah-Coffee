@@ -33,66 +33,103 @@ function glow(ctx: Ctx, cx: number, cy: number, r: number, a = 0.22) {
   }
 }
 
-/* ---------------- Town ---------------- */
+/* ---------------- Town: close-up row of shophouses ---------------- */
+
+// 3×5 pixel letters for the shop signs.
+const FONT: Record<string, string> = {
+  A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111',
+  F: '111100110100100', I: '111010010010111', J: '001001001101010', K: '101101110101101', M: '101111111101101',
+  N: '110101101101101', O: '010101101101010', P: '110101110100100', R: '110101110101101', S: '011100010001110',
+  T: '111010010010010', U: '101101101101111', Y: '101101010010010', ' ': '000000000000000',
+};
+function text(ctx: Ctx, str: string, x: number, y: number, c: string) {
+  for (const ch of str) {
+    const g = FONT[ch] ?? FONT[' '];
+    for (let i = 0; i < 15; i++) if (g[i] === '1') rect(ctx, x + (i % 3), y + Math.floor(i / 3), 1, 1, c);
+    x += 4;
+  }
+}
+
+const SHOPS = [
+  { name: 'KOPI', wall: '#d9c7a0', sign: '#2b5615', ink: '#f4ebcd', awn: '#e66f46', goods: ['#715542', '#c9a27a', '#f4ebcd'] },
+  { name: 'ROTI', wall: '#e8b9a0', sign: '#8a2e1c', ink: '#f2c94c', awn: '#f4ebcd', goods: ['#d9a441', '#a8742a', '#f2c94c'] },
+  { name: 'KEDAI RUNCIT', wall: '#a3b8a8', sign: '#f2c94c', ink: '#12120d', awn: '#2b5615', goods: ['#e66f46', '#8ad8d8', '#96b04f', '#f2c94c'] },
+  { name: 'BAJU', wall: '#c9b7d6', sign: '#455976', ink: '#f4ebcd', awn: '#8f7a9a', goods: ['#e66f46', '#8ad8d8', '#f4ebcd'] },
+  { name: 'FARMASI', wall: '#e2d39f', sign: '#f4ebcd', ink: '#2b5615', awn: '#96b04f', goods: ['#f4ebcd', '#8ad8d8', '#e66f46'] },
+  { name: 'MAKAN', wall: '#c98a6b', sign: '#12120d', ink: '#e66f46', awn: '#f2c94c', goods: ['#f2c94c', '#e66f46', '#f4ebcd'] },
+];
+
+function shopfront(ctx: Ctx, x: number, w: number, H: number, base: number, shop: typeof SHOPS[number], night: boolean, r: () => number) {
+  const k = night ? 0.45 : 1;
+  const signTop = base - 30, awnTop = signTop + 8, frontTop = awnTop + 4;
+  // upper floor wall with louvred windows, cut off by the top edge
+  rect(ctx, x, 0, w, signTop, shade(shop.wall, k));
+  for (let wx = x + 6; wx + 10 < x + w - 4; wx += 16) {
+    const wy = signTop - 16;
+    rect(ctx, wx - 1, wy - 1, 12, 14, INK);
+    const on = lit(r, night, 0.55, '#1d2130', '#5d7194');
+    rect(ctx, wx, wy, 10, 12, on);
+    for (let ly = wy + 1; ly < wy + 12; ly += 2) rect(ctx, wx, ly, 10, 1, night ? 'rgba(0,0,0,.25)' : '#8ad8d8');
+    rect(ctx, wx + 4, wy, 2, 12, INK);
+    if (night && on !== '#1d2130') glow(ctx, wx + 5, wy + 6, 10, 0.15);
+    rect(ctx, wx - 2, wy + 12, 14, 2, shade('#f4ebcd', k)); // sill
+  }
+  // sign board
+  rect(ctx, x + 2, signTop, w - 4, 8, INK);
+  rect(ctx, x + 3, signTop + 1, w - 6, 6, night ? shop.sign : shade(shop.sign, 1));
+  const tw = shop.name.length * 4 - 1;
+  text(ctx, shop.name, x + Math.round((w - tw) / 2), signTop + 2, shop.ink);
+  if (night) glow(ctx, x + w / 2, signTop + 4, Math.min(16, w / 3), 0.16);
+  // striped awning, slanting out
+  for (let i = 0; i < w; i++) {
+    const c = Math.floor(i / 4) % 2 ? '#f4ebcd' : shop.awn;
+    rect(ctx, x + i, awnTop, 1, 3, shade(c, k));
+  }
+  rect(ctx, x, awnTop + 3, w, 1, INK);
+  for (let i = 1; i < w; i += 4) rect(ctx, x + i, awnTop + 3, 2, 1, shade(Math.floor(i / 4) % 2 ? '#f4ebcd' : shop.awn, k)); // scallops
+  // shop front: display window + door
+  rect(ctx, x, frontTop, w, base - frontTop, shade(shop.wall, k * 0.85));
+  const doorW = 10, winW = w - doorW - 12, wy = frontTop + 2, wh = base - wy - 3;
+  rect(ctx, x + 4, wy - 1, winW + 2, wh + 2, INK);
+  rect(ctx, x + 5, wy, winW, wh, night ? '#ffe7a3' : '#3b4a5a');
+  // shelves and goods
+  for (let sy = wy + 4; sy < wy + wh; sy += 5) {
+    rect(ctx, x + 5, sy, winW, 1, night ? '#c9a27a' : '#2a3542');
+    for (let gx = x + 7; gx < x + 5 + winW - 2; gx += 3) if (r() < 0.7) rect(ctx, gx, sy - 2, 2, 2, shade(pick(r, shop.goods), night ? 0.95 : 0.8));
+  }
+  if (!night) for (let i = 0; i < wh; i++) { rect(ctx, x + 7 + i, wy + wh - 1 - i, 1, 1, 'rgba(200,240,240,.35)'); rect(ctx, x + 10 + i, wy + wh - 1 - i, 1, 1, 'rgba(200,240,240,.2)'); } // glass glint
+  else glow(ctx, x + 5 + winW / 2, base - 2, Math.min(18, winW / 2), 0.2);
+  // door
+  const dx = x + w - doorW - 4;
+  rect(ctx, dx - 1, wy - 1, doorW + 2, base - wy + 1, INK);
+  rect(ctx, dx, wy, doorW, base - wy, night ? '#ffd877' : shade('#715542', k));
+  rect(ctx, dx + doorW / 2, wy, 1, base - wy, INK);
+  rect(ctx, dx + 1, wy + 2, doorW / 2 - 2, 6, night ? '#fff2c4' : '#5d7194');
+  rect(ctx, dx + doorW / 2 + 1, wy + 2, doorW / 2 - 2, 6, night ? '#fff2c4' : '#5d7194');
+  // potted plant by the door
+  box(ctx, dx - 6, base - 4, 4, 4, shade('#a0603a', k));
+  rect(ctx, dx - 7, base - 8, 2, 4, shade('#4f7a2c', k)); rect(ctx, dx - 5, base - 9, 2, 5, shade('#2b5615', k)); rect(ctx, dx - 3, base - 7, 2, 3, shade('#4f7a2c', k));
+}
 
 export function drawTown(ctx: Ctx, W: number, H: number, night: boolean) {
   const r = rng(7);
-  const k = night ? 0.42 : 1;
-  const walls = ['#c98a6b', '#b0705a', '#d9c7a0', '#7d8a96', '#a3b8a8', '#e2d39f', '#8f7a9a', '#c4a484'];
-  const base = H - 3; // sidewalk below
+  const base = H - 4;
   ctx.clearRect(0, 0, W, H);
-
-  // back row: taller, flatter silhouettes for depth
-  for (let x = -6; x < W;) {
-    const w = 10 + Math.floor(r() * 14), h = Math.min(H - 2, 18 + Math.floor(r() * (H - 16)));
-    rect(ctx, x, base - h, w, h, night ? '#262a33' : '#c9c1a6');
-    for (let wy = base - h + 3; wy < base - 4; wy += 4) for (let wx = x + 2; wx < x + w - 2; wx += 3)
-      rect(ctx, wx, wy, 1, 2, lit(r, night, 0.45, '#1b1e26', '#b3ab90'));
-    x += w + Math.floor(r() * 3);
+  let x = -10, i = 0;
+  const pillars: number[] = [];
+  while (x < W) {
+    const w = 58 + Math.floor(r() * 18);
+    shopfront(ctx, x, w, H, base, SHOPS[i % SHOPS.length], night, r);
+    pillars.push(x + w);
+    x += w + 4; i++;
   }
-
-  // front row
-  const lamps: number[] = [];
-  for (let x = -4; x < W;) {
-    const w = 14 + Math.floor(r() * 14), h = Math.min(H - 4, 12 + Math.floor(r() * (H - 14)));
-    const top = base - h, wall = walls[Math.floor(r() * walls.length)];
-    box(ctx, x, top, w, h + 1, shade(wall, k));
-    rect(ctx, x + 1, top + 1, w - 2, 1, shade(wall, k * 1.12 > 1 ? 1 : k * 1.12)); // top highlight
-    // windows (upper floors)
-    for (let wy = top + 3; wy < base - 7; wy += 5) for (let wx = x + 3; wx + 2 < x + w - 2; wx += 4) {
-      rect(ctx, wx - 1, wy - 1, 4, 5, INK);
-      rect(ctx, wx, wy, 2, 3, lit(r, night, 0.62, '#1d2130', '#5d7194'));
-      if (!night) rect(ctx, wx, wy, 1, 1, '#8ad8d8');
-    }
-    // shop front with striped awning on some
-    const shop = r() < 0.55;
-    const doorX = x + 2 + Math.floor(r() * Math.max(1, w - 8));
-    if (shop) {
-      for (let i = 1; i < w - 1; i++) rect(ctx, x + i, base - 7, 1, 2, shade(Math.floor((i - 1) / 2) % 2 ? '#f4ebcd' : pick(r, ['#e66f46', '#e66f46', '#2b5615']), k));
-      rect(ctx, x + 1, base - 5, w - 2, 1, INK);
-      rect(ctx, x + 2, base - 4, w - 4, 4, night ? '#ffd877' : '#2e3138'); // shop window glow at night
-      if (night) glow(ctx, x + w / 2, base - 2, Math.min(8, w / 2), 0.18);
-    }
-    rect(ctx, doorX, base - 5, 3, 5, INK); rect(ctx, doorX + 1, base - 4, 1, 4, shade('#715542', k));
-    // roof bits
-    const roof = r();
-    if (roof < 0.3) { box(ctx, x + 3, top - 4, 5, 3, shade('#9aa0a6', k)); rect(ctx, x + 3, top - 1, 1, 1, INK); rect(ctx, x + 7, top - 1, 1, 1, INK); } // water tank
-    else if (roof < 0.5) { rect(ctx, x + w - 4, top - 5, 1, 5, INK); rect(ctx, x + w - 6, top - 4, 5, 1, INK); if (night) rect(ctx, x + w - 4, top - 6, 1, 1, '#e66f46'); } // antenna
-    if (r() < 0.5) lamps.push(x + w + 1);
-    x += w + Math.floor(r() * 2);
-  }
-
-  // sidewalk + curb
+  // five-foot-way pillars between shops
+  for (const px of pillars) { rect(ctx, px - 1, 0, 6, base, INK); rect(ctx, px, 0, 4, base, shade('#f4ebcd', night ? 0.5 : 1)); rect(ctx, px, 0, 1, base, shade('#ffffff', night ? 0.5 : 0.95)); }
+  // five-foot way floor + curb
   rect(ctx, 0, base, W, 1, INK);
   rect(ctx, 0, base + 1, W, 2, night ? '#4a4c50' : '#c9c5b8');
-  for (let x = 0; x < W; x += 6) rect(ctx, x, base + 1, 1, 2, night ? '#3a3c40' : '#b2ad9e');
-
-  // street lamps
-  for (let x = 6; x < W; x += 34 + Math.floor(r() * 10)) {
-    rect(ctx, x, base - 16, 1, 16, INK); rect(ctx, x, base - 16, 4, 1, INK);
-    rect(ctx, x + 3, base - 15, 2, 1, night ? '#fff2b0' : '#9aa0a6');
-    if (night) { glow(ctx, x + 4, base - 13, 7, 0.3); for (let j = 0; j < 12; j++) for (let i = -Math.floor(j / 2); i <= Math.floor(j / 2); i++) { ctx.fillStyle = 'rgba(255, 222, 110, .1)'; ctx.fillRect(x + 4 + i, base - 14 + j, 1, 1); } }
-  }
+  for (let tx = 0; tx < W; tx += 5) rect(ctx, tx, base + 1, 1, 2, night ? '#3a3c40' : '#b2ad9e');
+  rect(ctx, 0, base + 3, W, 1, night ? '#2e3034' : '#9aa0a6');
 }
 
 /* ---------------- Kampung (rural) ---------------- */
@@ -137,7 +174,7 @@ function stiltHouse(ctx: Ctx, x: number, base: number, w: number, night: boolean
 
 function shack(ctx: Ctx, x: number, base: number, w: number, night: boolean, r: () => number) {
   const k = night ? 0.45 : 1;
-  const h = 15, top = base - h;
+  const h = 18, top = base - h;
   rect(ctx, x, top, w, h, INK);
   for (let px = x + 1; px < x + w - 1; px++) rect(ctx, px, top + 1, 1, h - 1, shade(px % 3 ? '#6b4a32' : '#5a3d28', k));
   for (let py = top + 4; py < base; py += 4) rect(ctx, x + 1, py, w - 2, 1, shade('#4a3222', k)); // plank seams
@@ -147,13 +184,14 @@ function shack(ctx: Ctx, x: number, base: number, w: number, night: boolean, r: 
   if (night) glow(ctx, x + 7, top + 8, 10, 0.32);
   // crates
   box(ctx, x + w - 8, base - 5, 6, 5, shade('#a8742a', k));
-  // lean-to corrugated roof with rust patches
+  // lean-to corrugated roof with rust patches: one solid slab sloping down to the right
   for (let i = -3; i < w + 3; i++) {
-    const y = top - 5 + Math.floor((i + 3) / (w + 6) * 4);
+    const y = top - 6 + Math.floor(((i + 3) / (w + 6)) * 4);
     rect(ctx, x + i, y - 1, 1, 1, INK);
-    rect(ctx, x + i, y, 1, 3, shade(i % 2 ? '#9aa0a6' : '#7b8186', k));
-    if (r() < 0.18) rect(ctx, x + i, y + 1, 1, 1, shade('#a0603a', k));
+    rect(ctx, x + i, y, 1, top - y + 1, shade(i % 2 ? '#9aa0a6' : '#7b8186', k));
+    if (r() < 0.18) rect(ctx, x + i, y + 1, 1, 2, shade('#a0603a', k));
   }
+  rect(ctx, x - 3, top + 1, w + 6, 1, INK);
 }
 
 function palm(ctx: Ctx, x: number, base: number, h: number, night: boolean) {
@@ -191,18 +229,13 @@ export function drawVillage(ctx: Ctx, W: number, H: number, night: boolean) {
   const base = H - 1;
   ctx.clearRect(0, 0, W, H);
   canopy(ctx, W, base, H, night, r);
-  let x = 8 + Math.floor(r() * 6);
-  let n = 0;
-  while (x < W + 40) {
-    const kind = n % 4;
-    if (kind === 0) { const w = 40 + Math.floor(r() * 10); stiltHouse(ctx, x, base, w, night, r); x += w + 16; }
-    else if (kind === 1) { palm(ctx, x, base, Math.min(H - 6, 26 + Math.floor(r() * 10)), night); x += 18; }
-    else if (kind === 2) { const w = 22 + Math.floor(r() * 6); shack(ctx, x, base, w, night, r); x += w + 12; }
-    else {
-      banana(ctx, x + 4, base, night); x += 14;
-      for (let f = 0; f < 4; f++) rect(ctx, x + f * 3, base - 5, 1, 5, INK);
-      rect(ctx, x, base - 4, 10, 1, INK); x += 16 + Math.floor(r() * 10);
-    }
-    n++;
-  }
+  // One wooden house and one shack, with a few plants around them.
+  const houseW = 46, shackW = 30;
+  const hx = Math.max(10, Math.round(W * 0.16));
+  const sx = Math.max(hx + houseW + 30, Math.round(W * 0.68));
+  palm(ctx, hx - 16, base, Math.min(H - 6, 34), night);
+  stiltHouse(ctx, hx, base, houseW, night, r);
+  banana(ctx, hx + houseW + 16, base, night);
+  shack(ctx, sx, base, shackW, night, r);
+  palm(ctx, sx + shackW + 14, base, Math.min(H - 6, 28), night);
 }

@@ -14,7 +14,7 @@ const { dir, mode = 'pass', scenery, road = 'dirt' } = Astro.props;
 
 <style>
   .lane { position: relative; height: clamp(130px, 18vw, 190px); overflow: hidden; }
-  .lane[data-has-scenery] { height: clamp(190px, 24vw, 280px); }
+  .lane[data-has-scenery] { height: clamp(240px, 24vw, 280px); }
   .lane::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; border-top: 3px solid var(--line);
     background: repeating-linear-gradient(90deg, var(--road-dash) 0 24px, transparent 24px 52px) 0 50% / 100% 4px no-repeat, var(--road); }
   /* Town road: asphalt with a white centre line. */
