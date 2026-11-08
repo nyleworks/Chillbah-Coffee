@@ -23,6 +23,8 @@ import Footer from '../components/Footer.astro';
   import { drawArt, drawArtFaded, stopArtFade } from '../scripts/art';
   import { initThemeToggle, onThemeChange, isNight } from '../scripts/theme';
   import { initStory } from '../scripts/story';
+  import Lenis from 'lenis';
+  import 'lenis/dist/lenis.css';
 
   const scene = initScene(document.getElementById('scene') as HTMLCanvasElement | null);
   drawArt();
@@ -34,4 +36,10 @@ import Footer from '../components/Footer.astro';
   let artTimer = 0;
   addEventListener('resize', () => { clearTimeout(artTimer); artTimer = window.setTimeout(() => { stopArtFade(); drawArt(); }, 120); });
   initStory();
+  // Smooth, eased scrolling for mouse wheels and anchor links (touch keeps the native feel). Off under reduced motion.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const lenis = new Lenis({ lerp: 0.08, wheelMultiplier: 0.9, anchors: { offset: -72 } });
+    const raf = (time: number) => { lenis.raf(time); requestAnimationFrame(raf); };
+    requestAnimationFrame(raf);
+  }
 </script>
