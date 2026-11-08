@@ -33,6 +33,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
   // Day ↔ night blend: 0 = day, 1 = night. Switching theme animates it: the sun sinks behind the
   // mountain, then the moon rises, while the sky and ground colours fade across.
   let t = isNight() ? 1 : 0;
+  const frameEl = canvas.closest<HTMLElement>('.scene-frame');
   let anim = 0;
   const mix = (a: string, b: string) => {
     const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
@@ -45,7 +46,10 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     const ctx = sx!;
     const W = 240, H = 120;
     ctx.setTransform(1, 0, 0, 1, -40, -18);
-    ctx.fillStyle = mix('#8ad8d8', '#1f2b45'); ctx.fillRect(0, 0, W, H);
+    const sky = mix('#8ad8d8', '#1f2b45');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    // the plain sky above the art (tall screens) must match the canvas sky exactly, frame by frame
+    if (frameEl) frameEl.style.backgroundColor = sky;
     // stars fade in late
     if (t > 0.6) { ctx.fillStyle = `rgba(244,235,205,${((t - 0.6) / 0.4).toFixed(2)})`; stars.forEach(([x, y], i) => { if ((i + (frame >> 3)) % 7) ctx.fillRect(x, y, 1, 1); }); }
     // sun sets during the first half, moon rises in the second (both slip behind the hills)

@@ -34,4 +34,6 @@ html.theme-fade { transition: background-color 1.4s ease, color 1.4s ease, --roa
 html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
   transition: background-color 1.4s ease, color 1.4s ease, border-color 1.4s ease, fill 1.4s ease, box-shadow 1.4s ease, opacity 1.4s ease !important;
 }
+/* The hero sky is coloured by scene.ts in step with its canvas, so it must not lag behind on a CSS transition. */
+html.theme-fade #sceneFrame { transition: none !important; }
 @media (prefers-reduced-motion: reduce) { html.theme-fade, html.theme-fade * { transition: none !important; } }
