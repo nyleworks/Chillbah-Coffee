@@ -10,13 +10,20 @@ const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 /** 0→1 progress of p inside [a, b]. */
 const seg = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
 
+/** Spin a truck's wheels for the distance it has driven forward (the art faces left, so forward = anticlockwise). */
+function spin(truckEl: HTMLElement, travel: number) {
+  const d = truckEl.offsetWidth * 0.145; // wheel diameter
+  const deg = -(travel / (Math.PI * d)) * 360;
+  truckEl.querySelectorAll<HTMLElement>('.wheel').forEach((w) => (w.style.transform = `rotate(${deg}deg)`));
+}
+
 export function initStory() {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const track = document.getElementById('sceneTrack');
   const frame = document.getElementById('sceneFrame');
   const stage = document.getElementById('sceneStage');
   const truck = document.getElementById('heroTruck');
-  const awning = document.getElementById('heroAwning');
+  const awning = truck?.querySelector<HTMLElement>('.awning') ?? null;
   const barista = document.getElementById('barista');
   if (!track || !frame || !stage || !truck || !awning || !barista) return;
 
@@ -56,6 +63,8 @@ export function initStory() {
     const exit = stage!.offsetLeft + truck!.offsetLeft + truck!.offsetWidth + 0.03 * fw; // distance to clear the left edge
     const tx = -ease * exit;
     truck!.style.transform = `translateX(${tx}px)`;
+    spin(truck!, -tx);
+    truck!.classList.toggle('lights', p >= 0.7); // headlights on with the engine (shown at night)
   }
 
   // Road lanes. "pass" lanes sit at the bottom of a pinned section: once the section's bottom reaches the bottom of
@@ -80,19 +89,24 @@ export function initStory() {
       const ltr = lane.dataset.dir === 'ltr';
       const half = lane.clientWidth / 2 + truckEl.offsetWidth / 2 + 8; // centre → just off the edge
       let x: number;
+      let moving = false;
       if (lane.dataset.mode === 'arrive') {
         const host = (lane.parentElement ?? lane).getBoundingClientRect(); // the footer: parked once fully in view
         const q = clamp((vh - host.top) / Math.max(1, Math.min(host.height, vh)));
         const e = 1 - (1 - q) * (1 - q); // roll in and brake to a stop
         x = (1 - e) * half * (ltr ? -1 : 1);
+        moving = q < 1;
       } else {
         const track = lane.closest<HTMLElement>('.pin-track'); if (!track) continue;
         const sec = track.firstElementChild as HTMLElement;
         const pin = track.offsetHeight - sec.offsetHeight;
         const q = clamp((vh - sec.offsetHeight - track.getBoundingClientRect().top) / Math.max(1, pin));
         x = (q * 2 - 1) * half * (ltr ? 1 : -1); // off one edge → off the other
+        moving = q > 0 && q < 1;
       }
       truckEl.style.transform = `translateX(calc(-50% + ${x}px))${ltr ? ' scaleX(-1)' : ''}`;
+      spin(truckEl, ltr ? x + half : half - x);
+      truckEl.classList.toggle('lights', moving);
     }
   }
 

@@ -1,0 +1,48 @@
+---
+// The Chillbah Hilux: Niekki's artwork as a body layer, plus spinning wheel layers, an optional awning
+// layer (hero only) and a headlight beam that shows in night mode. Art faces left; mirror the root to drive right.
+interface Props { id?: string; class?: string; awning?: boolean; label?: string }
+const { id, class: className, awning = false, label } = Astro.props;
+---
+<div id={id} class:list={['truck', className]} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : 'true'}>
+  <div class="pool"></div>
+  <div class="beam"></div>
+  <div class="rig">
+    <img class="body" src="/hilux-body.webp" width="1200" height="455" alt="" />
+    <img class="wheel front" src="/wheel-front.webp" width="174" height="174" alt="" />
+    <img class="wheel rear" src="/wheel-rear.webp" width="174" height="174" alt="" />
+    {awning && <img class="awning" src="/hilux-awning.webp" width="1200" height="455" alt="" />}
+  </div>
+</div>
+
+<style>
+  .truck { position: relative; will-change: transform; }
+  .rig { position: relative; }
+  .body { display: block; width: 100%; height: auto; }
+  /* Wheel centres measured on the 1200×455 art: front (190, 352), rear (877, 352), 174px across. */
+  .wheel { position: absolute; width: 14.5%; height: auto; top: calc(77.36% - 19.12%); will-change: transform; }
+  .wheel.front { left: calc(15.83% - 7.25%); }
+  .wheel.rear { left: calc(73.08% - 7.25%); }
+  .awning { position: absolute; inset: 0; width: 100%; height: auto; transform-origin: 43% 11%; }
+
+  /* Engine idle shake (story.ts adds .idling). */
+  .truck.idling .rig { animation: idle .14s linear infinite; }
+  @keyframes idle { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-1px, -2px) rotate(-.3deg); } 50% { transform: translate(1px, 0); } 75% { transform: translate(0, -1px) rotate(.3deg); } }
+
+  /* Headlights: a warm cone from the lamp (≈3%, 44% of the art) down onto the road ahead, plus a pool of light.
+     Only at night, and only once the engine is on (story.ts adds .lights). */
+  .beam { position: absolute; z-index: 0; right: 96.5%; top: 41%; width: 75%; height: 59%; opacity: 0; pointer-events: none;
+    background: linear-gradient(to left, rgba(255, 236, 130, .95), rgba(255, 220, 90, .45) 55%, rgba(255, 214, 90, 0));
+    clip-path: polygon(100% 0%, 100% 14%, 0% 100%, 0% 38%);
+    mix-blend-mode: screen; transition: opacity .25s steps(3); }
+  /* Bright pool where the beam hits the road. */
+  .pool { position: absolute; z-index: 0; right: 88%; bottom: -2%; width: 85%; height: 26%; opacity: 0; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255, 230, 110, .85), rgba(255, 214, 80, .35) 60%, rgba(255, 214, 80, 0));
+    mix-blend-mode: screen; transition: opacity .25s steps(3); }
+  .truck::after { content: ""; position: absolute; left: 1.5%; top: 40%; width: 6%; height: 12%; border-radius: 50%; opacity: 0; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255, 245, 190, .95), rgba(255, 220, 100, 0)); mix-blend-mode: screen; transition: opacity .25s steps(3); }
+  :global(:root[data-theme="dark"]) .truck.lights :is(.beam, .pool), :global(:root[data-theme="dark"]) .truck.lights::after { opacity: 1; }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme="light"])) .truck.lights :is(.beam, .pool), :global(:root:not([data-theme="light"])) .truck.lights::after { opacity: 1; }
+  }
+</style>
