@@ -1,0 +1,21 @@
+@import "./tokens.css";
+@import "./components.css";
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+body { margin: 0; background: var(--surface-100); color: var(--text); font: 500 17px/1.55 var(--font-body); -webkit-font-smoothing: antialiased; }
+img, canvas { display: block; }
+canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+a { color: inherit; }
+.wrap { width: min(1120px, 100% - 32px); margin-inline: auto; }
+.label { font: 400 12px/1.2 var(--font-pixel); text-transform: uppercase; letter-spacing: .06em; }
+h1, h2, h3 { margin: 0; font-weight: 700; }
+h2 { font: 700 clamp(30px, 5vw, 44px)/1 var(--font-display); color: var(--forest); letter-spacing: .02em; }
+.kicker { color: var(--ember-600); margin-bottom: 10px; }
+section { padding: var(--space-20) 0; }
+.sec-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 32px; }
+.sec-head p { max-width: 420px; margin: 0; color: var(--muted); }
+.skip { position: absolute; left: -9999px; top: 8px; z-index: 20; }
+.skip:focus { left: 16px; }
+
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

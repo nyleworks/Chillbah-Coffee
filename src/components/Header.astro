@@ -1,0 +1,32 @@
+---
+---
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="Chillbah home">
+      <canvas data-cup="hot" data-liquid="#715542" width="16" height="16" style="width:32px;height:32px" aria-hidden="true"></canvas>
+      <b>CHILLBAH</b>
+    </a>
+    <ul class="label">
+      <li><a href="#menu">Menu</a></li>
+      <li><a href="#find">Find us</a></li>
+      <li><a href="#how">How it works</a></li>
+    </ul>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch day or night">
+      <canvas data-theme-icon width="10" height="10" aria-hidden="true"></canvas>
+    </button>
+  </div>
+</header>
+
+<style>
+  .site-header { position: sticky; top: 0; z-index: 10; background: var(--surface-100); border-bottom: 3px solid var(--line); }
+  .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .brand b { font: 700 24px/1 var(--font-display); color: var(--forest); letter-spacing: .04em; }
+  ul { display: flex; gap: 22px; list-style: none; margin: 0; padding: 0; }
+  ul a { text-decoration: none; }
+  ul a:hover { color: var(--ember-600); }
+  .theme-btn { width: 40px; height: 40px; border: 3px solid var(--line); background: var(--surface-200); box-shadow: 3px 3px 0 var(--line); cursor: pointer; display: grid; place-items: center; padding: 0; }
+  .theme-btn:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
+  .theme-btn canvas { width: 20px; height: 20px; }
+  @media (max-width: 720px) { ul { display: none; } }
+</style>

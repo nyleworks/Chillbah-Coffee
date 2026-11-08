@@ -1,0 +1,34 @@
+# Chillbah Coffee website
+
+The site for Chillbah, a mobile coffee kiosk run from the back of a 4x4 Toyota Hilux in Sabah. Built from the Chillbah design system: cream ground, pixel type, hard black outlines and pixel-art scenes drawn on canvas.
+
+## Stack
+
+- [Astro](https://astro.build) 5, static output (no server needed). Deploy `dist/` to Netlify, Vercel, Cloudflare Pages or GitHub Pages.
+- Plain CSS with design tokens (`src/styles/tokens.css`), day/night theme.
+- Pixel art is drawn in code (`src/lib/sprites.ts`), no image files.
+
+## Run it
+
+```sh
+npm install
+npm run dev      # http://localhost:4321
+npm run build    # outputs dist/
+```
+
+## Where to edit
+
+| What | File |
+| --- | --- |
+| Menu items and prices | `src/data/menu.ts` |
+| Instagram / WhatsApp links, page title, ticker words | `src/data/site.ts` |
+| Colours, fonts, spacing | `src/styles/tokens.css` |
+| Buttons, menu card, badge | `src/styles/components.css` |
+| Page sections | `src/components/*.astro` |
+| Hero scene and sprites | `src/scripts/scene.ts`, `src/lib/sprites.ts` |
+
+## Open items
+
+- Instagram and WhatsApp links are placeholders (`#`).
+- Menu prices come from the design mock; confirm before launch.
+- Header font: Pixel Quest isn't bundled yet, so Pixelify Sans stands in. To use it, add the font file under `public/fonts/`, add an `@font-face` `src: url(...)` in `tokens.css`, and check its FontSpace licence allows commercial use.

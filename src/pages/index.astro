@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import Menu from '../components/Menu.astro';
+import FindUs from '../components/FindUs.astro';
+import Steps from '../components/Steps.astro';
+import Footer from '../components/Footer.astro';
+---
+<Base>
+  <Header />
+  <main id="top">
+    <Hero />
+    <Menu />
+    <FindUs />
+    <Steps />
+  </main>
+  <Footer />
+</Base>
+
+<script>
+  import { initScene } from '../scripts/scene';
+  import { drawArt } from '../scripts/art';
+  import { initThemeToggle, onThemeChange } from '../scripts/theme';
+
+  const scene = initScene(document.getElementById('scene') as HTMLCanvasElement | null);
+  drawArt();
+  initThemeToggle(document.getElementById('themeBtn'));
+  onThemeChange(() => { scene.redraw(); drawArt(); });
+</script>

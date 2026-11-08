@@ -1,0 +1,31 @@
+---
+import Ticker from './Ticker.astro';
+---
+<section class="hero">
+  <div class="wrap">
+    <span class="label badge">Mobile coffee kiosk · Sabah</span>
+    <h1 class="title">CHILLBAH</h1>
+    <div class="tagline">Brew . Drive . Chill</div>
+    <p class="lede">Hand-pulled coffee served from the back of our 4x4 Toyota Hilux. New spot, same good cup. Pull over and take it slow.</p>
+    <div class="ctas">
+      <a class="cb-btn" href="#find">Find the truck</a>
+      <a class="cb-btn cb-btn--ghost" href="#menu">See menu</a>
+    </div>
+    <div class="scene-frame">
+      <canvas id="scene" width="180" height="98" role="img" aria-label="Pixel art of the Chillbah Hilux parked on grass, a coffee bar on its tray, mountains behind"></canvas>
+    </div>
+  </div>
+  <Ticker />
+</section>
+
+<style>
+  .hero { padding: var(--space-12) 0 0; text-align: center; }
+  .badge { display: inline-block; padding: 6px 10px; border: 2px solid var(--line); background: var(--surface-200); }
+  .title { margin: 18px 0 6px; font: 700 clamp(64px, 14vw, 156px)/.9 var(--font-display); color: var(--ember-600); letter-spacing: .03em;
+    text-shadow: 3px 3px 0 var(--brick), 6px 6px 0 var(--brick); }
+  .tagline { font: 700 clamp(14px, 2.4vw, 20px)/1.3 var(--font-pixel); color: var(--tagline); text-transform: uppercase; letter-spacing: .04em; }
+  .lede { max-width: 560px; margin: 16px auto 24px; color: var(--muted); }
+  .ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+  .scene-frame { border: 4px solid var(--line); border-radius: var(--radius-frame); overflow: hidden; background: var(--sky); box-shadow: var(--shadow-px-lg); }
+  .scene-frame canvas { width: 100%; height: auto; aspect-ratio: 180 / 98; }
+</style>

@@ -1,0 +1,44 @@
+---
+import { site } from '../data/site';
+const rows = [
+  { icon: 'pin', title: 'Pin drops each morning', text: 'Check our socials before you head out.' },
+  { icon: 'clock', title: 'Open till sold out', text: 'When the beans run out, we roll on.' },
+  { icon: 'truck', title: 'Look for the green Hilux', text: 'Striped awning. Steam on the tray.' },
+];
+---
+<section id="find" class="find">
+  <div class="wrap find-grid">
+    <div>
+      <div class="label kicker">Where we at</div>
+      <h2>WE MOVE.<br />YOU FOLLOW.</h2>
+      <p class="intro">Chillbah is a moving kiosk. The Hilux parks somewhere new most days: roadside, hilltop, beach or market. We drop the pin every morning before we open.</p>
+    </div>
+    <div class="pin-card">
+      <div class="cb-tag cb-tag--live">Today's spot</div>
+      {rows.map((r) => (
+        <div class="row">
+          <canvas data-icon={r.icon} width="8" height="8" aria-hidden="true"></canvas>
+          <div><b>{r.title}</b><span>{r.text}</span></div>
+        </div>
+      ))}
+      <div class="ctas">
+        <a class="cb-btn cb-btn--alt" href={site.instagram}>Instagram</a>
+        <a class="cb-btn cb-btn--ghost" href={site.whatsapp}>WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .find { background: var(--surface-200); border-block: 3px solid var(--line); }
+  .find-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 32px; align-items: center; }
+  @media (max-width: 820px) { .find-grid { grid-template-columns: 1fr; } }
+  .intro { color: var(--muted); max-width: 460px; }
+  .pin-card { background: var(--surface-100); border: 3px solid var(--line); box-shadow: var(--shadow-px-lg); padding: var(--space-6); }
+  .row { display: flex; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 2px dashed var(--line); }
+  .row:last-of-type { border-bottom: 0; }
+  .row canvas { width: 32px; height: 32px; flex: none; }
+  .row b { display: block; font: 700 16px/1.2 var(--font-body); }
+  .row span { font-size: 14px; color: var(--muted); }
+  .ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+</style>

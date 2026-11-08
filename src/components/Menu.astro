@@ -1,0 +1,19 @@
+---
+import MenuCard from './MenuCard.astro';
+import { menu } from '../data/menu';
+---
+<section id="menu">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><div class="label kicker">The menu</div><h2>FROM THE TRAY</h2></div>
+      <p>Small menu. Made one cup at a time on the back of the Hilux.</p>
+    </div>
+    <div class="menu-grid">
+      {menu.map((item) => <MenuCard item={item} />)}
+    </div>
+  </div>
+</section>
+
+<style>
+  .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-6); }
+</style>
