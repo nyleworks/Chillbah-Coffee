@@ -19,3 +19,8 @@ section { padding: var(--space-20) 0; }
 .skip:focus { left: 16px; }
 
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Scroll story pins: when a section's bottom reaches the bottom of the screen it holds still while the
+   truck drives across its road, then the page carries on (scripts/story.ts sets the sizes). */
+html.story .pin-track { height: calc(var(--sec-h, 0px) + var(--pin, 0px)); }
+html.story .pin-track > section { position: sticky; top: var(--pin-top, 0px); }

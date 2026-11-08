@@ -58,15 +58,25 @@ export function initStory() {
     truck!.style.transform = `translateX(${tx}px)`;
   }
 
-  // Road lanes: "pass" lanes drive right across while the lane scrolls through the screen,
-  // "arrive" lanes (the footer) roll in from the side and park in the middle.
+  // Road lanes. "pass" lanes sit at the bottom of a pinned section: once the section's bottom reaches the bottom of
+  // the screen the page holds while the truck drives in from one edge and out the other, then scrolling carries on.
+  // So each truck is gone before the next one shows up. The "arrive" lane (footer) rolls in and parks in the middle.
   const lanes = Array.from(document.querySelectorAll<HTMLElement>('.lane'));
+  const pins = Array.from(document.querySelectorAll<HTMLElement>('.pin-track'));
+  function sizePins() {
+    const vh = innerHeight;
+    for (const t of pins) {
+      const sec = t.firstElementChild as HTMLElement | null; if (!sec) continue;
+      const h = sec.offsetHeight;
+      t.style.setProperty('--sec-h', h + 'px');
+      t.style.setProperty('--pin-top', vh - h + 'px');
+      t.style.setProperty('--pin', Math.round(vh * 0.9) + 'px');
+    }
+  }
   function roads() {
     const vh = innerHeight;
     for (const lane of lanes) {
       const truckEl = lane.querySelector<HTMLElement>('.lane-truck'); if (!truckEl) continue;
-      const r = lane.getBoundingClientRect();
-      if (r.bottom < -50 || r.top > vh + 50) continue;
       const ltr = lane.dataset.dir === 'ltr';
       const half = lane.clientWidth / 2 + truckEl.offsetWidth / 2 + 8; // centre → just off the edge
       let x: number;
@@ -76,8 +86,11 @@ export function initStory() {
         const e = 1 - (1 - q) * (1 - q); // roll in and brake to a stop
         x = (1 - e) * half * (ltr ? -1 : 1);
       } else {
-        const q = clamp((vh - r.top) / (vh + r.height)); // enters at the bottom → leaves at the top
-        x = (q * 2 - 1) * half * (ltr ? 1 : -1);
+        const track = lane.closest<HTMLElement>('.pin-track'); if (!track) continue;
+        const sec = track.firstElementChild as HTMLElement;
+        const pin = track.offsetHeight - sec.offsetHeight;
+        const q = clamp((vh - sec.offsetHeight - track.getBoundingClientRect().top) / Math.max(1, pin));
+        x = (q * 2 - 1) * half * (ltr ? 1 : -1); // off one edge → off the other
       }
       truckEl.style.transform = `translateX(calc(-50% + ${x}px))${ltr ? ' scaleX(-1)' : ''}`;
     }
@@ -86,7 +99,9 @@ export function initStory() {
   let queued = false;
   const update = () => { queued = false; hero(); roads(); };
   const request = () => { if (!queued) { queued = true; requestAnimationFrame(update); } };
-  sizeTrack(); update();
+  sizeTrack(); sizePins(); update();
+  const ro = new ResizeObserver(() => { sizePins(); request(); });
+  pins.forEach((t) => t.firstElementChild && ro.observe(t.firstElementChild));
   addEventListener('scroll', request, { passive: true });
-  addEventListener('resize', () => { sizeTrack(); request(); });
+  addEventListener('resize', () => { sizeTrack(); sizePins(); request(); });
 }
