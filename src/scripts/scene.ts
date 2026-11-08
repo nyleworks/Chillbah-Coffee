@@ -64,12 +64,12 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     ctx.fillStyle = '#12120d'; ctx.fillRect(0, 92, W, 1);
     // truck, with a little idle bob
     const bob = reduce ? 0 : (frame >> 3) % 2;
-    const tx = 92, ty = 80;
+    const tx = 88, ty = 86;
     T.draw(ctx, tx, ty + bob);
-    // steam off the espresso machine
+    // steam rising from the espresso machine, past the awning
     ctx.fillStyle = '#ffffff';
     for (let i = 0; i < 4; i++) {
-      const t = (frame + i * 9) % 36; const y = ty + 14 - t / 2 + bob; const x = tx + 12 + Math.round(Math.sin((t + i) / 4) * 1.5);
+      const t = (frame + i * 9) % 36; const y = ty - 1 - t / 2 + bob; const x = tx + 48 + Math.round(Math.sin((t + i) / 4) * 1.5);
       if (t < 30) ctx.fillRect(x, Math.round(y), 1, 1);
     }
     sign.draw(ctx, 70, 96);

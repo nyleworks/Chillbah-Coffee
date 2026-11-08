@@ -3,32 +3,63 @@ import { Grid, place } from './pixel';
 const INK = '#12120d';
 const CREAM = '#f4ebcd';
 
-/** The green Hilux with the striped awning and espresso bar on the tray. 56×32. */
+/** The white double-cab Hilux with a dark side awning over the tray. Faces left. 66×27. */
 export function truck(): Grid {
-  const g = Grid(56, 32), G = '#2b5615', H = '#4f7a2c', D = '#1d3a0e', glass = '#8ad8d8', S = '#9aa0a6', C = CREAM, E = '#e66f46';
-  // awning + poles
-  g.rect(5, 6, 1, 12, S); g.rect(28, 6, 1, 12, S);
-  for (let x = 2; x < 32; x++) { const c = Math.floor((x - 2) / 3) % 2 ? C : E; g.rect(x, 3, 1, 3, c); if ((x - 2) % 3 !== 1) g.set(x, 6, c); }
-  // espresso machine, grinder, chalkboard
-  g.rect(8, 11, 8, 7, S); g.rect(8, 10, 8, 1, '#6d7278'); g.rect(10, 14, 2, 1, '#2a2620'); g.rect(13, 14, 2, 1, '#2a2620'); g.rect(11, 16, 2, 2, C);
-  g.rect(18, 12, 3, 6, '#715542'); g.rect(18, 10, 3, 2, '#c9a27a');
-  g.rect(22, 10, 5, 8, '#2a2620'); g.rect(23, 12, 3, 1, C); g.rect(23, 14, 2, 1, C); g.rect(23, 16, 3, 1, C);
-  // tray bed
-  g.rect(2, 18, 30, 8, G); g.rect(2, 18, 30, 1, H);
-  // cab
-  g.rect(33, 11, 13, 15, G); g.rect(35, 10, 9, 1, G); g.rect(34, 10, 1, 1, G);
-  g.rect(35, 12, 5, 5, glass); g.rect(42, 12, 4, 5, glass); for (let y = 13; y <= 16; y++) g.set(46, y, glass);
-  g.rect(35, 12, 1, 1, '#c8f0ee'); g.rect(42, 12, 1, 1, '#c8f0ee');
-  g.rect(41, 18, 1, 7, D); g.rect(38, 19, 2, 1, D);
-  // hood
-  g.rect(46, 17, 8, 9, G); g.rect(46, 17, 8, 1, H); g.rect(47, 15, 1, 2, G);
-  g.rect(52, 19, 2, 2, '#f2c94c'); g.rect(2, 19, 1, 3, '#c8442a');
-  // stripe
-  g.rect(2, 22, 52, 1, C);
-  // bumpers
-  g.rect(51, 25, 4, 2, S); g.rect(1, 25, 3, 2, S);
-  // wheels
-  ([[12, 26], [44, 26]] as const).forEach(([x, y]) => { g.disc(x, y, 5, '#2a2620'); g.disc(x, y, 2, '#b9b2a0'); g.set(x, y, '#6d7278'); });
+  const g = Grid(66, 27);
+  const W = '#eef0ec', Ws = '#d3d7d6', seam = '#7b8186', glass = '#2e3138', glassHi = '#4a5060',
+    trim = '#26282b', flare = '#44474c', tire = '#1b1c1e', rim = '#5a5e63', hub = '#6d7278', awn = '#33363b', awnHi = '#4c5058',
+    S = '#9aa0a6', red = '#c8442a', lamp = '#e8f4f6';
+
+  // awning: tent-like panel, peak near the middle, flap hangs lower at the back
+  for (let x = 29; x <= 65; x++) {
+    const top = x <= 47 ? Math.round(3 - (x - 29) / 9) : Math.round(1 + (x - 47) / 8);
+    g.rect(x, top, 1, 4 - top, awn);
+    g.set(x, top, awnHi);
+  }
+  g.rect(29, 4, 34, 1, awnHi); g.rect(60, 4, 6, 2, awn);
+  // antenna
+  g.set(25, 1, trim); g.set(26, 2, trim);
+
+  // body silhouette: nose, hood rising to the windscreen, A-pillar, roof, tray
+  const topAt = (x: number) =>
+    x <= 3 ? 10 : x <= 16 ? Math.round(10 - (x - 4) / 6) : x <= 28 ? Math.round(8 - ((x - 17) * 5) / 11) : x <= 42 ? 3 : 9;
+  for (let x = 2; x <= 62; x++) g.rect(x, topAt(x), 1, 19 - topAt(x), W);
+  g.rect(2, 15, 61, 3, Ws); // lower body shade band
+  g.rect(43, 9, 20, 1, Ws); // tray rail
+
+  // espresso machine peeking over the tray, under the awning
+  g.rect(46, 6, 5, 3, S); g.rect(46, 6, 5, 1, '#6d7278'); g.rect(52, 7, 2, 2, '#715542');
+
+  // side windows, B-pillar, mirror
+  for (let x = 18; x <= 41; x++) { const t = Math.max(topAt(x) + 1, 4); g.rect(x, t, 1, 10 - t, glass); }
+  g.rect(33, 4, 1, 6, trim); g.rect(42, 4, 1, 6, W);
+  g.set(30, 4, glassHi); g.set(29, 5, glassHi); g.set(37, 4, glassHi); g.set(36, 5, glassHi);
+  g.rect(19, 7, 3, 2, trim);
+
+  // door seams and handles
+  g.rect(17, 9, 1, 9, seam); g.rect(32, 9, 1, 9, seam); g.rect(41, 9, 1, 9, seam);
+  g.rect(28, 11, 3, 1, trim); g.rect(38, 11, 3, 1, trim);
+
+  // front: grille, bumper, headlight
+  g.rect(2, 12, 2, 7, trim); g.rect(3, 10, 6, 2, trim); g.rect(4, 11, 3, 1, lamp); g.set(7, 11, '#f2c94c'); g.rect(4, 15, 2, 2, '#44474c');
+  // rear: tail light, bumper
+  g.rect(61, 10, 2, 5, red); g.rect(61, 16, 3, 3, '#4a4e55');
+  // side step
+  g.rect(19, 19, 25, 1, trim);
+
+  // fender flares and wheels
+  ([11, 49] as const).forEach((cx) => {
+    const cy = 20;
+    for (let j = -6; j <= 1; j++) for (let i = -7; i <= 7; i++) { const d = i * i + j * j; if (d <= 46 && d > 28) g.set(cx + i, cy + j, flare); }
+    g.disc(cx, cy, 5, tire); g.disc(cx, cy, 3, rim);
+    [[0, -2], [0, 2], [-2, 0], [2, 0]].forEach(([i, j]) => g.set(cx + i, cy + j, tire));
+    g.set(cx, cy, hub);
+  });
+
+  // awning poles down to the tray
+  g.rect(44, 5, 1, 5, S);
+  g.rect(57, 6, 1, 4, S);
+
   g.outline(INK);
   return g;
 }
