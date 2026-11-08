@@ -1,7 +1,8 @@
 // Scroll story.
 // Hero (pinned while you scroll its track): the barista steps to the tray and folds the awning,
 // walks to the front door and gets in, then the Hilux drives off to the left.
-// Footer: as it scrolls into view the same Hilux rolls in from the right and parks in the middle.
+// Road lanes: the Hilux drives across the menu (left→right) and Find us (right→left) sections,
+// and rolls in from the left to park in the middle of the footer.
 // The barista moves in whole scene pixels; the truck shakes as the engine starts, then glides smoothly.
 // Off under reduced motion.
 
@@ -17,8 +18,6 @@ export function initStory() {
   const truck = document.getElementById('heroTruck');
   const awning = document.getElementById('heroAwning');
   const barista = document.getElementById('barista');
-  const footer = document.getElementById('siteFooter');
-  const footerTruck = document.getElementById('footerTruck');
   if (!track || !frame || !stage || !truck || !awning || !barista) return;
 
   document.documentElement.classList.add('story');
@@ -59,19 +58,33 @@ export function initStory() {
     truck!.style.transform = `translateX(${tx}px)`;
   }
 
-  function foot() {
-    if (!footer || !footerTruck) return;
-    const vh = innerHeight, r = footer.getBoundingClientRect();
-    const q = clamp((vh - r.top) / Math.max(1, Math.min(r.height, vh)));
-    const lane = footer.clientWidth, tw = footerTruck.offsetWidth;
-    const e = 1 - (1 - q) * (1 - q); // roll in and brake to a stop
-    const start = lane / 2 + tw / 2 + 8; // just past the right edge
-    const x = (1 - e) * start;
-    footerTruck.style.transform = `translateX(calc(-50% + ${x}px))`;
+  // Road lanes: "pass" lanes drive right across while the lane scrolls through the screen,
+  // "arrive" lanes (the footer) roll in from the side and park in the middle.
+  const lanes = Array.from(document.querySelectorAll<HTMLElement>('.lane'));
+  function roads() {
+    const vh = innerHeight;
+    for (const lane of lanes) {
+      const truckEl = lane.querySelector<HTMLElement>('.lane-truck'); if (!truckEl) continue;
+      const r = lane.getBoundingClientRect();
+      if (r.bottom < -50 || r.top > vh + 50) continue;
+      const ltr = lane.dataset.dir === 'ltr';
+      const half = lane.clientWidth / 2 + truckEl.offsetWidth / 2 + 8; // centre → just off the edge
+      let x: number;
+      if (lane.dataset.mode === 'arrive') {
+        const host = (lane.parentElement ?? lane).getBoundingClientRect(); // the footer: parked once fully in view
+        const q = clamp((vh - host.top) / Math.max(1, Math.min(host.height, vh)));
+        const e = 1 - (1 - q) * (1 - q); // roll in and brake to a stop
+        x = (1 - e) * half * (ltr ? -1 : 1);
+      } else {
+        const q = clamp((vh - r.top) / (vh + r.height)); // enters at the bottom → leaves at the top
+        x = (q * 2 - 1) * half * (ltr ? 1 : -1);
+      }
+      truckEl.style.transform = `translateX(calc(-50% + ${x}px))${ltr ? ' scaleX(-1)' : ''}`;
+    }
   }
 
   let queued = false;
-  const update = () => { queued = false; hero(); foot(); };
+  const update = () => { queued = false; hero(); roads(); };
   const request = () => { if (!queued) { queued = true; requestAnimationFrame(update); } };
   sizeTrack(); update();
   addEventListener('scroll', request, { passive: true });

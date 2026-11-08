@@ -1,11 +1,9 @@
 ---
+import RoadLane from './RoadLane.astro';
 const year = new Date().getFullYear();
 ---
 <footer id="siteFooter">
-  <div class="road" aria-hidden="true">
-    <canvas data-grass width="320" height="8"></canvas>
-    <img class="truck" id="footerTruck" src="/hilux-body.webp" width="1200" height="455" alt="" />
-  </div>
+  <RoadLane dir="ltr" mode="arrive" />
   <div class="wrap foot">
     <b>CHILLBAH</b>
     <span class="label">© {year} Chillbah · Coffee on four wheels</span>
@@ -14,12 +12,6 @@ const year = new Date().getFullYear();
 
 <style>
   footer { border-top: 3px solid var(--line); }
-  /* The Hilux rolls in from the right and parks in the middle as the footer scrolls into view (scripts/story.ts). */
-  .road { position: relative; height: clamp(150px, 22vw, 210px); overflow: hidden; border-bottom: 3px solid var(--line); }
-  .road::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; border-top: 3px solid var(--line);
-    background: repeating-linear-gradient(90deg, var(--road-dash) 0 24px, transparent 24px 52px) 0 50% / 100% 4px no-repeat, var(--road); }
-  canvas { position: absolute; left: 0; bottom: 43px; width: 100%; height: 32px; }
-  .truck { position: absolute; z-index: 1; left: 50%; bottom: 8px; width: clamp(240px, 34vw, 400px); height: auto; transform: translateX(-50%); will-change: transform; }
   .foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 24px 0 32px; }
   b { font: 700 22px/1 var(--font-display); color: var(--forest); }
   .label { color: var(--muted); }

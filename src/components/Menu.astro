@@ -1,8 +1,10 @@
 ---
 import MenuCard from './MenuCard.astro';
+import RoadLane from './RoadLane.astro';
 import { menu } from '../data/menu';
 ---
 <section id="menu">
+  <RoadLane dir="ltr" />
   <div class="wrap">
     <div class="sec-head">
       <div><div class="label kicker">The menu</div><h2>FROM THE TRAY</h2></div>
@@ -15,5 +17,7 @@ import { menu } from '../data/menu';
 </section>
 
 <style>
+  #menu { padding-top: 0; }
+  #menu :global(.lane) { margin-bottom: 56px; }
   .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-6); }
 </style>

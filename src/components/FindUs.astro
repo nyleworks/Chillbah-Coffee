@@ -1,5 +1,6 @@
 ---
 import { site } from '../data/site';
+import RoadLane from './RoadLane.astro';
 const rows = [
   { icon: 'pin', title: 'Pin drops each morning', text: 'Check our socials before you head out.' },
   { icon: 'clock', title: 'Open till sold out', text: 'When the beans run out, we roll on.' },
@@ -7,6 +8,7 @@ const rows = [
 ];
 ---
 <section id="find" class="find">
+  <RoadLane dir="rtl" />
   <div class="wrap find-grid">
     <div>
       <div class="label kicker">Where we at</div>
@@ -30,7 +32,8 @@ const rows = [
 </section>
 
 <style>
-  .find { background: var(--surface-200); border-block: 3px solid var(--line); }
+  .find { background: var(--surface-200); border-block: 3px solid var(--line); padding-top: 0; }
+  .find :global(.lane) { margin-bottom: 56px; }
   .find-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 32px; align-items: center; }
   @media (max-width: 820px) { .find-grid { grid-template-columns: 1fr; } }
   .intro { color: var(--muted); max-width: 460px; }

@@ -1,0 +1,20 @@
+---
+// A strip of road the Hilux drives along as you scroll (scripts/story.ts).
+// dir: which way it drives. mode "pass" drives right across; "arrive" rolls in and parks in the middle.
+interface Props { dir: 'ltr' | 'rtl'; mode?: 'pass' | 'arrive' }
+const { dir, mode = 'pass' } = Astro.props;
+---
+<div class="lane" data-dir={dir} data-mode={mode} aria-hidden="true">
+  <canvas data-grass width="320" height="8"></canvas>
+  <img class="lane-truck" src="/hilux-body.webp" width="1200" height="455" alt="" />
+</div>
+
+<style>
+  .lane { position: relative; height: clamp(130px, 18vw, 190px); overflow: hidden; }
+  .lane::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; border-top: 3px solid var(--line);
+    background: repeating-linear-gradient(90deg, var(--road-dash) 0 24px, transparent 24px 52px) 0 50% / 100% 4px no-repeat, var(--road); }
+  canvas { position: absolute; left: 0; bottom: 43px; width: 100%; height: 32px; }
+  .lane-truck { position: absolute; z-index: 1; left: 50%; bottom: 8px; width: clamp(220px, 30vw, 360px); height: auto; transform: translateX(-50%); will-change: transform; }
+  /* The art faces left; mirror it when driving right. */
+  .lane[data-dir="ltr"] .lane-truck { transform: translateX(-50%) scaleX(-1); }
+</style>
