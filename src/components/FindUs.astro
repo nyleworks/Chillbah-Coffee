@@ -14,7 +14,6 @@ const rows = [
     <div class="find-card">
       <div class="label kicker">Where we at</div>
       <h2>WE MOVE.<br />YOU FOLLOW.</h2>
-      <p class="intro">Chillbah is a moving kiosk. The Hilux parks somewhere new most days: roadside, hilltop, beach or market. We drop the pin every morning before we open.</p>
       <div class="spot">
         <div class="cb-tag cb-tag--live">Today's spot</div>
         {rows.map((r) => (
@@ -40,7 +39,6 @@ const rows = [
   .find-card { max-width: 640px; margin: 0 auto; text-align: center; background: var(--surface-100); border: 3px solid var(--line);
     box-shadow: 8px 8px 0 var(--line), 16px 16px 0 rgba(18, 18, 13, .18); padding: clamp(24px, 5vw, 44px); }
   .find-card h2 { margin-top: 8px; }
-  .intro { color: var(--muted); max-width: 480px; margin: 12px auto 0; }
   .spot { text-align: left; margin-top: 24px; padding-top: 20px; border-top: 3px solid var(--line); }
   @media (max-width: 560px) { .find-card { box-shadow: 5px 5px 0 var(--line), 10px 10px 0 rgba(18, 18, 13, .18); } }
   .row { display: flex; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 2px dashed var(--line); }
