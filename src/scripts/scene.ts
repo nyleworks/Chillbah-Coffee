@@ -78,7 +78,9 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     // tree line
     [[36, 76], [46, 80], [184, 79], [196, 74], [208, 80]].forEach(([x, y], i) => (i % 2 ? p2 : p1).draw(ctx, x, y));
     // ground, road
-    ctx.fillStyle = mix('#7fae45', '#4c5f2c'); ctx.fillRect(0, 92, W, H - 92);
+    const ground = mix('#7fae45', '#4c5f2c');
+    if (frameEl) frameEl.style.setProperty('--ground', ground); // phones extend the grass below the art (Hero.astro)
+    ctx.fillStyle = ground; ctx.fillRect(0, 92, W, H - 92);
     ctx.fillStyle = mix('#66882d', '#3a4a22');
     for (let i = 0; i < 90; i++) { const x = (i * 37) % W, y = 95 + ((i * 11) % 32); ctx.fillRect(x, y, 1, 2); ctx.fillRect(x + 1, y + 1, 1, 1); }
     ctx.fillStyle = mix('#c9a27a', '#5a4632'); ctx.fillRect(0, 108, W, 6);
