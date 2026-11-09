@@ -232,11 +232,13 @@ export function drawVillage(ctx: Ctx, W: number, H: number, night: boolean) {
   canopy(ctx, W, base, H, night, r);
   // One wooden house and one shack, with a few plants around them.
   const houseW = 46, shackW = 30;
-  const hx = Math.max(10, Math.round(W * 0.16));
-  const sx = Math.max(hx + houseW + 30, Math.round(W * 0.68));
+  // On narrow (phone) lanes the pair moves closer so both always fit on screen.
+  const narrow = W < houseW + shackW + 60;
+  const hx = narrow ? Math.round((W - houseW - shackW - 4) / 2) : Math.max(10, Math.round(W * 0.16));
+  const sx = narrow ? hx + houseW + 4 : Math.max(hx + houseW + 30, Math.round(W * 0.68));
   palm(ctx, hx - 16, base, Math.min(H - 6, 34), night);
   stiltHouse(ctx, hx, base, houseW, night, r);
-  banana(ctx, hx + houseW + 16, base, night);
+  if (!narrow) banana(ctx, hx + houseW + 16, base, night);
   shack(ctx, sx, base, shackW, night, r);
   palm(ctx, sx + shackW + 14, base, Math.min(H - 6, 28), night);
 }

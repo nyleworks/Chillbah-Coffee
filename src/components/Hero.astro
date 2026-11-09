@@ -28,7 +28,7 @@ import Truck from './Truck.astro';
   .scene-track { position: relative; }
   /* Full-bleed scene filling the screen under the header. The 180×98 art is pinned to the bottom at full width:
      on tall screens plain sky fills the space above it, on wide screens the top of the sky is trimmed. */
-  .scene-frame { position: relative; width: 100%; height: calc(100svh - 64px); min-height: 360px; overflow: hidden;
+  .scene-frame { position: relative; width: 100%; height: calc(100svh - 64px); min-height: 240px; overflow: hidden;
     background: var(--sky); border-bottom: 3px solid var(--line); container-type: size; }
   :global(html.story) .scene-track { height: calc(var(--frame-h, 60vw) + 156vh); }
   :global(html.story) .scene-frame { position: sticky; top: 64px; }
@@ -42,11 +42,13 @@ import Truck from './Truck.astro';
 
   /* Wordmark and buttons sit in the sky, over the art. */
   .hero-copy { position: absolute; z-index: 2; left: 0; right: 0; top: max(16px, calc((100cqh - max(54.4cqw, 50cqh)) * 0.4 + 4cqw)); display: grid; justify-items: center; gap: clamp(12px, 2.4cqw, 28px); padding: 0 16px; }
-  .title { margin: 0; font: 700 clamp(44px, 12cqw, 156px)/.9 var(--font-display); color: var(--ember-600); letter-spacing: .03em;
+  .title { margin: 0; font: 700 clamp(40px, min(12cqw, 24cqh), 156px)/.9 var(--font-display); color: var(--ember-600); letter-spacing: .03em;
     text-shadow: 3px 3px 0 var(--brick), 6px 6px 0 var(--brick); }
   .ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  /* Short screens (phones held sideways): smaller buttons so the title, buttons and truck all fit. */
+  @media (max-height: 500px) { .ctas .cb-btn { padding: 8px 12px; font-size: 11px; } .hero-copy { gap: 10px; } }
   @media (max-width: 560px) {
-    .title { text-shadow: 2px 2px 0 var(--brick), 4px 4px 0 var(--brick); }
+    .title { font-size: min(15cqw, 72px); text-shadow: 2px 2px 0 var(--brick), 4px 4px 0 var(--brick); }
     .ctas { gap: 10px; }
     .ctas .cb-btn { padding: 8px 10px; font-size: 11px; box-shadow: 3px 3px 0 var(--line); }
   }

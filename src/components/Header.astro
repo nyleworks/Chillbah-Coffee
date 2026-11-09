@@ -6,7 +6,10 @@
       <canvas data-cup="hot" data-liquid="#715542" width="16" height="16" style="width:32px;height:32px" aria-hidden="true"></canvas>
       <b>CHILLBAH</b>
     </a>
-    <ul class="label">
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="label" id="navLinks">
       <li><a href="#menu">Menu</a></li>
       <li><a href="#find">Find us</a></li>
       <li><a href="#how">How it works</a></li>
@@ -16,6 +19,17 @@
     </button>
   </div>
 </header>
+
+<script>
+  // Phone menu: the hamburger opens the links as a drop-down; picking one (or tapping outside) closes it.
+  const btn = document.getElementById('menuBtn');
+  const links = document.getElementById('navLinks');
+  const setOpen = (open: boolean) => { links?.classList.toggle('open', open); btn?.setAttribute('aria-expanded', String(open)); btn?.setAttribute('aria-label', open ? 'Close menu' : 'Open menu'); };
+  btn?.addEventListener('click', (e) => { e.stopPropagation(); setOpen(!links?.classList.contains('open')); });
+  links?.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('a')) setOpen(false); });
+  document.addEventListener('click', (e) => { if (!(e.target as HTMLElement).closest('.site-header')) setOpen(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+</script>
 
 <style>
   .site-header { position: sticky; top: 0; z-index: 10; background: var(--surface-100); border-bottom: 3px solid var(--line); }
@@ -28,5 +42,16 @@
   .theme-btn { width: 40px; height: 40px; border: 3px solid var(--line); background: var(--surface-200); box-shadow: 3px 3px 0 var(--line); cursor: pointer; display: grid; place-items: center; padding: 0; }
   .theme-btn:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
   .theme-btn canvas { width: 20px; height: 20px; }
-  @media (max-width: 720px) { ul { display: none; } }
+  .menu-btn { display: none; width: 40px; height: 40px; margin-left: auto; border: 3px solid var(--line); background: var(--surface-200); box-shadow: 3px 3px 0 var(--line);
+    cursor: pointer; padding: 0; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+  .menu-btn span { display: block; width: 18px; height: 3px; background: var(--line); }
+  .menu-btn:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
+  @media (max-width: 720px) {
+    .nav { gap: 10px; }
+    .brand b { font-size: 20px; }
+    .menu-btn { display: flex; }
+    ul { display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; gap: 0; background: var(--surface-100); border-bottom: 3px solid var(--line); }
+    ul.open { display: flex; }
+    ul a { display: block; padding: 16px 20px; font-size: 14px; border-top: 2px dashed var(--line); }
+  }
 </style>
