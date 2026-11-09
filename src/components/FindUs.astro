@@ -53,12 +53,16 @@ const rows = [
   const card = document.getElementById('findCard');
   if (dock && card && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const h2 = card.querySelector('h2')!;
+    const truck = document.getElementById('heroTruck');
     let raf = 0;
     const update = () => {
       raf = 0;
       const firstLine = parseFloat(getComputedStyle(h2).lineHeight) || h2.offsetHeight / 2;
       const visible = Math.round(h2.offsetTop + firstLine + 10); // down to just under the first heading line
-      const dockTop = innerHeight - visible; // rests on the bottom edge of the screen
+      // rests on the bottom edge of the screen, but never higher than just under the hero truck's tyres
+      // (with room for the bob), so on short screens it doesn't cover the truck
+      const tyres = truck ? truck.getBoundingClientRect().bottom + 20 : 0;
+      const dockTop = Math.max(innerHeight - visible, tyres);
       const wrap = dock.parentElement!; // untransformed, so it gives the dock's natural position
       const naturalTop = wrap.getBoundingClientRect().top + dock.offsetTop - wrap.offsetTop;
       const lift = Math.min(0, Math.round(dockTop - naturalTop));
