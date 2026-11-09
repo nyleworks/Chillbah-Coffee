@@ -3,14 +3,6 @@ import Ticker from './Ticker.astro';
 import Truck from './Truck.astro';
 ---
 <section class="hero">
-  <!-- The top of the Where we at card peeks up just above the ticker and bobs. It stays at the bottom of the screen through the
-       whole scroll story and after the hero leaves, until the real card scrolls up into its place, then hands over to it. -->
-  <div class="peek-dock" id="peekDock">
-    <a class="peek" href="#find" aria-label="Scroll to Where we at">
-      <span class="label peek-kicker">Where we at</span>
-      <span class="peek-title">WE MOVE. YOU FOLLOW.</span>
-    </a>
-  </div>
   <!-- Scroll story: the scene pins under the header while you scroll this track; scripts/story.ts drives it. -->
   <div class="scene-track" id="sceneTrack">
     <!-- Pinned together: the scene plus the ticker strip under it, so the strip shows on the first screen too. -->
@@ -21,6 +13,11 @@ import Truck from './Truck.astro';
       <Truck id="heroTruck" class="hilux" awning label="Pixel art of the white Chillbah Hilux with its black side awning, parked on grass with mountains behind" />
       <img class="barista" id="barista" src="/barista.png" width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
       </div>
+      <!-- The top of the Where we at card peeks up from the bottom edge and bobs, hinting there's more below. Tap to jump there. -->
+      <a class="peek" id="heroPeek" href="#find" aria-label="Scroll to Where we at">
+        <span class="label peek-kicker">Where we at</span>
+        <span class="peek-title">WE MOVE. YOU FOLLOW.</span>
+      </a>
       <div class="hero-copy">
         <h1 class="title">CHILLBAH</h1>
         <div class="ctas">
@@ -35,16 +32,10 @@ import Truck from './Truck.astro';
 </section>
 
 <script>
-  // Keep the tab docked at the bottom of the screen, then hide it the moment the real card's top reaches it.
-  const dock = document.getElementById('peekDock');
-  const card = document.querySelector<HTMLElement>('#find .find-card');
-  const peek = dock?.querySelector<HTMLElement>('.peek');
-  function place() {
-    if (!dock || !card || !peek) return;
-    // the tab's visible top edge (it bobs, so measure it live); the real card takes over once its top gets there
-    dock.classList.toggle('handed', card.getBoundingClientRect().top <= peek.getBoundingClientRect().top + 2);
-  }
-  addEventListener('scroll', place, { passive: true }); addEventListener('resize', place); place();
+  // Tuck the peeking card away once the visitor starts scrolling (the scroll story takes over from there).
+  const peek = document.getElementById('heroPeek');
+  const onScroll = () => peek?.classList.toggle('gone', scrollY > 24);
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
 </script>
 
 <style>
@@ -70,14 +61,13 @@ import Truck from './Truck.astro';
     text-shadow: 3px 3px 0 var(--brick), 6px 6px 0 var(--brick); }
   .ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
   /* Peeking card: only its top ~56px shows above the scene's bottom edge (the frame clips the rest). */
-  .peek-dock { position: fixed; z-index: 5; left: 0; right: 0; bottom: 43px; height: 96px; overflow: hidden; pointer-events: none; }
-  .peek-dock.handed { visibility: hidden; }
-  .peek { position: absolute; left: 50%; bottom: 0; width: min(640px, calc(100% - 32px)); height: 120px; box-sizing: border-box; pointer-events: auto;
+  .peek { position: absolute; z-index: 3; left: 50%; bottom: 0; width: min(640px, calc(100% - 32px)); height: 120px; box-sizing: border-box;
     display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 14px; text-decoration: none;
     background: var(--surface-100); border: 3px solid var(--line); box-shadow: 6px 6px 0 var(--line);
-    transform: translate(-50%, calc(100% - 58px)); animation: peek-bob 1.8s ease-in-out infinite; }
+    transform: translate(-50%, calc(100% - 58px)); animation: peek-bob 1.8s ease-in-out infinite; transition: opacity .3s ease; }
   .peek-kicker { color: var(--ember-600); font-size: 11px; }
-  .peek-title { font: 700 clamp(18px, 3vw, 26px)/1 var(--font-display); color: var(--forest); letter-spacing: .02em; }
+  .peek-title { font: 700 clamp(18px, 3cqw, 26px)/1 var(--font-display); color: var(--forest); letter-spacing: .02em; }
+  .peek.gone { opacity: 0; pointer-events: none; }
   .peek:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
   /* Soft jump: rises a little, settles back, with a tiny squash on landing. */
   @keyframes peek-bob {
