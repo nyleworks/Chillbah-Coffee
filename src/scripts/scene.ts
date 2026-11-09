@@ -1,4 +1,4 @@
-// The hero scene: grass, road and Kinabalu (the Hilux itself is an <img> over the canvas, see Hero.astro), day or night. 180×98 canvas, 140ms stepped frames.
+// The hero scene: grass, road and Kinabalu (the Hilux itself is an <img> over the canvas, see Hero.astro), day or night. 180×106 canvas (8 rows of extra grass under the road lift the ground off the screen edge), 140ms stepped frames.
 import { Grid } from '../lib/pixel';
 import { cup, pine } from '../lib/sprites';
 import { isNight } from './theme';
@@ -44,7 +44,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
 
   function draw() {
     const ctx = sx!;
-    const W = 240, H = 120;
+    const W = 240, H = 130;
     ctx.setTransform(1, 0, 0, 1, -40, -18);
     const sky = mix('#8ad8d8', '#1f2b45');
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
@@ -78,9 +78,9 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     // tree line
     [[36, 76], [46, 80], [184, 79], [196, 74], [208, 80]].forEach(([x, y], i) => (i % 2 ? p2 : p1).draw(ctx, x, y));
     // ground, road
-    ctx.fillStyle = mix('#7fae45', '#4c5f2c'); ctx.fillRect(0, 92, W, 28);
+    ctx.fillStyle = mix('#7fae45', '#4c5f2c'); ctx.fillRect(0, 92, W, H - 92);
     ctx.fillStyle = mix('#66882d', '#3a4a22');
-    for (let i = 0; i < 70; i++) { const x = (i * 37) % W, y = 95 + ((i * 11) % 24); ctx.fillRect(x, y, 1, 2); ctx.fillRect(x + 1, y + 1, 1, 1); }
+    for (let i = 0; i < 90; i++) { const x = (i * 37) % W, y = 95 + ((i * 11) % 32); ctx.fillRect(x, y, 1, 2); ctx.fillRect(x + 1, y + 1, 1, 1); }
     ctx.fillStyle = mix('#c9a27a', '#5a4632'); ctx.fillRect(0, 108, W, 6);
     ctx.fillStyle = mix('#b08560', '#4a3a2a'); for (let x = 0; x < W; x += 9) ctx.fillRect(x, 110, 4, 1);
     ctx.fillStyle = '#12120d'; ctx.fillRect(0, 92, W, 1);
