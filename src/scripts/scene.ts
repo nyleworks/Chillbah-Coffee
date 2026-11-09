@@ -55,16 +55,19 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     const stageEl = canvas!.parentElement;
     const cut = stageEl && stageEl.offsetLeft < 0 ? -stageEl.offsetLeft / (stageEl.clientWidth / 180) : 0; // hidden canvas px
     const skyX = Math.round(Math.max(0, cut + 4 - 2)); // extra world shift for the sun/moon
+    // ...and when the scene is lifted (Hero.astro --dock-h) the top rows can be cut off too: drop them into view
+    const cutTop = stageEl && stageEl.offsetTop < 0 ? -stageEl.offsetTop / (stageEl.clientWidth / 180) : 0;
+    const skyY = Math.round(Math.max(0, cutTop + 3));
     if (t > 0.6) { ctx.fillStyle = `rgba(244,235,205,${((t - 0.6) / 0.4).toFixed(2)})`; stars.forEach(([x, y], i) => { if ((i + (frame >> 3)) % 7) ctx.fillRect(x, y, 1, 1); }); }
     // sun sets during the first half, moon rises in the second (both slip behind the hills)
     if (t < 0.5) {
       const dy = Math.round(ease(t / 0.5) * 80);
       const s2 = Grid(22, 22); s2.disc(11, 11, 5, '#f2c94c');
       [[11, 1], [11, 2], [11, 20], [11, 19], [1, 11], [2, 11], [20, 11], [19, 11], [4, 4], [18, 4], [4, 18], [18, 18]].forEach(([x, y]) => s2.set(x, y, '#f2c94c'));
-      s2.draw(ctx, 42 + skyX, 18 + dy);
+      s2.draw(ctx, 42 + skyX, 18 + skyY + dy);
     } else {
       const dy = Math.round((1 - ease((t - 0.5) / 0.5)) * 80);
-      const m = Grid(14, 14); m.disc(7, 7, 6, '#f4ebcd'); m.disc(10, 5, 5, null); m.draw(ctx, 48 + skyX, 22 + dy);
+      const m = Grid(14, 14); m.disc(7, 7, 6, '#f4ebcd'); m.disc(10, 5, 5, null); m.draw(ctx, 48 + skyX, 22 + skyY + dy);
     }
     clouds.forEach(([x, y, sp]) => cloud(((x + frame * sp * 0.25) % 280) - 30, y, mix('#f0f8f0', '#3a4a66')));
     // mountain

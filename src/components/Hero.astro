@@ -13,11 +13,6 @@ import Truck from './Truck.astro';
       <Truck id="heroTruck" class="hilux" awning label="Pixel art of the white Chillbah Hilux with its black side awning, parked on grass with mountains behind" />
       <img class="barista" id="barista" src="/barista.png" width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
       </div>
-      <!-- The top of the Where we at card peeks up from the bottom edge and bobs, hinting there's more below. Tap to jump there. -->
-      <a class="peek" id="heroPeek" href="#find" aria-label="Scroll to Where we at">
-        <span class="label peek-kicker">Where we at</span>
-        <span class="peek-title">WE MOVE. YOU FOLLOW.</span>
-      </a>
       <div class="hero-copy">
         <h1 class="title">CHILLBAH</h1>
         <div class="ctas">
@@ -31,13 +26,6 @@ import Truck from './Truck.astro';
   </div>
 </section>
 
-<script>
-  // Tuck the peeking card away once the visitor starts scrolling (the scroll story takes over from there).
-  const peek = document.getElementById('heroPeek');
-  const onScroll = () => peek?.classList.toggle('gone', scrollY > 24);
-  addEventListener('scroll', onScroll, { passive: true }); onScroll();
-</script>
-
 <style>
   .hero { padding: 0; text-align: center; }
   .scene-track { position: relative; }
@@ -50,6 +38,10 @@ import Truck from './Truck.astro';
     /* The stage holds the art, truck and barista. Full width on most screens; on tall phones it grows so the scene fills
      about half the height, centred on the truck (the sign and stools drop off the sides), never leaving a gap at either edge. */
   .stage { position: absolute; bottom: 0; width: max(100cqw, 92cqh); aspect-ratio: 180 / 106; left: clamp(calc(100% - max(100cqw, 92cqh)), calc(50% - 0.48 * max(100cqw, 92cqh)), 0px); container-type: inline-size; }
+  /* The scene sits on a plain grass strip as tall as the docked Where we at card slice (--dock-h, set by FindUs.astro),
+     so the card never covers the truck or the barista. */
+  .stage { bottom: var(--dock-h, 0px); }
+  .scene-frame::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--dock-h, 0px) + 1px); background: var(--ground, #7fae45); }
   .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   /* Sizes are in cqw (stage width) so the truck and barista stay on the road. */
   .stage :global(.hilux) { position: absolute; left: 25.6%; width: 38.9%; bottom: 5.8cqw; }
@@ -60,35 +52,6 @@ import Truck from './Truck.astro';
   .title { margin: 0; font: 700 clamp(40px, min(12cqw, 24cqh), 156px)/.9 var(--font-display); color: var(--ember-600); letter-spacing: .03em;
     text-shadow: 3px 3px 0 var(--brick), 6px 6px 0 var(--brick); }
   .ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-  /* Peeking card: only its top ~56px shows above the scene's bottom edge (the frame clips the rest). */
-  .peek { position: absolute; z-index: 3; left: 50%; bottom: 0; width: min(640px, calc(100% - 32px)); height: 120px; box-sizing: border-box;
-    display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 14px; text-decoration: none;
-    background: var(--surface-100); border: 3px solid var(--line); box-shadow: 6px 6px 0 var(--line);
-    transform: translate(-50%, calc(100% - 58px)); animation: peek-bob 1.8s ease-in-out infinite; transition: opacity .3s ease; }
-  .peek-kicker { color: var(--ember-600); font-size: 11px; }
-  .peek-title { font: 700 clamp(18px, 3cqw, 26px)/1 var(--font-display); color: var(--forest); letter-spacing: .02em; }
-  .peek.gone { opacity: 0; pointer-events: none; }
-  .peek:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
-  /* Soft jump: rises a little, settles back, with a tiny squash on landing. */
-  @keyframes peek-bob {
-    0%, 100% { transform: translate(-50%, calc(100% - 58px)); }
-    40% { transform: translate(-50%, calc(100% - 74px)); }
-    70% { transform: translate(-50%, calc(100% - 56px)); }
-  }
-  @media (prefers-reduced-motion: reduce) { .peek { animation: none; } }
-  /* Phones: lift the whole scene above a plain grass strip, and use a smaller tab, so the peek never covers the truck. */
-  @media (max-width: 560px) {
-    .stage { bottom: 52px; }
-    .scene-frame::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 53px; background: var(--ground, #7fae45); }
-    .peek { width: 64%; padding-top: 10px; gap: 6px; transform: translate(-50%, calc(100% - 44px)); animation-name: peek-bob-sm; box-shadow: 4px 4px 0 var(--line); }
-    .peek-title { font-size: 14px; }
-    .peek-kicker { font-size: 9px; }
-  }
-  @keyframes peek-bob-sm {
-    0%, 100% { transform: translate(-50%, calc(100% - 44px)); }
-    40% { transform: translate(-50%, calc(100% - 56px)); }
-    70% { transform: translate(-50%, calc(100% - 42px)); }
-  }
   /* Short screens (phones held sideways): smaller buttons so the title, buttons and truck all fit. */
   @media (max-height: 500px) { .ctas .cb-btn { padding: 8px 12px; font-size: 11px; } .hero-copy { gap: 10px; } }
   @media (max-width: 560px) {
