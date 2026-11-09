@@ -45,13 +45,12 @@ const rows = [
 </div>
 
 <script>
-  // While the visitor is still above this section, the card is lifted to dock just above the hero ticker, showing only
+  // While the visitor is still above this section, the card is lifted to dock on the bottom edge of the screen, showing only
   // its top (kicker + first heading line), and bobs there. It stays docked while they scroll; once the card's real
   // position reaches the dock it lets go and sits in place. The dock wrapper does the lifting and the (static) clipping,
   // the card inside does the bobbing, so the slice always rises out of the same edge. Off under reduced motion.
   const dock = document.getElementById('findDock');
   const card = document.getElementById('findCard');
-  const TICKER = 43;
   if (dock && card && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const h2 = card.querySelector('h2')!;
     let raf = 0;
@@ -59,7 +58,7 @@ const rows = [
       raf = 0;
       const firstLine = parseFloat(getComputedStyle(h2).lineHeight) || h2.offsetHeight / 2;
       const visible = Math.round(h2.offsetTop + firstLine + 10); // down to just under the first heading line
-      const dockTop = innerHeight - TICKER - visible;
+      const dockTop = innerHeight - visible; // rests on the bottom edge of the screen
       const wrap = dock.parentElement!; // untransformed, so it gives the dock's natural position
       const naturalTop = wrap.getBoundingClientRect().top + dock.offsetTop - wrap.offsetTop;
       const lift = Math.min(0, Math.round(dockTop - naturalTop));
@@ -67,7 +66,6 @@ const rows = [
       dock.style.transform = docked ? `translateY(${lift}px)` : '';
       dock.style.clipPath = docked ? `polygon(-40px -60px, calc(100% + 40px) -60px, calc(100% + 40px) ${visible}px, -40px ${visible}px)` : '';
       dock.classList.toggle('docked', docked);
-      document.documentElement.style.setProperty('--dock-h', visible + 4 + 'px');
     };
     const request = () => { if (!raf) raf = requestAnimationFrame(update); };
     addEventListener('scroll', request, { passive: true });
@@ -91,6 +89,7 @@ const rows = [
   .find-card { max-width: 640px; margin: 0 auto; text-align: center; background: var(--surface-100); border: 3px solid var(--line);
     box-shadow: 8px 8px 0 var(--line), 16px 16px 0 rgba(18, 18, 13, .18); padding: clamp(24px, 5vw, 44px); }
   .find-card h2 { margin-top: 8px; }
+  .spot { text-align: left; margin-top: 24px; padding-top: 20px; border-top: 3px solid var(--line); }
   /* Docked (see script): the wrapper is lifted and clipped; the card bobs inside it, rising out of the clip edge. */
   .find-dock { position: relative; z-index: 6; }
   .find-dock.docked { cursor: pointer; }

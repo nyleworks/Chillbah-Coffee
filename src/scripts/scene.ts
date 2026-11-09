@@ -55,7 +55,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     const stageEl = canvas!.parentElement;
     const cut = stageEl && stageEl.offsetLeft < 0 ? -stageEl.offsetLeft / (stageEl.clientWidth / 180) : 0; // hidden canvas px
     const skyX = Math.round(Math.max(0, cut + 4 - 2)); // extra world shift for the sun/moon
-    // ...and when the scene is lifted (Hero.astro --dock-h) the top rows can be cut off too: drop them into view
+    // ...and when the scene is lifted (phones, Hero.astro) the top rows can be cut off too: drop them into view
     const cutTop = stageEl && stageEl.offsetTop < 0 ? -stageEl.offsetTop / (stageEl.clientWidth / 180) : 0;
     const skyY = Math.round(Math.max(0, cutTop + 3));
     if (t > 0.6) { ctx.fillStyle = `rgba(244,235,205,${((t - 0.6) / 0.4).toFixed(2)})`; stars.forEach(([x, y], i) => { if ((i + (frame >> 3)) % 7) ctx.fillRect(x, y, 1, 1); }); }

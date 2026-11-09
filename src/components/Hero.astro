@@ -5,8 +5,9 @@ import Truck from './Truck.astro';
 <section class="hero">
   <!-- Scroll story: the scene pins under the header while you scroll this track; scripts/story.ts drives it. -->
   <div class="scene-track" id="sceneTrack">
-    <!-- Pinned together: the scene plus the ticker strip under it, so the strip shows on the first screen too. -->
+    <!-- Pinned together: the ticker strip (just under the header) plus the scene, so the strip shows on the first screen too. -->
     <div class="scene-pin" id="sceneFrame">
+    <Ticker />
     <div class="scene-frame">
       <div class="stage" id="sceneStage">
       <canvas id="scene" width="180" height="106" aria-hidden="true"></canvas>
@@ -21,7 +22,6 @@ import Truck from './Truck.astro';
         </div>
       </div>
     </div>
-    <Ticker />
     </div>
   </div>
 </section>
@@ -38,10 +38,11 @@ import Truck from './Truck.astro';
     /* The stage holds the art, truck and barista. Full width on most screens; on tall phones it grows so the scene fills
      about half the height, centred on the truck (the sign and stools drop off the sides), never leaving a gap at either edge. */
   .stage { position: absolute; bottom: 0; width: max(100cqw, 92cqh); aspect-ratio: 180 / 106; left: clamp(calc(100% - max(100cqw, 92cqh)), calc(50% - 0.48 * max(100cqw, 92cqh)), 0px); container-type: inline-size; }
-  /* The scene sits on a plain grass strip as tall as the docked Where we at card slice (--dock-h, set by FindUs.astro),
-     so the card never covers the truck or the barista. */
-  .stage { bottom: var(--dock-h, 0px); }
-  .scene-frame::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--dock-h, 0px) + 1px); background: var(--ground, #7fae45); }
+  /* Phones: lift the scene above a plain grass strip so the docked Where we at card (FindUs.astro) mostly clears the truck. */
+  @media (max-width: 560px) {
+    .stage { bottom: 52px; }
+    .scene-frame::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 53px; background: var(--ground, #7fae45); }
+  }
   .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   /* Sizes are in cqw (stage width) so the truck and barista stay on the road. */
   .stage :global(.hilux) { position: absolute; left: 25.6%; width: 38.9%; bottom: 5.8cqw; }
