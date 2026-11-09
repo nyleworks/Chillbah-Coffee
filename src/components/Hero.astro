@@ -5,7 +5,9 @@ import Truck from './Truck.astro';
 <section class="hero">
   <!-- Scroll story: the scene pins under the header while you scroll this track; scripts/story.ts drives it. -->
   <div class="scene-track" id="sceneTrack">
-    <div class="scene-frame" id="sceneFrame">
+    <!-- Pinned together: the scene plus the ticker strip under it, so the strip shows on the first screen too. -->
+    <div class="scene-pin" id="sceneFrame">
+    <div class="scene-frame">
       <div class="stage" id="sceneStage">
       <canvas id="scene" width="180" height="98" aria-hidden="true"></canvas>
       <Truck id="heroTruck" class="hilux" awning label="Pixel art of the white Chillbah Hilux with its black side awning, parked on grass with mountains behind" />
@@ -19,8 +21,9 @@ import Truck from './Truck.astro';
         </div>
       </div>
     </div>
+    <Ticker />
+    </div>
   </div>
-  <Ticker />
 </section>
 
 <style>
@@ -28,10 +31,10 @@ import Truck from './Truck.astro';
   .scene-track { position: relative; }
   /* Full-bleed scene filling the screen under the header. The 180×98 art is pinned to the bottom at full width:
      on tall screens plain sky fills the space above it, on wide screens the top of the sky is trimmed. */
-  .scene-frame { position: relative; width: 100%; height: calc(100svh - 64px); min-height: 240px; overflow: hidden;
+  .scene-frame { position: relative; width: 100%; height: calc(100svh - 64px - 43px); min-height: 200px; /* 43px = ticker strip */ overflow: hidden;
     background: var(--sky); border-bottom: 3px solid var(--line); container-type: size; }
   :global(html.story) .scene-track { height: calc(var(--frame-h, 60vw) + 156vh); }
-  :global(html.story) .scene-frame { position: sticky; top: 64px; }
+  :global(html.story) .scene-pin { position: sticky; top: 64px; }
     /* The stage holds the art, truck and barista. Full width on most screens; on tall phones it grows so the scene fills
      about half the height, centred on the truck (the sign and stools drop off the sides), never leaving a gap at either edge. */
   .stage { position: absolute; bottom: 0; width: max(100cqw, 92cqh); aspect-ratio: 180 / 98; left: clamp(calc(100% - max(100cqw, 92cqh)), calc(50% - 0.48 * max(100cqw, 92cqh)), 0px); container-type: inline-size; }
