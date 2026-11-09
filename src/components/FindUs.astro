@@ -12,29 +12,31 @@ const rows = [
 <section id="find" class="find">
   <div class="wrap">
     <!-- One floating card, centred: heading, intro, today's spot and the social links together. -->
-    <div class="find-card" id="findCard">
-      <div class="label kicker">Where we at</div>
-      <h2>WE MOVE.<br />YOU FOLLOW.</h2>
-      <div class="spot">
-        <div class="cb-tag cb-tag--live">Today's spot</div>
-        {rows.map((r) => (
-          <div class="row">
-            <canvas data-icon={r.icon} width="8" height="8" aria-hidden="true"></canvas>
-            <div><b>{r.title}</b><span>{r.text}</span></div>
-          </div>
-        ))}
-      </div>
-      <div class="hours">
-        <div class="label hours-head">Opening hours <span>Placeholder</span></div>
-        <table>
-          <tbody>
-            {hours.map((h) => <tr><th scope="row">{h.day}</th><td>{h.time}</td></tr>)}
-          </tbody>
-        </table>
-      </div>
-      <div class="ctas">
-        <a class="cb-btn cb-btn--alt" href={site.instagram}>Instagram</a>
-        <a class="cb-btn cb-btn--ghost" href={site.whatsapp}>WhatsApp</a>
+    <div class="find-dock" id="findDock">
+      <div class="find-card" id="findCard">
+        <div class="label kicker">Where we at</div>
+        <h2>WE MOVE.<br />YOU FOLLOW.</h2>
+        <div class="spot">
+          <div class="cb-tag cb-tag--live">Today's spot</div>
+          {rows.map((r) => (
+            <div class="row">
+              <canvas data-icon={r.icon} width="8" height="8" aria-hidden="true"></canvas>
+              <div><b>{r.title}</b><span>{r.text}</span></div>
+            </div>
+          ))}
+        </div>
+        <div class="hours">
+          <div class="label hours-head">Opening hours <span>Placeholder</span></div>
+          <table>
+            <tbody>
+              {hours.map((h) => <tr><th scope="row">{h.day}</th><td>{h.time}</td></tr>)}
+            </tbody>
+          </table>
+        </div>
+        <div class="ctas">
+          <a class="cb-btn cb-btn--alt" href={site.instagram}>Instagram</a>
+          <a class="cb-btn cb-btn--ghost" href={site.whatsapp}>WhatsApp</a>
+        </div>
       </div>
     </div>
   </div>
@@ -43,27 +45,29 @@ const rows = [
 </div>
 
 <script>
-  // While the visitor is still above this section, the card's own top is lifted to dock just above the hero ticker,
-  // showing only the kicker and the first heading line, and it bobs there. As they scroll, it stays docked; once the
-  // card's real position reaches the dock it lets go and simply sits in place. Off under reduced motion.
+  // While the visitor is still above this section, the card is lifted to dock just above the hero ticker, showing only
+  // its top (kicker + first heading line), and bobs there. It stays docked while they scroll; once the card's real
+  // position reaches the dock it lets go and sits in place. The dock wrapper does the lifting and the (static) clipping,
+  // the card inside does the bobbing, so the slice always rises out of the same edge. Off under reduced motion.
+  const dock = document.getElementById('findDock');
   const card = document.getElementById('findCard');
   const TICKER = 43;
-  if (card && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (dock && card && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const h2 = card.querySelector('h2')!;
     let raf = 0;
     const update = () => {
       raf = 0;
-      // visible slice: down to just under the first heading line
       const firstLine = parseFloat(getComputedStyle(h2).lineHeight) || h2.offsetHeight / 2;
-      const visible = Math.round(h2.offsetTop + firstLine + 10);
+      const visible = Math.round(h2.offsetTop + firstLine + 10); // down to just under the first heading line
       const dockTop = innerHeight - TICKER - visible;
-      const wrap = card.parentElement!; // not transformed, so it gives the card's untransformed position
-      const naturalTop = wrap.getBoundingClientRect().top + card.offsetTop - wrap.offsetTop;
-      const lift = Math.min(0, dockTop - naturalTop);
-      card.style.setProperty('--lift', lift + 'px');
-      card.style.setProperty('--peek-v', visible + 'px');
+      const wrap = dock.parentElement!; // untransformed, so it gives the dock's natural position
+      const naturalTop = wrap.getBoundingClientRect().top + dock.offsetTop - wrap.offsetTop;
+      const lift = Math.min(0, Math.round(dockTop - naturalTop));
+      const docked = lift < 0;
+      dock.style.transform = docked ? `translateY(${lift}px)` : '';
+      dock.style.clipPath = docked ? `polygon(-40px -60px, calc(100% + 40px) -60px, calc(100% + 40px) ${visible}px, -40px ${visible}px)` : '';
+      dock.classList.toggle('docked', docked);
       document.documentElement.style.setProperty('--dock-h', visible + 4 + 'px');
-      card.classList.toggle('docked', lift < 0);
     };
     const request = () => { if (!raf) raf = requestAnimationFrame(update); };
     addEventListener('scroll', request, { passive: true });
@@ -72,9 +76,10 @@ const rows = [
     // the page grows after load (fonts, scroll-story track sizing), which moves the card without a scroll event
     new ResizeObserver(request).observe(document.body);
     addEventListener('load', request);
-    // tapping the docked tab scrolls down to the section
-    card.addEventListener('click', (e) => {
-      if (!card.classList.contains('docked') || (e.target as HTMLElement).closest('a')) return;
+    document.fonts?.ready.then(request);
+    // tapping the docked slice scrolls down to the section
+    dock.addEventListener('click', (e) => {
+      if (!dock.classList.contains('docked') || (e.target as HTMLElement).closest('a')) return;
       document.getElementById('find')?.scrollIntoView({ behavior: 'smooth' });
     });
   }
@@ -86,17 +91,11 @@ const rows = [
   .find-card { max-width: 640px; margin: 0 auto; text-align: center; background: var(--surface-100); border: 3px solid var(--line);
     box-shadow: 8px 8px 0 var(--line), 16px 16px 0 rgba(18, 18, 13, .18); padding: clamp(24px, 5vw, 44px); }
   .find-card h2 { margin-top: 8px; }
-  /* Docked: lifted up over the hero, clipped to its top slice, bobbing. The clip grows with each hop so the slice
-     always reaches the same bottom line (just above the ticker). */
-  .find-card { position: relative; z-index: 6; transform: translateY(var(--lift, 0px)); }
-  .find-card.docked { cursor: pointer; animation: card-bob 1.8s ease-in-out infinite;
-    clip-path: polygon(-24px -24px, calc(100% + 24px) -24px, calc(100% + 24px) var(--peek-v), -24px var(--peek-v)); }
-  @keyframes card-bob {
-    0%, 100% { translate: 0 0; clip-path: polygon(-24px -24px, calc(100% + 24px) -24px, calc(100% + 24px) var(--peek-v), -24px var(--peek-v)); }
-    40% { translate: 0 -16px; clip-path: polygon(-24px -24px, calc(100% + 24px) -24px, calc(100% + 24px) calc(var(--peek-v) + 16px), -24px calc(var(--peek-v) + 16px)); }
-    70% { translate: 0 2px; clip-path: polygon(-24px -24px, calc(100% + 24px) -24px, calc(100% + 24px) calc(var(--peek-v) - 2px), -24px calc(var(--peek-v) - 2px)); }
-  }
-  .spot { text-align: left; margin-top: 24px; padding-top: 20px; border-top: 3px solid var(--line); }
+  /* Docked (see script): the wrapper is lifted and clipped; the card bobs inside it, rising out of the clip edge. */
+  .find-dock { position: relative; z-index: 6; }
+  .find-dock.docked { cursor: pointer; }
+  .find-dock.docked .find-card { animation: card-bob 1.8s ease-in-out infinite; }
+  @keyframes card-bob { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-16px); } 70% { transform: translateY(2px); } }
   @media (max-width: 560px) { .find-card { box-shadow: 5px 5px 0 var(--line), 10px 10px 0 rgba(18, 18, 13, .18); } }
   .row { display: flex; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 2px dashed var(--line); }
   .row:last-of-type { border-bottom: 0; }
