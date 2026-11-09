@@ -1,0 +1,40 @@
+---
+import { pastEvents } from '../data/events';
+---
+<section id="past" class="past">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><div class="label kicker">Past events</div><h2>WHERE WE'VE BEEN</h2></div>
+      <p>A few of the spots and events the Hilux has rolled into.</p>
+    </div>
+    <div class="past-grid">
+      {pastEvents.map((e) => (
+        <article class="past-card">
+          {e.photo
+            ? <img src={e.photo} alt={e.name} loading="lazy" />
+            : <div class="photo-ph" aria-hidden="true"><span class="label">Photo soon</span></div>}
+          <div class="past-body">
+            <div class="label">{e.date}</div>
+            <h3>{e.name}</h3>
+            <p>{e.place}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .past { border-top: 3px solid var(--line); }
+  .past-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-6); }
+  .past-card { background: var(--surface-100); border: 3px solid var(--line); box-shadow: var(--shadow-px); }
+  .past-card img, .photo-ph { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-bottom: 3px solid var(--line); }
+  /* Pixel placeholder until real photos are added: chunky checker in the page colours. */
+  .photo-ph { display: grid; place-items: center;
+    background: repeating-conic-gradient(var(--surface-200) 0 25%, var(--surface-300) 0 50%) 0 0 / 24px 24px; }
+  .photo-ph span { background: var(--surface-100); border: 2px solid var(--line); padding: 6px 8px; font-size: 10px; }
+  .past-body { padding: 16px 18px 18px; }
+  .past-body .label { font-size: 10px; color: var(--ember-600); }
+  .past-body h3 { font: 700 17px/1.2 var(--font-body); margin-top: 6px; }
+  .past-body p { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+</style>

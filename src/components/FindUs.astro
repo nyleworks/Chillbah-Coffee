@@ -1,6 +1,7 @@
 ---
 import { site } from '../data/site';
 import RoadLane from './RoadLane.astro';
+import { hours } from '../data/events';
 const rows = [
   { icon: 'pin', title: 'Pin drops each morning', text: 'Check our socials before you head out.' },
   { icon: 'clock', title: 'Open till sold out', text: 'When the beans run out, we roll on.' },
@@ -22,6 +23,14 @@ const rows = [
             <div><b>{r.title}</b><span>{r.text}</span></div>
           </div>
         ))}
+      </div>
+      <div class="hours">
+        <div class="label hours-head">Opening hours <span>Placeholder</span></div>
+        <table>
+          <tbody>
+            {hours.map((h) => <tr><th scope="row">{h.day}</th><td>{h.time}</td></tr>)}
+          </tbody>
+        </table>
       </div>
       <div class="ctas">
         <a class="cb-btn cb-btn--alt" href={site.instagram}>Instagram</a>
@@ -46,5 +55,13 @@ const rows = [
   .row canvas { width: 32px; height: 32px; flex: none; }
   .row b { display: block; font: 700 16px/1.2 var(--font-body); }
   .row span { font-size: 14px; color: var(--muted); }
+  .hours { text-align: left; margin-top: 20px; padding-top: 18px; border-top: 3px solid var(--line); }
+  .hours-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .hours-head span { font-size: 10px; border: 2px solid var(--line); padding: 3px 5px; color: var(--muted); }
+  .hours table { width: 100%; border-collapse: collapse; }
+  .hours th, .hours td { padding: 9px 0; border-bottom: 2px dashed var(--line); font: 600 15px/1.2 var(--font-body); }
+  .hours tr:last-child :is(th, td) { border-bottom: 0; }
+  .hours th { text-align: left; }
+  .hours td { text-align: right; color: var(--muted); }
   .ctas { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 22px; }
 </style>

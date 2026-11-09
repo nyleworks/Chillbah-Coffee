@@ -1,4 +1,4 @@
-import { Grid, place } from './pixel';
+import { Grid } from './pixel';
 
 const INK = '#12120d';
 const CREAM = '#f4ebcd';
@@ -29,9 +29,6 @@ export const icons = {
   pin(c: string) { const g = Grid(8, 8); g.rect(2, 0, 4, 1, c); g.rect(1, 1, 6, 3, c); g.rect(2, 4, 4, 1, c); g.rect(3, 5, 2, 2, c); g.rect(3, 2, 2, 1, CREAM); return g; },
   clock(c: string) { const g = Grid(8, 8); g.disc(4, 4, 3, c); g.rect(4, 2, 1, 3, CREAM); g.set(5, 4, CREAM); return g; },
   truck(c: string) { const g = Grid(8, 8); g.rect(0, 2, 5, 3, c); g.rect(5, 3, 3, 2, c); g.set(6, 3, '#8ad8d8'); g.set(1, 6, '#2a2620'); g.set(6, 6, '#2a2620'); g.rect(0, 5, 8, 1, c); return g; },
-  bigpin() { const g = Grid(18, 18); g.disc(9, 6, 5, '#e66f46'); g.rect(7, 11, 4, 2, '#e66f46'); g.rect(8, 13, 2, 3, '#e66f46'); g.disc(9, 6, 2, CREAM); g.outline(INK); return g; },
-  bigcup() { return place(cup('hot', '#715542'), 18, 18, 1, 1); },
-  tree() { const t = pine(14, '#2b5615', '#4f7a2c'); t.outline(INK); return place(t, 18, 18, 2, 0); },
 };
 export type IconName = keyof typeof icons;
 

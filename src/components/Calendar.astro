@@ -1,0 +1,38 @@
+---
+// A pixel month calendar, filled in by scripts/calendar.ts (so it always opens on the visitor's current month).
+// mode "events": event days are marked and listed under the grid.
+// mode "booking": booked days are greyed out; tapping a free day selects it for the booking request.
+interface Props { mode: 'events' | 'booking'; data: unknown; label: string }
+const { mode, data, label } = Astro.props;
+---
+<div class="cal" data-calendar={mode} data-cal={JSON.stringify(data)}>
+  <div class="cal-head">
+    <button type="button" class="cal-nav" data-prev aria-label={`Previous month, ${label}`}>◀</button>
+    <div class="cal-month label" aria-live="polite"></div>
+    <button type="button" class="cal-nav" data-next aria-label={`Next month, ${label}`}>▶</button>
+  </div>
+  <div class="cal-grid" role="grid" aria-label={label}>
+    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => <div class="cal-dow label" aria-hidden="true">{d.slice(0, 2)}</div>)}
+  </div>
+</div>
+
+<style>
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cal-month { font-size: 14px; }
+  .cal-nav { width: 36px; height: 36px; border: 3px solid var(--line); background: var(--surface-200); color: var(--text); box-shadow: 3px 3px 0 var(--line); cursor: pointer; font-size: 12px; padding: 0; }
+  .cal-nav:active { transform: translate(3px, 3px); box-shadow: none; }
+  .cal-nav:focus-visible { outline: 3px dashed var(--forest); outline-offset: 3px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-dow { text-align: center; font-size: 10px; color: var(--muted); padding-bottom: 4px; }
+  .cal-grid :global(.cal-day) { aspect-ratio: 1; display: grid; place-items: center; position: relative; border: 2px solid var(--line); background: var(--surface-100);
+    font: 700 13px/1 var(--font-body); color: var(--text); padding: 0; }
+  .cal-grid :global(.cal-day.blank) { border-color: transparent; background: none; }
+  .cal-grid :global(.cal-day.today) { box-shadow: inset 0 0 0 2px var(--ember); }
+  .cal-grid :global(.cal-day.event) { background: var(--ember); color: var(--on-ember); }
+  .cal-grid :global(.cal-day.booked) { background: var(--surface-300); color: var(--muted); text-decoration: line-through; }
+  .cal-grid :global(.cal-day.past) { opacity: .45; }
+  .cal-grid :global(button.cal-day) { cursor: pointer; }
+  .cal-grid :global(button.cal-day:hover) { background: var(--surface-200); }
+  .cal-grid :global(button.cal-day:focus-visible) { outline: 3px dashed var(--forest); outline-offset: 1px; }
+  .cal-grid :global(.cal-day.selected), .cal-grid :global(button.cal-day.selected:hover) { background: var(--forest); color: var(--on-forest); }
+</style>

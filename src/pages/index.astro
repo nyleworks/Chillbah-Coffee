@@ -4,7 +4,8 @@ import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
 import Menu from '../components/Menu.astro';
 import FindUs from '../components/FindUs.astro';
-import Steps from '../components/Steps.astro';
+import Events from '../components/Events.astro';
+import PastEvents from '../components/PastEvents.astro';
 import Footer from '../components/Footer.astro';
 ---
 <Base>
@@ -12,8 +13,9 @@ import Footer from '../components/Footer.astro';
   <main id="top">
     <Hero />
     <FindUs />
+    <Events />
     <Menu />
-    <Steps />
+    <PastEvents />
   </main>
   <Footer />
 </Base>
@@ -23,6 +25,7 @@ import Footer from '../components/Footer.astro';
   import { drawArt, drawArtFaded, stopArtFade } from '../scripts/art';
   import { initThemeToggle, onThemeChange, isNight } from '../scripts/theme';
   import { initStory } from '../scripts/story';
+  import { initCalendars } from '../scripts/calendar';
   import Lenis from 'lenis';
   import 'lenis/dist/lenis.css';
 
@@ -36,6 +39,7 @@ import Footer from '../components/Footer.astro';
   let artTimer = 0;
   addEventListener('resize', () => { clearTimeout(artTimer); artTimer = window.setTimeout(() => { stopArtFade(); drawArt(); }, 120); });
   initStory();
+  initCalendars();
   // Smooth, eased scrolling for mouse wheels and anchor links (touch keeps the native feel). Off under reduced motion.
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const lenis = new Lenis({ lerp: 0.08, wheelMultiplier: 0.9, anchors: { offset: -72 } });

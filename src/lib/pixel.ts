@@ -45,10 +45,3 @@ export function paint(cv: HTMLCanvasElement, g: Grid) {
   ctx.clearRect(0, 0, cv.width, cv.height);
   g.draw(ctx);
 }
-
-/** Copy one grid into a bigger one at an offset. */
-export function place(src: Grid, w: number, h: number, ox: number, oy: number): Grid {
-  const g = Grid(w, h);
-  src.p.forEach((v, i) => v && g.set(ox + (i % src.w), oy + ((i / src.w) | 0), v));
-  return g;
-}
