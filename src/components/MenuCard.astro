@@ -1,11 +1,14 @@
 ---
 import type { MenuItem } from '../data/menu';
+import { FOOD_KINDS } from '../lib/sprites';
 interface Props { item: MenuItem }
 const { item } = Astro.props;
+const isFood = (FOOD_KINDS as readonly string[]).includes(item.icon);
 ---
 <article class="cb-card">
   {item.hot && <span class="cb-hot"><canvas data-flame width="9" height="11" aria-hidden="true"></canvas>Hot</span>}
-  <canvas class="cb-card__icon" data-cup={item.icon} data-liquid={item.liquid} width="16" height="16" aria-hidden="true"></canvas>
+  <canvas class="cb-card__icon" data-cup={isFood ? undefined : item.icon} data-food={isFood ? item.icon : undefined} data-liquid={item.liquid} width="16" height="16" aria-hidden="true"></canvas>
   <h3>{item.name}</h3>
+  {item.note && <small class="cb-card__note">{item.note}</small>}
   <b class="cb-card__price">{item.price}</b>
 </article>

@@ -1,17 +1,18 @@
-import type { CupKind } from '../lib/sprites';
+import type { CupKind, FoodKind } from '../lib/sprites';
 
 export interface MenuItem {
   name: string;
   price: string; // formatted "RM 12"
-  icon: CupKind; // pixel cup sprite (src/lib/sprites.ts)
-  liquid?: string; // drink colour inside the sprite
+  icon: CupKind | FoodKind; // pixel sprite (src/lib/sprites.ts)
+  liquid?: string; // drink colour inside a cup, or the topping/patty colour of a snack
+  note?: string; // small line under the name ("per stick", "200 g each")
   hot?: boolean; // shows the HOT badge (best sellers)
 }
 
 export interface MenuPage { title: string; items: MenuItem[] }
 
 // Edit the menu here (from Chillbah's menu board, 2026-11-10). All drinks are served iced.
-// Drinks come in pages (the menu section shows one page at a time, 4 across); snacks are still to come.
+// Drinks and snacks come in pages (the menu section shows one page at a time, 4 across).
 export const drinks: MenuPage[] = [
   {
     title: 'Coffee',
@@ -50,4 +51,35 @@ export const drinks: MenuPage[] = [
   },
 ];
 
-export const snacks: MenuItem[] = [];
+// Snacks, from Chillbah's grill menu board (2026-11-10).
+export const snacks: MenuPage[] = [
+  {
+    title: 'Burgers',
+    items: [
+      { name: 'Ayam Burger', price: 'RM 10', icon: 'burger', liquid: '#c98a4a' },
+      { name: 'Beef Burger', price: 'RM 10', icon: 'burger', liquid: '#5a3a26' },
+      { name: 'Kerbau Burger', price: 'RM 10', icon: 'burger', liquid: '#4a2a1e' },
+      { name: 'Burger + Fries', price: 'RM 18', icon: 'fries', note: 'Any grill burger' },
+      { name: 'Bagel Ayam Burger', price: 'RM 13', icon: 'bagel', liquid: '#c98a4a' },
+      { name: 'Bagel Beef Burger', price: 'RM 17', icon: 'bagel', liquid: '#5a3a26' },
+      { name: 'Bagel Kerbau Burger', price: 'RM 19', icon: 'bagel', liquid: '#4a2a1e' },
+      { name: 'Burger + Fries + Drink', price: 'RM 21', icon: 'fries', note: 'Any grill burger' },
+      { name: 'Add Fries', price: '+RM 2', icon: 'fries', note: 'With a bagel burger' },
+      { name: 'Add Drink', price: '+RM 2', icon: 'iced', liquid: '#3b2416', note: 'With a bagel burger' },
+    ],
+  },
+  {
+    title: 'Grill & bites',
+    items: [
+      { name: 'Classic Hotdog Bun', price: 'RM 7', icon: 'hotdog' },
+      { name: 'Chilli Cheese Hotdog Bun', price: 'RM 9', icon: 'hotdog', liquid: '#6fae3a' },
+      { name: 'Loaded Hotdog Bun', price: 'RM 11', icon: 'hotdog', liquid: '#d9452f' },
+      { name: 'Lamb Grill', price: 'RM 25', icon: 'lamb', note: '200 g each' },
+      { name: 'Roti John Ayam', price: 'RM 8.90', icon: 'rotijohn', liquid: '#e8c060' },
+      { name: 'Roti John Beef', price: 'RM 9.90', icon: 'rotijohn', liquid: '#8a4a2a' },
+      { name: 'Roti John Loaded', price: 'RM 13.90', icon: 'rotijohn', liquid: '#c0503a' },
+      { name: 'Bakso Sate', price: 'RM 3', icon: 'sate', note: 'Per stick' },
+      { name: 'Cheese Sausage', price: 'RM 5', icon: 'sausage' },
+    ],
+  },
+];

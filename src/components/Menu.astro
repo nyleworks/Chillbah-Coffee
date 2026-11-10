@@ -2,8 +2,9 @@
 import MenuCard from './MenuCard.astro';
 import RoadLane from './RoadLane.astro';
 import { drinks, snacks } from '../data/menu';
-// The other page's name, shown on both arrows (two pages, so either arrow goes there).
-const other = (i: number) => drinks[(i + 1) % drinks.length].title;
+const panels = [{ id: 'drinks', pages: drinks }, { id: 'snacks', pages: snacks }];
+// The other page's name, shown on both arrows (two pages per tab, so either arrow goes there).
+const other = (pages: typeof drinks, i: number) => pages[(i + 1) % pages.length].title;
 ---
 <div class="pin-track">
 <section id="menu">
@@ -17,47 +18,39 @@ const other = (i: number) => drinks[(i + 1) % drinks.length].title;
       <button class="cb-btn cb-btn--ghost" role="tab" id="tab-snacks" aria-controls="panel-snacks" aria-selected="false" data-tab="snacks" tabindex="-1">Snacks</button>
     </div>
 
-    <!-- Drinks: one page at a time (Coffee, Non-coffee), 4 across, filled row by row. The arrows either side flip the page
-         and are tagged with the page they lead to. -->
-    <div class="menu-panel drinks" id="panel-drinks" role="tabpanel" aria-labelledby="tab-drinks" data-pager data-page="0">
-      <div class="side prev">
-        <button class="arrow" data-step="-1" aria-label={`Show ${other(0)}`}><span class="chev" aria-hidden="true"></span></button>
-        <span class="tag label" aria-hidden="true" data-other>{other(0)}</span>
-      </div>
-      <div class="pages-view">
-        <div class="pages">
-          {drinks.map((page, i) => (
-            <div class="page" data-leads-to={other(i)} aria-hidden={i === 0 ? undefined : 'true'} inert={i === 0 ? undefined : true}>
-              <h3 class="label page-title">{page.title}</h3>
-              <div class="menu-grid">
-                {page.items.map((item) => <MenuCard item={item} />)}
+    <!-- Each tab shows one page at a time (Drinks: Coffee, Non-coffee; Snacks: Burgers, Grill & bites), 4 across, filled
+         row by row. The arrows either side flip the page and are tagged with the page they lead to. -->
+    {panels.map((panel, k) => (
+      <div class="menu-panel" id={`panel-${panel.id}`} role="tabpanel" aria-labelledby={`tab-${panel.id}`} data-pager data-page="0" hidden={k > 0}>
+        <div class="side prev">
+          <button class="arrow" data-step="-1" aria-label={`Show ${other(panel.pages, 0)}`}><span class="chev" aria-hidden="true"></span></button>
+          <span class="tag label" aria-hidden="true" data-other>{other(panel.pages, 0)}</span>
+        </div>
+        <div class="pages-view">
+          <div class="pages">
+            {panel.pages.map((page, i) => (
+              <div class="page" data-leads-to={other(panel.pages, i)} aria-hidden={i === 0 ? undefined : 'true'} inert={i === 0 ? undefined : true}>
+                <h3 class="label page-title">{page.title}</h3>
+                <div class="menu-grid">
+                  {page.items.map((item) => <MenuCard item={item} />)}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+        <div class="side next">
+          <button class="arrow" data-step="1" aria-label={`Show ${other(panel.pages, 0)}`}><span class="chev" aria-hidden="true"></span></button>
+          <span class="tag label" aria-hidden="true" data-other>{other(panel.pages, 0)}</span>
         </div>
       </div>
-      <div class="side next">
-        <button class="arrow" data-step="1" aria-label={`Show ${other(0)}`}><span class="chev" aria-hidden="true"></span></button>
-        <span class="tag label" aria-hidden="true" data-other>{other(0)}</span>
-      </div>
-    </div>
-
-    <!-- Snacks: empty cards for now. Add items to `snacks` in src/data/menu.ts. -->
-    <div class="menu-panel snacks" id="panel-snacks" role="tabpanel" aria-labelledby="tab-snacks" hidden>
-      <h3 class="label page-title">Snacks</h3>
-      <div class="menu-grid">
-        {snacks.length
-          ? snacks.map((item) => <MenuCard item={item} />)
-          : Array.from({ length: 4 }, () => <div class="empty-card"><span class="label">Coming soon</span></div>)}
-      </div>
-    </div>
+    ))}
   </div>
   <RoadLane dir="ltr" scenery="town" road="asphalt" />
 </section>
 </div>
 
 <script>
-  // Drinks / Snacks tabs, and the page flip between Coffee and Non-coffee (arrows, arrow keys, or a sideways swipe).
+  // Drinks / Snacks tabs, and each tab's page flip (Coffee / Non-coffee, Burgers / Grill & bites) (arrows, arrow keys, or a sideways swipe).
   const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.menu-tabs [role="tab"]'));
   const showTab = (name: string) => {
     for (const t of tabs) {
@@ -78,8 +71,7 @@ const other = (i: number) => drinks[(i + 1) % drinks.length].title;
     });
   });
 
-  const pager = document.querySelector<HTMLElement>('[data-pager]');
-  if (pager) {
+  document.querySelectorAll<HTMLElement>('[data-pager]').forEach((pager) => {
     const pages = Array.from(pager.querySelectorAll<HTMLElement>('.page'));
     const go = (i: number) => {
       const n = (i + pages.length) % pages.length;
@@ -106,7 +98,7 @@ const other = (i: number) => drinks[(i + 1) % drinks.length].title;
       const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
       if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(cur() + (dx < 0 ? 1 : -1));
     }, { passive: true });
-  }
+  });
 </script>
 
 <style>
@@ -117,8 +109,8 @@ const other = (i: number) => drinks[(i + 1) % drinks.length].title;
   .menu-tabs .cb-btn { min-width: 132px; }
 
   /* Pager: arrow column | sliding pages | arrow column. */
-  .drinks { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; gap: 12px; --page: 0; }
-  .drinks[hidden], .snacks[hidden] { display: none; }
+  .menu-panel { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; gap: 12px; --page: 0; }
+  .menu-panel[hidden] { display: none; }
   .side { position: relative; }
   /* The arrow and its tag stay in view while a long page scrolls past. */
   .side > * { position: sticky; }
@@ -148,17 +140,12 @@ const other = (i: number) => drinks[(i + 1) % drinks.length].title;
   /* 4 across, filled row by row. */
   .menu-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
 
-  .snacks { max-width: calc(100% - 136px); margin: 0 auto; }
-  .empty-card { min-height: 190px; display: grid; place-items: center; border: 3px dashed var(--line); background: var(--surface-200); color: var(--muted); opacity: .75; }
-  .empty-card .label { font-size: 10px; }
 
   /* Phones: two across (still row by row), slimmer arrow columns. */
   @media (max-width: 640px) {
-    .drinks { grid-template-columns: 40px minmax(0, 1fr) 40px; gap: 8px; }
+    .menu-panel { grid-template-columns: 40px minmax(0, 1fr) 40px; gap: 8px; }
     .side .arrow { width: 38px; height: 38px; margin-top: 60px; }
     .side .tag { font-size: 9px; top: calc(45vh + 48px); }
     .menu-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
-    .snacks { max-width: none; }
-    .empty-card { min-height: 160px; }
   }
 </style>
