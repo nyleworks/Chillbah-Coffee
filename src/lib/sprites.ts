@@ -10,7 +10,7 @@ export function pine(h: number, c1: string, c2: string): Grid {
   return g;
 }
 
-export type CupKind = 'hot' | 'iced' | 'tall' | 'cream' | 'croffle';
+export type CupKind = 'hot' | 'iced' | 'tall' | 'cream';
 
 /** 16×16 menu icons. */
 export function cup(kind: CupKind, liquid: string | null = null): Grid {
@@ -19,7 +19,16 @@ export function cup(kind: CupKind, liquid: string | null = null): Grid {
   if (kind === 'iced') { g.rect(4, 4, 8, 11, '#d7f0ee'); g.rect(5, 7, 6, 8, liquid); g.rect(5, 8, 2, 2, W); g.rect(8, 10, 2, 2, W); g.rect(9, 1, 1, 6, '#e66f46'); g.rect(10, 1, 2, 1, '#e66f46'); g.rect(3, 3, 10, 1, C); }
   if (kind === 'tall') { g.rect(4, 4, 8, 11, C); g.rect(4, 7, 8, 4, '#2b5615'); g.rect(3, 2, 10, 2, '#715542'); g.rect(7, 8, 2, 2, C); }
   if (kind === 'cream') { g.rect(4, 7, 8, 8, liquid); g.disc(8, 6, 3, W); g.set(8, 2, '#c8442a'); g.rect(3, 6, 10, 1, W); }
-  if (kind === 'croffle') { g.rect(2, 7, 12, 6, '#d9a441'); for (let x = 3; x < 13; x += 3) g.rect(x, 7, 1, 6, '#a8742a'); g.rect(2, 9, 12, 1, '#a8742a'); g.rect(5, 5, 6, 2, W); g.set(8, 4, '#c8442a'); }
+  g.outline(INK);
+  return g;
+}
+
+/** HOT badge flame, 9×11 (7×9 flame plus its outline): yellow core in an orange flame. */
+export function flame(): Grid {
+  const g = Grid(9, 11), O = '#f08a2e', Y = '#ffd34d';
+  const r = (x: number, y: number, w: number, h: number, c: string) => g.rect(x + 1, y + 1, w, h, c);
+  r(3, 0, 1, 1, O); r(2, 1, 2, 1, O); r(5, 1, 1, 1, O); r(2, 2, 4, 1, O); r(1, 3, 5, 2, O); r(0, 5, 7, 3, O); r(1, 8, 5, 1, O);
+  r(3, 4, 1, 1, Y); r(2, 5, 3, 3, Y);
   g.outline(INK);
   return g;
 }

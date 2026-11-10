@@ -1,6 +1,6 @@
 // Paints every pixel sprite on the page: menu icons, logo, header button icons, lane scenery, footer grass.
 import { paint } from '../lib/pixel';
-import { cup, themeIcon, motionIcon, type CupKind } from '../lib/sprites';
+import { cup, flame, themeIcon, motionIcon, type CupKind } from '../lib/sprites';
 import { isNight } from './theme';
 import { drawTown, drawVillage, drawWedding, drawCamp, setFlicker } from '../lib/scenery';
 import { reduceMotion } from '../lib/motion';
@@ -10,6 +10,8 @@ const SCENES = { town: drawTown, village: drawVillage, wedding: drawWedding, cam
 export function drawArt() {
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-cup]').forEach((cv) =>
     paint(cv, cup(cv.dataset.cup as CupKind, cv.dataset.liquid || null)));
+  const fl = flame();
+  document.querySelectorAll<HTMLCanvasElement>('canvas[data-flame]').forEach((cv) => paint(cv, fl));
 
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-theme-icon]').forEach((cv) => paint(cv, themeIcon(isNight())));
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-motion-icon]').forEach((cv) => paint(cv, motionIcon(reduceMotion(), isNight() ? '#fff6dc' : '#2a2620')));

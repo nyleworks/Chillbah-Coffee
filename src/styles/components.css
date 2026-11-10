@@ -8,14 +8,17 @@
 .cb-btn--alt { background: var(--forest); color: var(--on-forest); }
 .cb-btn--ghost { background: var(--surface-100); color: var(--text); }
 
-.cb-card { background: var(--surface-200); border: 3px solid var(--line); box-shadow: var(--shadow-px); padding: 20px; display: grid; grid-template-columns: 64px 1fr; gap: 16px; align-items: center; color: var(--text); }
+.cb-card { position: relative; background: var(--surface-200); border: 3px solid var(--line); box-shadow: var(--shadow-px); padding: 20px 12px 16px;
+  display: grid; justify-items: center; align-content: start; gap: 10px; text-align: center; color: var(--text); }
 .cb-card__icon { width: 64px; height: 64px; background: var(--surface-300); border: 2px solid var(--line); }
-.cb-card h3 { margin: 0; font: 700 18px/1.2 var(--font-body); }
-.cb-card p { margin: 4px 0 0; font: 500 14px/1.45 var(--font-body); color: var(--muted); }
-.cb-card__foot { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; border-top: 2px dashed var(--line); padding-top: 12px; }
-.cb-card__price { font: 700 18px/1 var(--font-pixel); color: var(--forest); }
+.cb-card h3 { margin: 0; font: 700 15px/1.25 var(--font-body); }
+.cb-card__price { margin-top: auto; font: 700 18px/1 var(--font-pixel); color: var(--ember-600); }
+/* HOT badge: a pixel flame and "HOT" on an ember sticker, tipped over the card's top-left corner. */
+.cb-hot { position: absolute; top: -12px; left: -10px; z-index: 1; display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px 4px 5px;
+  background: var(--ember); color: #fff6dc; border: 2px solid var(--line); box-shadow: 2px 2px 0 var(--line); transform: rotate(-6deg);
+  font: 700 11px/1 var(--font-pixel); letter-spacing: .08em; text-transform: uppercase; }
+.cb-hot canvas { width: 14px; height: 17px; image-rendering: pixelated; }
 
-.cb-tag { display: inline-block; font: 400 11px/1 var(--font-pixel); text-transform: uppercase; padding: 4px 6px; border: 2px solid var(--line); background: var(--surface-100); color: var(--text); }
 
 /* Click animation (scripts/press.ts adds .is-pressed): squash down, then pop back with a small overshoot, in pixel steps. */
 .is-pressed { animation: cb-press .32s steps(4, end); }

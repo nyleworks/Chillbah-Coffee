@@ -9,9 +9,14 @@ import { menu } from '../data/menu';
     <div class="sec-head">
       <div><div class="label kicker">The menu</div><h2>FROM THE TRAY</h2></div>
     </div>
-    <div class="menu-grid">
-      {menu.map((item) => <MenuCard item={item} />)}
-    </div>
+    {menu.map((group) => (
+      <div class="menu-group">
+        <h3 class="label group-title">{group.title}</h3>
+        <div class="menu-grid">
+          {group.items.map((item) => <MenuCard item={item} />)}
+        </div>
+      </div>
+    ))}
   </div>
   <RoadLane dir="ltr" scenery="town" road="asphalt" />
 </section>
@@ -20,5 +25,10 @@ import { menu } from '../data/menu';
 <style>
   #menu { padding-bottom: 0; }
   #menu :global(.lane) { margin-top: 56px; }
-  .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-6); }
+  .menu-group + .menu-group { margin-top: 36px; }
+  /* Category heading: pixel label with a dashed rule running to the edge. */
+  .group-title { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; font-size: 13px; color: var(--ember-600); }
+  .group-title::after { content: ""; flex: 1; border-top: 2px dashed var(--line); }
+  .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 20px; }
+  @media (max-width: 420px) { .menu-grid { grid-template-columns: 1fr 1fr; gap: 14px; } }
 </style>

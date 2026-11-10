@@ -4,7 +4,8 @@ interface Props { item: MenuItem }
 const { item } = Astro.props;
 ---
 <article class="cb-card">
+  {item.hot && <span class="cb-hot"><canvas data-flame width="9" height="11" aria-hidden="true"></canvas>Hot</span>}
   <canvas class="cb-card__icon" data-cup={item.icon} data-liquid={item.liquid} width="16" height="16" aria-hidden="true"></canvas>
-  <div><h3>{item.name}</h3><p>{item.description}</p></div>
-  <div class="cb-card__foot"><span class="cb-tag">{item.serve}</span><b class="cb-card__price">{item.price}</b></div>
+  <h3>{item.name}</h3>
+  <b class="cb-card__price">{item.price}</b>
 </article>
