@@ -109,7 +109,9 @@ import { hours } from '../data/events';
   .find-card h2 { margin-top: 8px; }
   /* Docked (see script): the peek wrapper is fixed to the screen and clipped; the card bobs inside it, rising out of the clip edge. */
   .find-dock { position: relative; z-index: 6; }
-  .find-peek { z-index: 6; }
+  /* The peek box is as wide as the page, but only the card itself should catch taps (the hero's Change scene button sits beside it). */
+  .find-peek { z-index: 6; pointer-events: none; }
+  .find-card { pointer-events: auto; }
   .find-dock.docked { cursor: pointer; }
   .find-dock.docked .find-card { animation: card-bob 1.8s ease-in-out infinite; }
   .find-dock.gliding .find-card { animation: none; }
