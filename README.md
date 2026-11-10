@@ -22,7 +22,7 @@ npm run check    # checks the code for mistakes (types, missing imports) without
 | What | File |
 | --- | --- |
 | Opening hours and events (upcoming and past) | `src/data/events.ts` |
-| Menu drinks, prices and HOT badges | `src/data/menu.ts` |
+| Menu drinks (Coffee / Non-coffee pages), snacks, prices and HOT badges | `src/data/menu.ts` |
 | Instagram / WhatsApp links, page title, ticker words | `src/data/site.ts` |
 | Colours, fonts, spacing | `src/styles/tokens.css` |
 | Buttons, menu card, HOT badge | `src/styles/components.css` |

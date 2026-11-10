@@ -8,10 +8,11 @@ export interface MenuItem {
   hot?: boolean; // shows the HOT badge (best sellers)
 }
 
-export interface MenuGroup { title: string; items: MenuItem[] }
+export interface MenuPage { title: string; items: MenuItem[] }
 
 // Edit the menu here (from Chillbah's menu board, 2026-11-10). All drinks are served iced.
-export const menu: MenuGroup[] = [
+// Drinks come in pages (the menu section shows one page at a time, 4 across); snacks are still to come.
+export const drinks: MenuPage[] = [
   {
     title: 'Coffee',
     items: [
@@ -30,31 +31,17 @@ export const menu: MenuGroup[] = [
     ],
   },
   {
-    title: 'Chocolate',
+    title: 'Non-coffee',
     items: [
+      // chocolate, tea, ade, matcha
       { name: 'Iced Chocolate', price: 'RM 12', icon: 'iced', liquid: '#5a3a26' },
       { name: 'Iced Choco Strawberry', price: 'RM 14', icon: 'iced', liquid: '#7a3b3b' },
-    ],
-  },
-  {
-    title: 'Tea',
-    items: [
       { name: 'Thai Mix Tea', price: 'RM 8', icon: 'iced', liquid: '#e08a3c', hot: true },
       { name: 'Thai Green Tea', price: 'RM 8', icon: 'iced', liquid: '#a8c95a', hot: true },
-    ],
-  },
-  {
-    title: 'Ade',
-    items: [
       { name: 'Passionfruit Ade', price: 'RM 8', icon: 'iced', liquid: '#f2c14e', hot: true },
       { name: 'Strawberry Ade', price: 'RM 8', icon: 'iced', liquid: '#e0566b', hot: true },
       { name: 'Honey Lemon Ade', price: 'RM 8', icon: 'iced', liquid: '#f1d77a', hot: true },
       { name: 'Mango Ade', price: 'RM 8', icon: 'iced', liquid: '#f2a93b', hot: true },
-    ],
-  },
-  {
-    title: 'Matcha',
-    items: [
       { name: 'Matcha Latte', price: 'RM 14', icon: 'tall' },
       { name: 'Matcha Strawberry', price: 'RM 16', icon: 'tall' },
       { name: 'Matcha Mango', price: 'RM 16', icon: 'tall' },
@@ -62,3 +49,5 @@ export const menu: MenuGroup[] = [
     ],
   },
 ];
+
+export const snacks: MenuItem[] = [];

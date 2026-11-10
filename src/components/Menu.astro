@@ -1,7 +1,9 @@
 ---
 import MenuCard from './MenuCard.astro';
 import RoadLane from './RoadLane.astro';
-import { menu } from '../data/menu';
+import { drinks, snacks } from '../data/menu';
+// The other page's name, shown on both arrows (two pages, so either arrow goes there).
+const other = (i: number) => drinks[(i + 1) % drinks.length].title;
 ---
 <div class="pin-track">
 <section id="menu">
@@ -9,26 +11,154 @@ import { menu } from '../data/menu';
     <div class="sec-head">
       <div><div class="label kicker">The menu</div><h2>FROM THE TRAY</h2></div>
     </div>
-    {menu.map((group) => (
-      <div class="menu-group">
-        <h3 class="label group-title">{group.title}</h3>
-        <div class="menu-grid">
-          {group.items.map((item) => <MenuCard item={item} />)}
+
+    <div class="menu-tabs" role="tablist" aria-label="Menu">
+      <button class="cb-btn" role="tab" id="tab-drinks" aria-controls="panel-drinks" aria-selected="true" data-tab="drinks">Drinks</button>
+      <button class="cb-btn cb-btn--ghost" role="tab" id="tab-snacks" aria-controls="panel-snacks" aria-selected="false" data-tab="snacks" tabindex="-1">Snacks</button>
+    </div>
+
+    <!-- Drinks: one page at a time (Coffee, Non-coffee), 4 across, filled row by row. The arrows either side flip the page
+         and are tagged with the page they lead to. -->
+    <div class="menu-panel drinks" id="panel-drinks" role="tabpanel" aria-labelledby="tab-drinks" data-pager data-page="0">
+      <div class="side prev">
+        <button class="arrow" data-step="-1" aria-label={`Show ${other(0)}`}><span class="chev" aria-hidden="true"></span></button>
+        <span class="tag label" aria-hidden="true" data-other>{other(0)}</span>
+      </div>
+      <div class="pages-view">
+        <div class="pages">
+          {drinks.map((page, i) => (
+            <div class="page" data-leads-to={other(i)} aria-hidden={i === 0 ? undefined : 'true'} inert={i === 0 ? undefined : true}>
+              <h3 class="label page-title">{page.title}</h3>
+              <div class="menu-grid">
+                {page.items.map((item) => <MenuCard item={item} />)}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-    ))}
+      <div class="side next">
+        <button class="arrow" data-step="1" aria-label={`Show ${other(0)}`}><span class="chev" aria-hidden="true"></span></button>
+        <span class="tag label" aria-hidden="true" data-other>{other(0)}</span>
+      </div>
+    </div>
+
+    <!-- Snacks: empty cards for now. Add items to `snacks` in src/data/menu.ts. -->
+    <div class="menu-panel snacks" id="panel-snacks" role="tabpanel" aria-labelledby="tab-snacks" hidden>
+      <h3 class="label page-title">Snacks</h3>
+      <div class="menu-grid">
+        {snacks.length
+          ? snacks.map((item) => <MenuCard item={item} />)
+          : Array.from({ length: 4 }, () => <div class="empty-card"><span class="label">Coming soon</span></div>)}
+      </div>
+    </div>
   </div>
   <RoadLane dir="ltr" scenery="town" road="asphalt" />
 </section>
 </div>
 
+<script>
+  // Drinks / Snacks tabs, and the page flip between Coffee and Non-coffee (arrows, arrow keys, or a sideways swipe).
+  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.menu-tabs [role="tab"]'));
+  const showTab = (name: string) => {
+    for (const t of tabs) {
+      const on = t.dataset.tab === name;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      t.classList.toggle('cb-btn--ghost', !on);
+      const panel = document.getElementById(t.getAttribute('aria-controls')!);
+      if (panel) panel.hidden = !on;
+    }
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => showTab(t.dataset.tab!));
+    t.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+      n.focus(); showTab(n.dataset.tab!);
+    });
+  });
+
+  const pager = document.querySelector<HTMLElement>('[data-pager]');
+  if (pager) {
+    const pages = Array.from(pager.querySelectorAll<HTMLElement>('.page'));
+    const go = (i: number) => {
+      const n = (i + pages.length) % pages.length;
+      pager.dataset.page = String(n);
+      pager.style.setProperty('--page', String(n));
+      pages.forEach((p, j) => { p.toggleAttribute('inert', j !== n); p.setAttribute('aria-hidden', String(j !== n)); });
+      const other = pages[n].dataset.leadsTo ?? '';
+      pager.querySelectorAll('[data-other]').forEach((el) => (el.textContent = other));
+      pager.querySelectorAll('.arrow').forEach((b) => b.setAttribute('aria-label', `Show ${other}`));
+      // after a flip on a long (phone) page, bring the page's top back into view
+      const top = pager.getBoundingClientRect().top;
+      if (top < 100) scrollBy({ top: top - 130, behavior: 'instant' as ScrollBehavior }); // under the sticky header
+    };
+    const cur = () => Number(pager.dataset.page) || 0;
+    pager.querySelectorAll<HTMLButtonElement>('.arrow').forEach((b) => b.addEventListener('click', () => go(cur() + Number(b.dataset.step))));
+    pager.addEventListener('keydown', (e) => {
+      if ((e.target as HTMLElement).closest('.arrow') && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) go(cur() + (e.key === 'ArrowRight' ? 1 : -1));
+    });
+    // sideways swipe on touch screens
+    let sx = 0, sy = 0;
+    const view = pager.querySelector<HTMLElement>('.pages-view')!;
+    view.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+    view.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(cur() + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+  }
+</script>
+
 <style>
   #menu { padding-bottom: 0; }
   #menu :global(.lane) { margin-top: 56px; }
-  .menu-group + .menu-group { margin-top: 36px; }
-  /* Category heading: pixel label with a dashed rule running to the edge. */
-  .group-title { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; font-size: 13px; color: var(--ember-600); }
-  .group-title::after { content: ""; flex: 1; border-top: 2px dashed var(--line); }
-  .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 20px; }
-  @media (max-width: 420px) { .menu-grid { grid-template-columns: 1fr 1fr; gap: 14px; } }
+
+  .menu-tabs { display: flex; justify-content: center; gap: 14px; margin-bottom: 28px; }
+  .menu-tabs .cb-btn { min-width: 132px; }
+
+  /* Pager: arrow column | sliding pages | arrow column. */
+  .drinks { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; gap: 12px; --page: 0; }
+  .drinks[hidden], .snacks[hidden] { display: none; }
+  .side { position: relative; }
+  /* The arrow and its tag stay in view while a long page scrolls past. */
+  .side > * { position: sticky; }
+  .side { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .side .arrow { top: 45vh; }
+  .side .arrow { margin-top: 140px; width: 48px; height: 48px; display: grid; place-items: center; padding: 0; cursor: pointer;
+    background: var(--surface-100); color: var(--text); border: 3px solid var(--line); box-shadow: var(--shadow-px); }
+  .side .arrow:hover { background: var(--ember); color: #fff6dc; }
+  .side .arrow:active { transform: translate(3px, 3px); box-shadow: none; }
+  .side .arrow:focus-visible { outline: 3px solid var(--ember); outline-offset: 3px; }
+  /* Pixel chevron: a stepped triangle in the button's text colour. */
+  .chev { width: 14px; height: 20px; background: currentColor;
+    clip-path: polygon(0 0, 29% 0, 29% 10%, 43% 10%, 43% 20%, 57% 20%, 57% 30%, 71% 30%, 71% 40%, 100% 40%, 100% 60%, 71% 60%, 71% 70%, 57% 70%, 57% 80%, 43% 80%, 43% 90%, 29% 90%, 29% 100%, 0 100%); }
+  .prev .chev { transform: scaleX(-1); }
+  /* Tag under each arrow: the page it leads to, written down the side. */
+  .side .tag { top: calc(45vh + 60px); writing-mode: vertical-rl; font-size: 11px; letter-spacing: .14em; color: var(--ember-600); padding: 8px 4px;
+    border: 2px solid var(--line); background: var(--surface-200); }
+  .prev .tag { transform: rotate(180deg); }
+
+  .pages-view { overflow: hidden; margin: -14px -10px -10px; }
+  .pages { display: flex; transform: translateX(calc(var(--page) * -100%)); transition: transform .45s steps(9, end); }
+  .page { flex: 0 0 100%; min-width: 0; padding: 14px 10px 10px; } /* room for the HOT stickers and card shadows */
+  html[data-motion="reduce"] .pages { transition: none; }
+
+  .page-title { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; font-size: 13px; color: var(--ember-600); }
+  .page-title::after { content: ""; flex: 1; border-top: 2px dashed var(--line); }
+  /* 4 across, filled row by row. */
+  .menu-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+
+  .snacks { max-width: calc(100% - 136px); margin: 0 auto; }
+  .empty-card { min-height: 190px; display: grid; place-items: center; border: 3px dashed var(--line); background: var(--surface-200); color: var(--muted); opacity: .75; }
+  .empty-card .label { font-size: 10px; }
+
+  /* Phones: two across (still row by row), slimmer arrow columns. */
+  @media (max-width: 640px) {
+    .drinks { grid-template-columns: 40px minmax(0, 1fr) 40px; gap: 8px; }
+    .side .arrow { width: 38px; height: 38px; margin-top: 60px; }
+    .side .tag { font-size: 9px; top: calc(45vh + 48px); }
+    .menu-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+    .snacks { max-width: none; }
+    .empty-card { min-height: 160px; }
+  }
 </style>
