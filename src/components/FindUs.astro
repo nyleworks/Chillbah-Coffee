@@ -2,30 +2,16 @@
 import { site } from '../data/site';
 import RoadLane from './RoadLane.astro';
 import { hours } from '../data/events';
-const rows = [
-  { icon: 'pin', title: 'Pin drops each morning', text: 'Check our socials before you head out.' },
-  { icon: 'clock', title: 'Open till sold out', text: 'When the beans run out, we roll on.' },
-  { icon: 'truck', title: 'Look for the white Hilux', text: 'Black side awning over the tray.' },
-];
 ---
 <div class="pin-track">
 <section id="find" class="find">
   <div class="wrap">
-    <!-- One floating card, centred: heading, intro, today's spot and the social links together. -->
+    <!-- One floating card, centred: heading, opening hours and the social links together. -->
     <div class="find-dock" id="findDock">
       <div class="find-peek" id="findPeek">
       <div class="find-card" id="findCard">
         <div class="label kicker">Where we at</div>
         <h2>WE MOVE.<br />YOU FOLLOW.</h2>
-        <div class="spot">
-          <div class="cb-tag cb-tag--live">Today's spot</div>
-          {rows.map((r) => (
-            <div class="row">
-              <canvas data-icon={r.icon} width="8" height="8" aria-hidden="true"></canvas>
-              <div><b>{r.title}</b><span>{r.text}</span></div>
-            </div>
-          ))}
-        </div>
         <div class="hours">
           <div class="label hours-head">Opening hours</div>
           <table>
@@ -108,7 +94,6 @@ const rows = [
   .find-card { max-width: 640px; margin: 0 auto; text-align: center; background: var(--surface-100); border: 3px solid var(--line);
     box-shadow: 8px 8px 0 var(--line), 16px 16px 0 rgba(18, 18, 13, .18); padding: clamp(24px, 5vw, 44px); }
   .find-card h2 { margin-top: 8px; }
-  .spot { text-align: left; margin-top: 24px; padding-top: 20px; border-top: 3px solid var(--line); }
   /* Docked (see script): the peek wrapper is fixed to the screen and clipped; the card bobs inside it, rising out of the clip edge. */
   .find-dock { position: relative; z-index: 6; }
   .find-peek { z-index: 6; }
@@ -116,12 +101,7 @@ const rows = [
   .find-dock.docked .find-card { animation: card-bob 1.8s ease-in-out infinite; }
   @keyframes card-bob { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-16px); } 70% { transform: translateY(2px); } }
   @media (max-width: 560px) { .find-card { box-shadow: 5px 5px 0 var(--line), 10px 10px 0 rgba(18, 18, 13, .18); } }
-  .row { display: flex; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 2px dashed var(--line); }
-  .row:last-of-type { border-bottom: 0; }
-  .row canvas { width: 32px; height: 32px; flex: none; }
-  .row b { display: block; font: 700 16px/1.2 var(--font-body); }
-  .row span { font-size: 14px; color: var(--muted); }
-  .hours { text-align: left; margin-top: 20px; padding-top: 18px; border-top: 3px solid var(--line); }
+  .hours { text-align: left; margin-top: 24px; padding-top: 20px; border-top: 3px solid var(--line); }
   .hours-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .hours-head span { font-size: 10px; border: 2px solid var(--line); padding: 3px 5px; color: var(--muted); }
   .hours table { width: 100%; border-collapse: collapse; }
