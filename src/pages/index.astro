@@ -54,7 +54,8 @@ import Footer from '../components/Footer.astro';
   // so Lenis isn't loaded into the loop there at all). Off under reduced motion.
   // Its frame loop only runs while a scroll is actually happening, then stops, so a still page costs nothing.
   if (!reduceMotion() && matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    const lenis = new Lenis({ lerp: 0.08, wheelMultiplier: 0.9, anchors: { offset: -72 } });
+    const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 94;
+    const lenis = new Lenis({ lerp: 0.08, wheelMultiplier: 0.9, anchors: { offset: -(headerH + 8) } });
     let running = false, quiet = 0;
     const loop = (time: number) => {
       lenis.raf(time);

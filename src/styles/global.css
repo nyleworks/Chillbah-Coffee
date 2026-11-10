@@ -2,7 +2,7 @@
 @import "./components.css";
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 8px); }
 html.lenis { scroll-behavior: auto; } /* Lenis does the smoothing itself */
 body { margin: 0; background: var(--surface-100); color: var(--text); font: 500 17px/1.55 var(--font-body); -webkit-font-smoothing: antialiased; }
 img, canvas { display: block; }

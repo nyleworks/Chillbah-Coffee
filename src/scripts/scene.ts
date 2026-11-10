@@ -4,7 +4,13 @@ import { cup, pine } from '../lib/sprites';
 import { isNight } from './theme';
 import { reduceMotion } from '../lib/motion';
 
-const ridge = [[52, 92], [70, 72], [84, 58], [94, 60], [102, 44], [110, 48], [116, 34], [122, 40], [128, 28], [134, 36], [140, 26], [146, 33], [152, 30], [160, 42], [170, 38], [180, 52], [196, 58], [214, 70], [240, 76]];
+// Kinabalu's ridge as drawn at full height; MT_SCALE shrinks it toward its base (y 92) so there's open sky above the peak
+// for the wordmark (Niekki, 2026-11-10: a smaller mountain is fine). The tail past x 240 lets it slope down to the base
+// on wide screens, where the canvas extends beyond the original 180px of art.
+const MT_SCALE = 0.62;
+const lift = (y: number) => 92 - (92 - y) * MT_SCALE;
+const ridge = [[52, 92], [70, 72], [84, 58], [94, 60], [102, 44], [110, 48], [116, 34], [122, 40], [128, 28], [134, 36], [140, 26], [146, 33], [152, 30], [160, 42], [170, 38], [180, 52], [196, 58], [214, 70], [240, 76], [262, 86], [284, 92]]
+  .map(([x, y]) => [x, lift(y)]);
 const heightAt = (x: number) => {
   for (let i = 0; i < ridge.length - 1; i++) {
     const [x1, y1] = ridge[i], [x2, y2] = ridge[i + 1];
@@ -12,8 +18,8 @@ const heightAt = (x: number) => {
   }
   return 200;
 };
+const snow = [[100, 52, 10], [126, 38, 8], [148, 40, 10], [172, 50, 9]].map(([x, y, l]) => [x, Math.round(lift(y)), Math.max(3, Math.round(l * MT_SCALE))]);
 const clouds = [[20, 40, 1], [150, 24, 0.6], [200, 46, 0.8], [90, 30, 0.7]];
-const stars = Array.from({ length: 40 }, (_, i) => [(i * 53) % 240, 18 + ((i * 29) % 50)]);
 
 export function initScene(canvas: HTMLCanvasElement | null) {
   const sx = canvas?.getContext('2d');
@@ -44,22 +50,39 @@ export function initScene(canvas: HTMLCanvasElement | null) {
   const ease = (v: number) => v * v * (3 - 2 * v);
   let lastSky = '', lastGround = '';
   // How much of the stage is cropped off the left/top on narrow screens, in canvas px. Re-measured on resize only.
-  let cut = 0, cutTop = 0;
+  // On wide screens the art (stage) is narrower than the frame: the canvas then spans the whole frame width and the
+  // 180px of art is drawn `ox` canvas px in from its left edge, with sky, ground and road carrying on to both edges.
+  let cut = 0, cutTop = 0, ox = 0;
   const measure = () => {
     const stageEl = canvas.parentElement; if (!stageEl) return;
     const px = stageEl.clientWidth / 180 || 1;
-    cut = stageEl.offsetLeft < 0 ? -stageEl.offsetLeft / px : 0;
+    const left = stageEl.offsetLeft;
+    cut = left < 0 ? -left / px : 0;
     cutTop = stageEl.offsetTop < 0 ? -stageEl.offsetTop / px : 0;
+    const fw = frameEl?.clientWidth ?? 0;
+    if (left > 0.5 && fw) {
+      const cw = Math.round(fw / px);
+      if (canvas.width !== cw) canvas.width = cw;
+      canvas.style.left = `${-left}px`; canvas.style.width = `${fw}px`;
+      ox = left / px;
+    } else {
+      if (canvas.width !== 180) canvas.width = 180;
+      canvas.style.left = ''; canvas.style.width = '';
+      ox = 0;
+    }
   };
   measure();
   addEventListener('resize', () => { measure(); draw(); });
 
   function draw() {
     const ctx = sx!;
-    const W = 240, H = 130;
-    ctx.setTransform(1, 0, 0, 1, -40, -18);
+    const H = 130;
+    // World x 40 is the art's left edge; L..R is the world span the canvas shows (wider than the art on wide screens).
+    const L = Math.floor(40 - ox), R = Math.ceil(40 - ox + canvas.width), W = R - L;
+    ctx.imageSmoothingEnabled = false;
+    ctx.setTransform(1, 0, 0, 1, Math.round(ox) - 40, -18);
     const sky = mix('#8ad8d8', '#1f2b45');
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = sky; ctx.fillRect(L, 0, W, H);
     // the plain sky above the art (tall screens) must match the canvas sky exactly, frame by frame
     if (frameEl && sky !== lastSky) { frameEl.style.backgroundColor = sky; lastSky = sky; } // only when it changes (theme switch)
     // stars fade in late
@@ -68,7 +91,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     const skyX = Math.round(Math.max(0, cut + 4 - 2)); // extra world shift for the sun/moon
     // ...and when the scene is lifted (phones, Hero.astro) the top rows can be cut off too: drop them into view
     const skyY = Math.round(Math.max(0, cutTop + 3));
-    if (t > 0.6) { ctx.fillStyle = `rgba(244,235,205,${((t - 0.6) / 0.4).toFixed(2)})`; stars.forEach(([x, y], i) => { if ((i + (frame >> 3)) % 7) ctx.fillRect(x, y, 1, 1); }); }
+    if (t > 0.6) { ctx.fillStyle = `rgba(244,235,205,${((t - 0.6) / 0.4).toFixed(2)})`; const n = Math.round(40 * W / 240); for (let i = 0; i < n; i++) if ((i + (frame >> 3)) % 7) ctx.fillRect(L + ((i * 53) % W), 18 + ((i * 29) % 50), 1, 1); }
     // sun sets during the first half, moon rises in the second (both slip behind the hills)
     if (t < 0.5) {
       const dy = Math.round(ease(t / 0.5) * 80);
@@ -79,26 +102,29 @@ export function initScene(canvas: HTMLCanvasElement | null) {
       const dy = Math.round((1 - ease((t - 0.5) / 0.5)) * 80);
       const m = Grid(14, 14); m.disc(7, 7, 6, '#f4ebcd'); m.disc(10, 5, 5, null); m.draw(ctx, 48 + skyX, 22 + skyY + dy);
     }
-    clouds.forEach(([x, y, sp]) => cloud(((x + frame * sp * 0.25) % 280) - 30, y, mix('#f0f8f0', '#3a4a66')));
+    const reps = Math.max(1, Math.round(W / 240)); // more clouds across a wide sky
+    for (let r = 0; r < reps; r++) clouds.forEach(([x, y, sp]) => cloud(L + ((x + r * 240 * 0.37 + frame * sp * 0.25) % (W + 40)) - 30, y + (r % 2) * 6, mix('#f0f8f0', '#3a4a66')));
     // mountain
     const mt = mix('#455976', '#3c4c68');
-    for (let x = 52; x < W; x++) { const h = heightAt(x); ctx.fillStyle = mt; ctx.fillRect(x, h, 1, 96 - h); ctx.fillStyle = '#12120d'; ctx.fillRect(x, h, 1, 1); }
+    for (let x = 52; x < 284; x++) { const h = heightAt(x); if (h >= 92) continue; ctx.fillStyle = mt; ctx.fillRect(x, h, 1, 96 - h); ctx.fillStyle = '#12120d'; ctx.fillRect(x, h, 1, 1); }
     ctx.fillStyle = mix('#5d7194', '#2d3a52');
-    [[100, 52, 10], [126, 38, 8], [148, 40, 10], [172, 50, 9]].forEach(([x, y, l]) => { for (let i = 0; i < l; i++) ctx.fillRect(x + (i >> 1), y + i, 1, 1); });
+    snow.forEach(([x, y, l]) => { for (let i = 0; i < l; i++) ctx.fillRect(x + (i >> 1), y + i, 1, 1); });
     // cloud band at the mountain base
     ctx.fillStyle = mix('#f0f8f0', '#3a4a66');
-    for (let x = 40; x < W; x++) { const y = 82 + Math.round(Math.sin(x / 7) * 2); ctx.fillRect(x, y, 1, 8); }
-    // tree line
+    for (let x = L; x < R; x++) { const y = 82 + Math.round(Math.sin(x / 7) * 2); ctx.fillRect(x, y, 1, 8); }
+    // tree line (plus a loose row of pines out to the edges on wide screens)
     [[36, 76], [46, 80], [184, 79], [196, 74], [208, 80]].forEach(([x, y], i) => (i % 2 ? p2 : p1).draw(ctx, x, y));
+    for (let x = 14, i = 0; x > L - 12; x -= 19 + (i % 3) * 4, i++) (i % 2 ? p2 : p1).draw(ctx, x, 77 + (i % 3) * 2);
+    for (let x = 226, i = 0; x < R; x += 19 + (i % 3) * 4, i++) (i % 2 ? p1 : p2).draw(ctx, x, 77 + ((i + 1) % 3) * 2);
     // ground, road
     const ground = mix('#7fae45', '#4c5f2c');
     if (frameEl && ground !== lastGround) { frameEl.style.setProperty('--ground', ground); lastGround = ground; } // phones extend the grass below the art (Hero.astro)
-    ctx.fillStyle = ground; ctx.fillRect(0, 92, W, H - 92);
+    ctx.fillStyle = ground; ctx.fillRect(L, 92, W, H - 92);
     ctx.fillStyle = mix('#66882d', '#3a4a22');
-    for (let i = 0; i < 90; i++) { const x = (i * 37) % W, y = 95 + ((i * 11) % 32); ctx.fillRect(x, y, 1, 2); ctx.fillRect(x + 1, y + 1, 1, 1); }
-    ctx.fillStyle = mix('#c9a27a', '#5a4632'); ctx.fillRect(0, 108, W, 6);
-    ctx.fillStyle = mix('#b08560', '#4a3a2a'); for (let x = 0; x < W; x += 9) ctx.fillRect(x, 110, 4, 1);
-    ctx.fillStyle = '#12120d'; ctx.fillRect(0, 92, W, 1);
+    for (let x0 = Math.floor(L / 240) * 240; x0 < R; x0 += 240) for (let i = 0; i < 90; i++) { const x = x0 + ((i * 37) % 240), y = 95 + ((i * 11) % 32); ctx.fillRect(x, y, 1, 2); ctx.fillRect(x + 1, y + 1, 1, 1); }
+    ctx.fillStyle = mix('#c9a27a', '#5a4632'); ctx.fillRect(L, 108, W, 6);
+    ctx.fillStyle = mix('#b08560', '#4a3a2a'); for (let x = Math.floor(L / 9) * 9; x < R; x += 9) ctx.fillRect(x, 110, 4, 1);
+    ctx.fillStyle = '#12120d'; ctx.fillRect(L, 92, W, 1);
     sign.draw(ctx, 70, 96);
     stool.draw(ctx, 172, 99); stool.draw(ctx, 186, 101);
     icedCup.draw(ctx, 198, 94);

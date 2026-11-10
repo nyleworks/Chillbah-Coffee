@@ -7,9 +7,10 @@ const run = Array.from({ length: 6 }, () => site.ticker).flat();
 </div>
 
 <style>
-  .ticker { background: var(--forest); color: var(--on-forest); border-bottom: 3px solid var(--line); overflow: hidden; white-space: nowrap; }
-  .ticker div { display: inline-block; padding: 12px 0; font: 700 16px/1 var(--font-pixel); text-transform: uppercase; letter-spacing: .08em; animation: tick 28s steps(140) infinite; }
-  span { margin: 0 20px; color: var(--sun); }
+  .ticker { height: 27px; background: var(--forest); color: var(--on-forest); border-bottom: 3px solid var(--line); overflow: hidden; white-space: nowrap; }
+  /* 27px tall in all (12px text + padding + border); --header-h in tokens.css counts on that. */
+  .ticker div { display: inline-block; padding: 6px 0; font: 700 12px/1 var(--font-pixel); text-transform: uppercase; letter-spacing: .1em; animation: tick 24s steps(120) infinite; }
+  span { margin: 0 14px; color: var(--sun); }
   @keyframes tick { to { transform: translateX(-50%); } }
   :global(html[data-motion="reduce"]) .ticker div { animation: none; }
 </style>

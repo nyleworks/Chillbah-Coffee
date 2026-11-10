@@ -9,6 +9,7 @@
 @font-face { font-family: "Nunito"; font-weight: 500 700; font-display: swap; src: url("../assets/fonts/nunito-500-700.woff2") format("woff2"); }
 
 :root {
+  --header-h: 94px; /* sticky header: 27px ticker + 64px nav + 3px border (Header.astro, Ticker.astro) */
   --surface-100: #f4ebcd; --surface-200: #ebdfb6; --surface-300: #e2d39f;
   --text: #2a2620; --muted: #5a4b3c;
   --line: #12120d;

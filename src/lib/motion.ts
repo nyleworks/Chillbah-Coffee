@@ -31,7 +31,7 @@ export function initMotionToggle(btn: HTMLElement | null) {
       sessionStorage.removeItem(SPOT);
       const el = spot ? document.getElementById(spot) : null;
       const target = el?.closest<HTMLElement>('.pin-track') ?? el; // pinned sections: go to the start of their track
-      const go = () => scrollTo({ top: target ? target.getBoundingClientRect().top + scrollY - 64 : 0, behavior: 'instant' as ScrollBehavior });
+      const go = () => scrollTo({ top: target ? target.getBoundingClientRect().top + scrollY - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 94) : 0, behavior: 'instant' as ScrollBehavior });
       // Images, fonts and the scroll story keep resizing the page for a moment, so follow the section until it settles
       // (or until you start scrolling yourself).
       const ro = new ResizeObserver(() => requestAnimationFrame(go));
