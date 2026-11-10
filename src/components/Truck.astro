@@ -9,16 +9,17 @@ const { id, class: className, awning = false, label, lazy = false, hero = false 
 const sizes = hero ? '(max-width: 720px) 52vw, 39vw' : '(max-width: 733px) 220px, (max-width: 1200px) 30vw, 360px';
 const wheelSizes = hero ? '(max-width: 720px) 8vw, 6vw' : '(max-width: 733px) 32px, (max-width: 1200px) 4.4vw, 52px';
 const loading = lazy ? 'lazy' : 'eager';
+const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a subfolder (GitHub Pages)
 ---
 <div id={id} class:list={['truck', className]} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : 'true'}>
   <div class="shadow"></div>
   <div class="pool"></div>
   <div class="beam"></div>
   <div class="rig">
-    <img class="body" src="/hilux-body.webp" srcset="/hilux-body-760.webp 760w, /hilux-body.webp 1200w" sizes={sizes} width="1200" height="455" alt="" loading={loading} decoding="async" />
-    <img class="wheel front" src="/wheel-front.webp" srcset="/wheel-front-96.webp 96w, /wheel-front.webp 174w" sizes={wheelSizes} width="174" height="174" alt="" loading={loading} decoding="async" />
-    <img class="wheel rear" src="/wheel-rear.webp" srcset="/wheel-rear-96.webp 96w, /wheel-rear.webp 174w" sizes={wheelSizes} width="174" height="174" alt="" loading={loading} decoding="async" />
-    {awning && <img class="awning" src="/hilux-awning.webp" srcset="/hilux-awning-760.webp 760w, /hilux-awning.webp 1200w" sizes={sizes} width="1200" height="455" alt="" loading={loading} decoding="async" />}
+    <img class="body" src={`${B}hilux-body.webp`} srcset={`${B}hilux-body-760.webp 760w, ${B}hilux-body.webp 1200w`} sizes={sizes} width="1200" height="455" alt="" loading={loading} decoding="async" />
+    <img class="wheel front" src={`${B}wheel-front.webp`} srcset={`${B}wheel-front-96.webp 96w, ${B}wheel-front.webp 174w`} sizes={wheelSizes} width="174" height="174" alt="" loading={loading} decoding="async" />
+    <img class="wheel rear" src={`${B}wheel-rear.webp`} srcset={`${B}wheel-rear-96.webp 96w, ${B}wheel-rear.webp 174w`} sizes={wheelSizes} width="174" height="174" alt="" loading={loading} decoding="async" />
+    {awning && <img class="awning" src={`${B}hilux-awning.webp`} srcset={`${B}hilux-awning-760.webp 760w, ${B}hilux-awning.webp 1200w`} sizes={sizes} width="1200" height="455" alt="" loading={loading} decoding="async" />}
   </div>
 </div>
 

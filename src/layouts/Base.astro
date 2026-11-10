@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import { site } from '../data/site';
 import pixelifyUrl from '../assets/fonts/pixelify-sans-700.woff2?url';
+const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a subfolder (GitHub Pages)
 interface Props { title?: string; description?: string }
 const { title = site.title, description = site.description } = Astro.props;
 ---
@@ -16,7 +17,7 @@ const { title = site.title, description = site.description } = Astro.props;
     <meta property="og:description" content={description} />
     <meta name="theme-color" content="#f4ebcd" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#211812" media="(prefers-color-scheme: dark)" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href={`${B}favicon.svg`} type="image/svg+xml" />
     <!-- Fonts ship with the site (styles/tokens.css). Only the small heading font is fetched ahead, so the CHILLBAH title
          doesn't flash in a stand-in font; the rest load alongside without competing with the stylesheet. -->
     <link rel="preload" href={pixelifyUrl} as="font" type="font/woff2" crossorigin />

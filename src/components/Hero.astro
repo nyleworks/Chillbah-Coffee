@@ -1,6 +1,7 @@
 ---
 import Ticker from './Ticker.astro';
 import Truck from './Truck.astro';
+const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a subfolder (GitHub Pages)
 ---
 <section class="hero">
   <!-- Scroll story: the scene pins under the header while you scroll this track; scripts/story.ts drives it. -->
@@ -12,7 +13,7 @@ import Truck from './Truck.astro';
       <div class="stage" id="sceneStage">
       <canvas id="scene" width="180" height="106" aria-hidden="true"></canvas>
       <Truck id="heroTruck" class="hilux" awning hero label="Pixel art of the white Chillbah Hilux with its black side awning, parked on grass with mountains behind" />
-      <img class="barista" id="barista" src="/barista.png" width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
+      <img class="barista" id="barista" src={`${B}barista.png`} width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
       </div>
       <div class="hero-copy">
         <h1 class="title">CHILLBAH</h1>
