@@ -55,6 +55,9 @@ import Ticker from './Ticker.astro';
   .menu-btn { display: none; width: 40px; height: 40px; margin-left: auto; border: 3px solid var(--line); background: var(--surface-200); box-shadow: 3px 3px 0 var(--line);
     cursor: pointer; padding: 0; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
   .menu-btn span { display: block; width: 18px; height: 3px; background: var(--line); }
+  /* Night: bars in the same cream as the motion and theme icons (the frame's dark line colour vanished on dark). */
+  @media (prefers-color-scheme: dark) { :global(:root:not([data-theme="light"])) .menu-btn span { background: #fff6dc; } }
+  :global(:root[data-theme="dark"]) .menu-btn span { background: #fff6dc; }
   .menu-btn:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
   @media (max-width: 720px) {
     .nav { gap: 10px; }
