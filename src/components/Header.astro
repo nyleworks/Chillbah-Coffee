@@ -15,9 +15,14 @@
       <li><a href="#menu">Menu</a></li>
       <li><a href="#past">Past events</a></li>
     </ul>
+    <div class="toggles">
+    <button class="theme-btn" id="motionBtn" type="button" aria-label="Reduce motion" aria-pressed="false" title="Reduce motion">
+      <canvas data-motion-icon width="10" height="10" aria-hidden="true"></canvas>
+    </button>
     <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch day or night">
       <canvas data-theme-icon width="10" height="10" aria-hidden="true"></canvas>
     </button>
+    </div>
   </div>
 </header>
 
@@ -40,6 +45,7 @@
   ul { display: flex; gap: 22px; list-style: none; margin: 0; padding: 0; }
   ul a { text-decoration: none; }
   ul a:hover { color: var(--ember-600); }
+  .toggles { display: flex; gap: 10px; }
   .theme-btn { width: 40px; height: 40px; border: 3px solid var(--line); background: var(--surface-200); box-shadow: 3px 3px 0 var(--line); cursor: pointer; display: grid; place-items: center; padding: 0; }
   .theme-btn:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
   .theme-btn canvas { width: 20px; height: 20px; }

@@ -11,5 +11,5 @@ const run = Array.from({ length: 6 }, () => site.ticker).flat();
   .ticker div { display: inline-block; padding: 12px 0; font: 700 16px/1 var(--font-pixel); text-transform: uppercase; letter-spacing: .08em; animation: tick 28s steps(140) infinite; }
   span { margin: 0 20px; color: var(--sun); }
   @keyframes tick { to { transform: translateX(-50%); } }
-  @media (prefers-reduced-motion: reduce) { .ticker div { animation: none; } }
+  :global(html[data-motion="reduce"]) .ticker div { animation: none; }
 </style>

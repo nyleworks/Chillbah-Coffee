@@ -20,4 +20,15 @@
 .cb-tag--live::before { content: ""; width: 10px; height: 10px; background: var(--ember); box-shadow: 0 0 0 2px var(--line); animation: cb-blink 1.2s steps(2) infinite; }
 @keyframes cb-blink { 50% { opacity: .2; } }
 
-@media (prefers-reduced-motion: reduce) { .cb-tag--live::before { animation: none; } .cb-btn { transition: none; } }
+/* Click animation (scripts/press.ts adds .is-pressed): squash down, then pop back with a small overshoot, in pixel steps. */
+.is-pressed { animation: cb-press .32s steps(4, end); }
+@keyframes cb-press {
+  0% { transform: translate(3px,3px) scale(.94); box-shadow: none; }
+  45% { transform: translate(-2px,-2px) scale(1.06); }
+  75% { transform: translate(0,0) scale(.98); }
+  100% { transform: none; }
+}
+
+html[data-motion="reduce"] .cb-tag--live::before { animation: none; }
+html[data-motion="reduce"] .cb-btn { transition: none; }
+html[data-motion="reduce"] .is-pressed { animation: none; }

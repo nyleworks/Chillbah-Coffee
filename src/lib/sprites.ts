@@ -39,3 +39,11 @@ export function themeIcon(night: boolean): Grid {
   else { g.disc(5, 5, 3, '#f2c94c'); [[5, 0], [5, 9], [0, 5], [9, 5]].forEach(([x, y]) => g.set(x, y, '#f2c94c')); }
   return g;
 }
+
+/** Reduce-motion button. Motion on: pause bars (tap to calm the page). Motion reduced: play arrow (tap to bring it back). 10×10. */
+export function motionIcon(reduced: boolean, c: string): Grid {
+  const g = Grid(10, 10);
+  if (reduced) for (let i = 0; i < 4; i++) g.rect(2 + i * 2, 1 + i, 2, 8 - i * 2, c);
+  else { g.rect(2, 1, 2, 8, c); g.rect(6, 1, 2, 8, c); }
+  return g;
+}

@@ -19,7 +19,7 @@ section { padding: var(--space-20) 0; }
 .skip { position: absolute; left: -9999px; top: 8px; z-index: 20; }
 .skip:focus { left: 16px; }
 
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+html[data-motion="reduce"] { scroll-behavior: auto; }
 
 /* Scroll story pins: when a section's bottom reaches the bottom of the screen it holds still while the
    truck drives across its road, then the page carries on (scripts/story.ts sets the sizes). */
@@ -37,4 +37,4 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
 }
 /* The hero sky is coloured by scene.ts in step with its canvas, so it must not lag behind on a CSS transition. */
 html.theme-fade #sceneFrame .scene-frame { transition: none !important; }
-@media (prefers-reduced-motion: reduce) { html.theme-fade, html.theme-fade * { transition: none !important; } }
+html[data-motion="reduce"].theme-fade, html[data-motion="reduce"].theme-fade *, html[data-motion="reduce"].theme-fade *::before, html[data-motion="reduce"].theme-fade *::after { transition: none !important; }

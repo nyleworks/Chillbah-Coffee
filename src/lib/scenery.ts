@@ -242,3 +242,251 @@ export function drawVillage(ctx: Ctx, W: number, H: number, night: boolean) {
   shack(ctx, sx, base, shackW, night, r);
   palm(ctx, sx + shackW + 14, base, Math.min(H - 6, 28), night);
 }
+
+/* ---------------- Wedding venue (Events section) ---------------- */
+
+const SKIN = ['#f1c9a5', '#d9a47a', '#b97a52', '#8d5a3a'];
+const HAIR = ['#2a2620', '#4a3222', '#12120d', '#715542'];
+const CLOTHES = ['#e66f46', '#2b5615', '#455976', '#c9b7d6', '#f2c94c', '#8a2e1c', '#8ad8d8', '#96b04f', '#e8b9a0'];
+
+/** Draw a small sprite from rows of letters; each letter maps to a colour, space = transparent. */
+function sprite(ctx: Ctx, x: number, y: number, rows: string[], pal: Record<string, string>, flip = false) {
+  rows.forEach((row, j) => [...row].forEach((ch, i) => {
+    const c = pal[ch]; if (!c) return;
+    rect(ctx, x + (flip ? row.length - 1 - i : i), y + j, 1, 1, c);
+  }));
+}
+const GUY = [' KKK ', 'KHHHK', 'KSSSK', 'KSSSK', ' KSK ', 'KTTTK', 'KTTTK', 'KTTTK', 'KTTTK', 'KLKLK', 'KLKLK', 'KLKLK', 'KK KK'];
+const GAL = [' KKK ', 'KHHHK', 'KSSSK', 'KHSHK', 'KHSHK', 'KTTTK', 'KTTTK', 'KTTTK', 'KTTTK', 'KTTTK', 'KTTTK', ' KSK ', ' K K '];
+
+/** One guest, 5 wide × 13 tall, standing on `base`. Always draws the same number of random picks. */
+function guest(ctx: Ctx, x: number, base: number, night: boolean, r: () => number) {
+  const k = night ? 0.55 : 1;
+  const pal = { K: INK, S: shade(pick(r, SKIN), k), H: shade(pick(r, HAIR), k), T: shade(pick(r, CLOTHES), k), L: shade(pick(r, ['#2a2620', '#455976', '#715542']), k) };
+  const rows = r() < 0.45 ? GAL : GUY;
+  const lift = r() < 0.5 ? 1 : 0;
+  sprite(ctx, x, base - rows.length - lift, rows, pal);
+}
+
+function bride(ctx: Ctx, x: number, base: number, night: boolean) {
+  const k = night ? 0.8 : 1, white = shade('#ffffff', k), lace = shade('#e9e4d4', k);
+  // long veil behind, then the flared gown
+  rect(ctx, x + 1, base - 15, 5, 12, INK); rect(ctx, x + 2, base - 14, 3, 11, shade('#f4f1ea', k * 0.92));
+  for (let j = 0; j < 9; j++) { const half = 1 + Math.floor(j / 2); rect(ctx, x + 3 - half - 1, base - 9 + j, half * 2 + 3, 1, INK); rect(ctx, x + 3 - half, base - 9 + j, half * 2 + 1, 1, j % 3 ? white : lace); }
+  rect(ctx, x + 1, base - 1, 7, 1, INK);
+  rect(ctx, x + 1, base - 16, 5, 7, INK); rect(ctx, x + 2, base - 15, 3, 3, shade('#e8b98f', k)); rect(ctx, x + 2, base - 15, 3, 1, shade('#4a3222', k));
+  rect(ctx, x + 2, base - 12, 3, 3, white);
+  rect(ctx, x + 1, base - 17, 5, 1, white); // tiara / veil top
+  rect(ctx, x + 5, base - 10, 2, 2, shade('#e66f46', k)); rect(ctx, x + 6, base - 11, 1, 1, shade('#f2a0b4', k)); // bouquet
+}
+
+function groom(ctx: Ctx, x: number, base: number, night: boolean) {
+  const k = night ? 0.8 : 1, suit = '#1d2130';
+  rect(ctx, x, base - 16, 6, 16, INK);
+  rect(ctx, x + 1, base - 15, 4, 3, shade('#d9a47a', k)); rect(ctx, x + 1, base - 15, 4, 1, shade('#12120d', k));
+  rect(ctx, x + 1, base - 11, 4, 6, suit);
+  rect(ctx, x + 2, base - 11, 2, 4, shade('#ffffff', k)); // shirt
+  rect(ctx, x + 2, base - 11, 2, 1, shade('#8a2e1c', k)); // bow tie
+  rect(ctx, x + 4, base - 10, 1, 1, shade('#f2a0b4', k)); // boutonnière
+  rect(ctx, x + 1, base - 5, 1, 5, suit); rect(ctx, x + 4, base - 5, 1, 5, suit);
+}
+
+/** Flower arch the couple stands under. */
+function arch(ctx: Ctx, cx: number, base: number, w: number, h: number, night: boolean, r: () => number) {
+  const k = night ? 0.6 : 1, post = shade('#f4ebcd', k), leaf = shade('#4f7a2c', k), leafD = shade('#2b5615', k);
+  const FLOWERS = ['#f2a0b4', '#ffffff', '#e66f46', '#f2c94c'];
+  const left = cx - Math.floor(w / 2), right = left + w - 2, rad = Math.floor(w / 2);
+  // posts
+  rect(ctx, left - 1, base - h, 4, h, INK); rect(ctx, left, base - h, 2, h, post);
+  rect(ctx, right - 1, base - h, 4, h, INK); rect(ctx, right, base - h, 2, h, post);
+  // rounded top with greenery and flowers
+  for (let a = 0; a <= 64; a++) {
+    const t = Math.PI * (a / 64);
+    const x = Math.round(cx - Math.cos(t) * rad), y = Math.round(base - h - Math.sin(t) * (rad * 0.7));
+    rect(ctx, x - 1, y - 1, 3, 3, INK);
+  }
+  for (let a = 0; a <= 64; a++) {
+    const t = Math.PI * (a / 64);
+    const x = Math.round(cx - Math.cos(t) * rad), y = Math.round(base - h - Math.sin(t) * (rad * 0.7));
+    rect(ctx, x, y, 1, 1, a % 2 ? leaf : leafD);
+    const f = r(), fc = pick(r, FLOWERS);
+    if (f < 0.35) rect(ctx, x, y - 1, 1, 1, shade(fc, k));
+  }
+  // garland down the posts
+  for (let y = base - h; y < base - 2; y += 3) { const f = pick(r, FLOWERS); rect(ctx, left - 1, y, 1, 1, shade(f, k)); rect(ctx, right + 2, y + 1, 1, 1, shade(f, k)); rect(ctx, left + 2, y + 1, 1, 1, leaf); rect(ctx, right - 1, y, 1, 1, leaf); }
+}
+
+/** Fairy lights strung between poles; lit at night. */
+function stringLights(ctx: Ctx, W: number, top: number, night: boolean) {
+  const poleGap = 60;
+  for (let px = 6; px < W + poleGap; px += poleGap) {
+    rect(ctx, px - 1, top, 3, 40, INK); rect(ctx, px, top, 1, 40, night ? '#3a2a1a' : '#8a5a3c');
+    for (let i = 0; i < poleGap; i++) {
+      const x = px + i, sag = Math.round(Math.sin((i / poleGap) * Math.PI) * 6), y = top + 1 + sag;
+      rect(ctx, x, y, 1, 1, INK);
+      if (i % 5 === 2) {
+        rect(ctx, x, y + 1, 1, 2, night ? '#ffe08a' : '#f4ebcd');
+        if (night) glow(ctx, x, y + 2, 5, 0.3);
+      }
+    }
+  }
+}
+
+export function drawWedding(ctx: Ctx, W: number, H: number, night: boolean) {
+  const r = rng(21);
+  const base = H - 1;
+  ctx.clearRect(0, 0, W, H);
+  // garden hedge behind the crowd
+  const hedge = night ? '#1f2a17' : '#66882d', hedgeD = night ? '#18220f' : '#4f7a2c';
+  for (let x = -6; x < W + 6; x += 9) {
+    const rad = 6;
+    for (let j = -rad; j <= rad; j++) for (let i = -rad; i <= rad; i++) if (i * i + j * j <= rad * rad) rect(ctx, x + i, base - 14 + j, 1, base - (base - 14 + j), j < -2 ? hedge : hedgeD);
+  }
+  stringLights(ctx, W, Math.max(2, base - 44), night);
+  // People and the arch are drawn at double size (2×2 art pixels) so they're in scale with the truck.
+  ctx.save(); ctx.scale(2, 2);
+  const w2 = Math.ceil(W / 2), b2 = Math.floor(H / 2), cx = Math.round(w2 / 2);
+  arch(ctx, cx, b2, 28, 14, night, r);
+  // the couple under the arch
+  groom(ctx, cx - 7, b2, night);
+  bride(ctx, cx + 1, b2, night);
+  // guests gathered on both sides: a back row and a front row, leaving the couple clear; a few gaps so it reads as a crowd
+  const gap = 17;
+  for (const row of [0, 1]) {
+    const y = b2 - (row ? 0 : 2), step = row ? 7 : 6;
+    for (let x = cx - gap - 5 - (row ? 3 : 0); x > -6; x -= step) { const skip = r() < 0.15; if (!skip || row) guest(ctx, x, y, night, r); else for (let i = 0; i < 6; i++) r(); }
+    for (let x = cx + gap + (row ? 3 : 0); x < w2 + 1; x += step) { const skip = r() < 0.15; if (!skip || row) guest(ctx, x, y, night, r); else for (let i = 0; i < 6; i++) r(); }
+  }
+  ctx.restore();
+}
+
+/* ---------------- Campsite (footer) ---------------- */
+
+function pineTree(ctx: Ctx, x: number, base: number, h: number, night: boolean) {
+  const c1 = night ? '#18220f' : '#66733f', c2 = night ? '#1f2a17' : '#7d8a52';
+  rect(ctx, x - 1, base - 3, 3, 3, night ? '#3a2a1a' : '#715542');
+  for (let j = 0; j < h; j++) {
+    const tier = j % Math.max(4, Math.floor(h / 3));
+    const half = Math.max(1, Math.round((j / h) * (h / 2.6)) - (tier < 1 ? 1 : 0));
+    rect(ctx, x - half - 1, base - 3 - h + j, half * 2 + 3, 1, INK);
+    rect(ctx, x - half, base - 3 - h + j, half * 2 + 1, 1, j % 3 ? c2 : c1);
+  }
+}
+
+function tent(ctx: Ctx, x: number, base: number, w: number, h: number, color: string, night: boolean) {
+  const k = night ? 0.5 : 1, body = shade(color, k), side = shade(color, k * 0.78);
+  for (let j = 0; j < h; j++) {
+    const half = Math.round(((j + 1) / h) * (w / 2));
+    const cx = x + Math.floor(w / 2);
+    rect(ctx, cx - half - 1, base - h + j, half * 2 + 2, 1, INK);
+    rect(ctx, cx - half, base - h + j, half, 1, side);
+    rect(ctx, cx, base - h + j, half, 1, body);
+  }
+  // open door flap: warm inside at night
+  const dh = Math.round(h * 0.6);
+  for (let j = 0; j < dh; j++) {
+    const half = Math.round(((j + 1) / dh) * (w / 6));
+    rect(ctx, x + Math.floor(w / 2) - half, base - dh + j, half * 2 + 1, 1, night ? '#f5b942' : shade('#2a2620', 1));
+  }
+  if (night) glow(ctx, x + Math.floor(w / 2), base - 3, Math.round(w / 2), 0.28);
+  // guy ropes and pegs
+  rect(ctx, x - 3, base - 1, 2, 1, INK); rect(ctx, x + w + 1, base - 1, 2, 1, INK);
+  for (let i = 0; i < 4; i++) { rect(ctx, x - 2 + i, base - 2 - i, 1, 1, INK); rect(ctx, x + w + 1 - i, base - 2 - i, 1, 1, INK); }
+  rect(ctx, x, base, w + 1, 1, INK);
+}
+
+const CHAIR = ['KK      ', 'KFK     ', 'KFK     ', 'KFK  KK ', 'KFKKKKK ', 'KFFFFFFK', 'KKKKKKKK', ' K    K ', '  K  K  ', '   KK   ', '  K  K  ', ' K    K '];
+/** Folding camp chair, side view, backrest away from the fire. */
+function campChair(ctx: Ctx, x: number, base: number, color: string, facing: 1 | -1, night: boolean) {
+  sprite(ctx, x, base - CHAIR.length, CHAIR, { K: INK, F: shade(color, night ? 0.6 : 1) }, facing === -1);
+}
+
+// A camper sitting in a camp chair, side view facing the fire, holding a mug. Rows line up with CHAIR: row 7 is the seat
+// (left open so the chair shows), the last row is the ground. Shins are drawn in ink, like the chair legs.
+const SITTER = [
+  '  KKK    ',
+  ' KHHHK   ',
+  ' KHSSK   ',
+  '  KSSK   ',
+  '  KTTK   ',
+  ' KTTTKSM ',
+  ' KLLLLLK ',
+  '         ',
+  '      KK ',
+  '      KK ',
+  '      KK ',
+  '      KK ',
+  '      KK ',
+  '     KKK ',
+]
+// long hair falls down the back for the second camper
+const SITTER_LONG = SITTER.map((r, j) => (j >= 2 && j <= 4 ? r.slice(0, 1) + 'H' + r.slice(2) : r));
+type Look = { hair: string; skin: string; top: string; legs: string; long?: boolean };
+/** A camper in the chair drawn by campChair at the same x/base/facing. */
+function camper(ctx: Ctx, x: number, base: number, facing: 1 | -1, look: Look, night: boolean) {
+  const k = night ? 0.6 : 1;
+  const pal = { K: INK, H: shade(look.hair, k), S: shade(look.skin, night ? 0.75 : 1), T: shade(look.top, k), L: shade(look.legs, k), M: night ? '#c9c3b3' : '#f4ecd8' };
+  // flipped, the extra front column lands on the other side, so shift one left to stay seated in the mirrored chair
+  sprite(ctx, facing === 1 ? x : x - 1, base - SITTER.length, look.long ? SITTER_LONG : SITTER, pal, facing === -1);
+}
+
+// Flicker frame for the campfire, advanced by scripts/art.ts while the footer is on screen.
+let flick = 0;
+export function setFlicker(n: number) { flick = n; }
+
+function campfire(ctx: Ctx, cx: number, base: number, night: boolean) {
+  const f = flick % 4;
+  const pulse = [0, 2, 1, 3][f]; // glow breathes with the flame
+  if (night) { glow(ctx, cx, base - 4, 20 + pulse, 0.32); glow(ctx, cx, base - 4, 9 + pulse / 2, 0.3); }
+  else glow(ctx, cx, base - 4, 7, 0.18);
+  // stones
+  for (const dx of [-5, -3, -1, 1, 3, 5]) { rect(ctx, cx + dx - 1, base - 2, 2, 2, INK); rect(ctx, cx + dx, base - 2, 1, 1, night ? '#5a5d62' : '#9aa0a6'); }
+  // crossed logs
+  for (let i = 0; i < 7; i++) { rect(ctx, cx - 3 + i, base - 3 - Math.floor(i / 3), 1, 1, '#5a3d28'); rect(ctx, cx + 3 - i, base - 3 - Math.floor(i / 3), 1, 1, '#715542'); }
+  // flame: outer orange, inner yellow, white-hot core. Four frames of column heights make it lick and sway.
+  const OUTER = [
+    [9, 7, 8, 5, 6, 3, 3],
+    [10, 8, 6, 6, 4, 3, 2],
+    [8, 6, 9, 4, 6, 2, 3],
+    [11, 7, 7, 5, 5, 2, 2],
+  ][f];
+  const INNER = [[6, 4, 5], [7, 5, 3], [5, 3, 6], [7, 4, 4]][f];
+  const DX = [0, -1, 1, -2, 2, -3, 3];
+  DX.forEach((dx, i) => rect(ctx, cx + dx, base - 3 - OUTER[i], 1, OUTER[i], '#e66f46'));
+  DX.slice(0, 3).forEach((dx, i) => rect(ctx, cx + dx, base - 3 - INNER[i], 1, INNER[i], '#f2c94c'));
+  rect(ctx, cx, base - 6, 1, 3, '#fff3c4');
+  // sparks drift up and fade
+  const SP = [[-1, 13, '#f2c94c'], [2, 15, '#e66f46'], [1, 12, '#f2c94c'], [-2, 16, '#e66f46']];
+  for (let k = 0; k < 2; k++) {
+    const [dx, up, c] = SP[(f + k * 2) % 4] as [number, number, string];
+    rect(ctx, cx + dx, base - up - f, 1, 1, c);
+  }
+}
+
+export function drawCamp(ctx: Ctx, W: number, H: number, night: boolean) {
+  const base = H - 1;
+  ctx.clearRect(0, 0, W, H);
+  // a loose line of pines behind the campsite, different heights, with gaps
+  for (let x = -2, i = 0; x < W + 8; i++) {
+    const h = Math.round(H * (0.45 + ((i * 7) % 5) * 0.09));
+    pineTree(ctx, x, base, h, night);
+    x += 12 + ((i * 11) % 4) * 6;
+  }
+  // Tents, chairs and fire are drawn at double size so they're in scale with the truck (normal size on phones, so
+  // both tents, the chairs and the fire all fit). The truck parks in the middle, so the camp sits to either side of it.
+  const narrow = W < 160, sc = narrow ? 1 : 2;
+  ctx.save(); ctx.scale(sc, sc);
+  const w2 = Math.ceil(W / sc), b2 = Math.floor(H / sc);
+  // on phones the two tents pitch side by side on the left (the green one just behind), the fire and chairs on the right
+  const t1 = narrow ? -3 : Math.round(w2 * 0.06);
+  const t2 = narrow ? 12 : Math.round(w2 * 0.84);
+  const fire = narrow ? w2 - 16 : Math.round(w2 * 0.73);
+  tent(ctx, t2, b2 - (narrow ? 1 : 0), 22, 14, '#2b5615', night);
+  tent(ctx, t1, b2, 24, 15, '#e66f46', night);
+  campChair(ctx, fire - 13, b2, '#455976', 1, night);
+  campChair(ctx, fire + 6, b2, '#8a2e1c', -1, night);
+  camper(ctx, fire - 13, b2, 1, { hair: '#2a1c14', skin: '#c68a5e', top: '#e66f46', legs: '#3b4a5e' }, night);
+  camper(ctx, fire + 6, b2, -1, { hair: '#5a3220', skin: '#e0ac7e', top: '#2b5615', legs: '#6b5a44', long: true }, night);
+  campfire(ctx, fire, b2, night);
+  ctx.restore();
+}

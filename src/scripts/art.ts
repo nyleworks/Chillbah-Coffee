@@ -1,8 +1,11 @@
 // Paints every pixel sprite on the page: menu icons, inline icons, logo, theme icon, footer grass.
 import { paint } from '../lib/pixel';
-import { cup, icons, themeIcon, type CupKind, type IconName } from '../lib/sprites';
+import { cup, icons, themeIcon, motionIcon, type CupKind, type IconName } from '../lib/sprites';
 import { css, isNight } from './theme';
-import { drawTown, drawVillage } from '../lib/scenery';
+import { drawTown, drawVillage, drawWedding, drawCamp, setFlicker } from '../lib/scenery';
+import { reduceMotion } from '../lib/motion';
+
+const SCENES = { town: drawTown, village: drawVillage, wedding: drawWedding, camp: drawCamp };
 
 export function drawArt() {
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-cup]').forEach((cv) =>
@@ -12,6 +15,7 @@ export function drawArt() {
     paint(cv, icons[cv.dataset.icon as IconName](css('ember'))));
 
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-theme-icon]').forEach((cv) => paint(cv, themeIcon(isNight())));
+  document.querySelectorAll<HTMLCanvasElement>('canvas[data-motion-icon]').forEach((cv) => paint(cv, motionIcon(reduceMotion(), isNight() ? '#fff6dc' : '#2a2620')));
 
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-grass]').forEach((cv) => {
     const ctx = cv.getContext('2d'); if (!ctx) return;
@@ -29,15 +33,16 @@ export function drawArt() {
     if (cv.width !== w) cv.width = w;
     if (cv.height !== h) cv.height = h;
     const ctx = cv.getContext('2d'); if (!ctx) return;
-    (cv.dataset.scenery === 'town' ? drawTown : drawVillage)(ctx, w, h, isNight());
+    (SCENES[cv.dataset.scenery as keyof typeof SCENES] ?? drawVillage)(ctx, w, h, isNight());
   });
 }
 
 // Theme switch: repaint every sprite, then cross-fade each canvas from its old picture to the new one
 // so section scenery (shop lights, house windows) and icons ease across instead of snapping.
+// The header buttons (day/night, reduce motion) are left out: their icons switch straight away.
 let fadeToken = 0;
 export function drawArtFaded(dur = 1400) {
-  const cvs = [...document.querySelectorAll<HTMLCanvasElement>('canvas[data-cup], canvas[data-icon], canvas[data-theme-icon], canvas[data-grass], canvas[data-scenery]')];
+  const cvs = [...document.querySelectorAll<HTMLCanvasElement>('canvas[data-cup], canvas[data-icon], canvas[data-grass], canvas[data-scenery]')];
   const snap = (cv: HTMLCanvasElement) => {
     const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height;
     if (cv.width && cv.height) c.getContext('2d')!.drawImage(cv, 0, 0);
@@ -45,12 +50,12 @@ export function drawArtFaded(dur = 1400) {
   };
   const olds = cvs.map(snap);
   drawArt();
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (reduceMotion()) return;
   const news = cvs.map(snap);
   const token = ++fadeToken, start = performance.now();
   const step = (now: number) => {
     if (token !== fadeToken) return;
-    const k = Math.min(1, (now - start) / dur), e = k * k * (3 - 2 * k);
+    const k = Math.min(1, Math.max(0, (now - start) / dur)), e = k * k * (3 - 2 * k);
     cvs.forEach((cv, i) => {
       const ctx = cv.getContext('2d'); if (!ctx || !cv.width || !cv.height) return;
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
@@ -62,6 +67,27 @@ export function drawArtFaded(dur = 1400) {
     if (k < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
+  // Safety net: if the browser holds back animation frames (Safari can), finish on the new picture anyway.
+  setTimeout(() => { if (token === fadeToken) step(start + dur); }, dur + 100);
 }
 /** Stop any running cross-fade (e.g. before a resize repaint). */
 export function stopArtFade() { fadeToken++; }
+
+// Campfire flicker: while the camp lane is on screen, redraw it a few times a second with the next flame frame.
+// Waits out a theme cross-fade (which is painting the same canvas). Off under reduced motion.
+export function initFireFlicker() {
+  if (reduceMotion()) return;
+  const cv = document.querySelector<HTMLCanvasElement>('canvas[data-scenery="camp"]'); if (!cv) return;
+  let frame = 0, timer = 0, fadeSeen = fadeToken, quietUntil = 0;
+  const tick = () => {
+    if (fadeSeen !== fadeToken) { fadeSeen = fadeToken; quietUntil = performance.now() + 1500; }
+    if (performance.now() < quietUntil) return;
+    const ctx = cv.getContext('2d'); if (!ctx || !cv.width) return;
+    setFlicker(++frame);
+    drawCamp(ctx, cv.width, cv.height, isNight());
+  };
+  new IntersectionObserver(([e]) => {
+    clearInterval(timer);
+    if (e.isIntersecting) timer = window.setInterval(tick, 150);
+  }).observe(cv);
+}

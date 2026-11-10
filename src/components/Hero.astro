@@ -38,10 +38,10 @@ import Truck from './Truck.astro';
     /* The stage holds the art, truck and barista. Full width on most screens; on tall phones it grows so the scene fills
      about half the height, centred on the truck (the sign and stools drop off the sides), never leaving a gap at either edge. */
   .stage { position: absolute; bottom: 0; width: max(100cqw, 92cqh); aspect-ratio: 180 / 106; left: clamp(calc(100% - max(100cqw, 92cqh)), calc(50% - 0.48 * max(100cqw, 92cqh)), 0px); container-type: inline-size; }
-  /* Phones: lift the scene above a plain grass strip so the docked Where we at card (FindUs.astro) mostly clears the truck. */
+  /* Phones: lift the scene above a plain grass strip so the docked Where we at card (FindUs.astro) shows in full under the truck. */
   @media (max-width: 560px) {
-    .stage { bottom: 52px; }
-    .scene-frame::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 53px; background: var(--ground, #7fae45); }
+    .stage { bottom: 96px; }
+    .scene-frame::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 97px; background: var(--ground, #7fae45); }
   }
   .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   /* Sizes are in cqw (stage width) so the truck and barista stay on the road. */

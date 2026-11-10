@@ -1,9 +1,9 @@
 ---
 // A strip of road the Hilux drives along as you scroll (scripts/story.ts).
 // dir: which way it drives. mode "pass" drives right across; "arrive" rolls in and parks in the middle.
-// scenery: a pixel backdrop (town or kampung) whose lights come on at night. road: dirt or asphalt.
+// scenery: a pixel backdrop (town, kampung, wedding venue or campsite) whose lights come on at night. road: dirt or asphalt.
 import Truck from './Truck.astro';
-interface Props { dir: 'ltr' | 'rtl'; mode?: 'pass' | 'arrive'; scenery?: 'town' | 'village'; road?: 'dirt' | 'asphalt' }
+interface Props { dir: 'ltr' | 'rtl'; mode?: 'pass' | 'arrive'; scenery?: 'town' | 'village' | 'wedding' | 'camp'; road?: 'dirt' | 'asphalt' }
 const { dir, mode = 'pass', scenery, road = 'dirt' } = Astro.props;
 ---
 <div class="lane" data-dir={dir} data-mode={mode} data-road={road} data-has-scenery={scenery ? '' : undefined} data-scenery-kind={scenery} aria-hidden="true">

@@ -1,50 +1,56 @@
 ---
 import Calendar from './Calendar.astro';
-import { events, booked } from '../data/events';
+import RoadLane from './RoadLane.astro';
+import { events } from '../data/events';
 import { site } from '../data/site';
 ---
+<div class="pin-track">
 <section id="events" class="events">
   <div class="wrap">
     <div class="sec-head">
       <div><div class="label kicker">Events</div><h2>CATCH THE HILUX</h2></div>
-      <p>Where we're pouring next, and the dates you can book us for your own event.</p>
+      <p>Where we're pouring next. Tap an event day to see what's on, or book the Hilux for your own event.</p>
     </div>
-    <div class="cal-cards">
-      <article class="cal-card" data-cal-card>
-        <h3>EVENT CALENDAR</h3>
-        <Calendar mode="events" data={events} label="Event calendar" />
-        <div class="legend label"><i class="sw ev"></i>Event day</div>
-        <ul class="event-list" data-event-list></ul>
-      </article>
-      <article class="cal-card" data-cal-card>
-        <h3>BOOK THE TRUCK</h3>
-        <Calendar mode="booking" data={booked} label="Booking calendar" />
-        <div class="legend label"><i class="sw free"></i>Free <i class="sw bk"></i>Booked <i class="sw sel"></i>Your pick</div>
-        <div class="pick"><span class="label">Your date</span><b data-picked>Pick a free date</b></div>
-        <a class="cb-btn" data-book data-base={site.whatsapp} href={site.whatsapp}>Request this date</a>
-      </article>
-    </div>
+    <article class="cal-card" data-cal-card>
+      <h3>EVENT CALENDAR</h3>
+      <Calendar data={events} label="Event calendar" />
+      <div class="legend label"><span><i class="sw ev"></i>Event day</span></div>
+      <ul class="event-list" data-event-list></ul>
+      <a class="cb-btn" href={site.whatsapp}>Book with us</a>
+      <!-- Event details popup, filled by scripts/calendar.ts when an event day is tapped. -->
+      <dialog class="ev-pop" data-event-pop aria-labelledby="evPopName">
+        <b id="evPopName" class="pop-day" data-pop-date></b>
+        <ul class="event-list" data-pop-list></ul>
+        <form method="dialog"><button class="cb-btn cb-btn--ghost">Close</button></form>
+      </dialog>
+    </article>
   </div>
+  <RoadLane dir="rtl" scenery="wedding" />
 </section>
+</div>
 
 <style>
-  .events { border-top: 3px solid var(--line); }
-  .cal-cards { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); align-items: start; }
-  @media (max-width: 820px) { .cal-cards { grid-template-columns: 1fr; } }
-  .cal-card { background: var(--surface-100); border: 3px solid var(--line); box-shadow: var(--shadow-px-lg); padding: clamp(16px, 3vw, 28px); }
+  .events { border-top: 3px solid var(--line); padding-bottom: 0; }
+  .events :global(.lane) { margin-top: 56px; }
+  .cal-card { max-width: 560px; margin: 0 auto; background: var(--surface-100); border: 3px solid var(--line); box-shadow: var(--shadow-px-lg); padding: clamp(16px, 3vw, 28px); }
   .cal-card h3 { font: 700 20px/1 var(--font-display); color: var(--forest); margin-bottom: 16px; letter-spacing: .03em; }
   .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 12px; font-size: 10px; color: var(--muted); }
+  .legend span { white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
   .sw { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--line); margin-right: 2px; }
-  .sw.ev { background: var(--ember); } .sw.free { background: var(--surface-100); } .sw.bk { background: var(--surface-300); } .sw.sel { background: var(--forest); }
+  .sw.ev { background: var(--ember); }
   .event-list { list-style: none; margin: 16px 0 0; padding: 0; }
   .event-list :global(li) { display: grid; gap: 2px; padding: 10px 0; border-top: 2px dashed var(--line); }
   .event-list :global(li .label) { font-size: 10px; color: var(--ember-600); }
   .event-list :global(li b) { font: 700 15px/1.2 var(--font-body); }
   .event-list :global(li small) { font-size: 13px; color: var(--muted); }
+  .event-list :global(li.done) { opacity: .6; }
   .event-list :global(li.empty) { font-size: 14px; color: var(--muted); }
-  .pick { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 16px 0; padding-top: 14px; border-top: 2px dashed var(--line); }
-  .pick .label { font-size: 10px; color: var(--muted); }
-  .pick b { font: 700 15px/1.2 var(--font-body); }
   .cal-card .cb-btn { width: 100%; justify-content: center; }
-  .cal-card .cb-btn[aria-disabled] { opacity: .5; pointer-events: none; }
+  .cal-card > .cb-btn { margin-top: 20px; }
+  .ev-pop { width: min(360px, calc(100vw - 32px)); border: 3px solid var(--line); background: var(--surface-100); color: var(--text); box-shadow: var(--shadow-px-lg); padding: 24px; }
+  .ev-pop[open] { display: grid; gap: 6px; }
+  .ev-pop::backdrop { background: rgba(18, 18, 13, .45); }
+  .ev-pop .pop-day { font: 700 16px/1.2 var(--font-display); color: var(--forest); letter-spacing: .03em; }
+  .ev-pop .event-list { margin-top: 8px; }
+  .ev-pop form { margin-top: 14px; }
 </style>

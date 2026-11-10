@@ -5,6 +5,7 @@
 // and rolls in from the left to park in the middle of the footer.
 // The barista moves in whole scene pixels; the truck shakes as the engine starts, then glides smoothly.
 // Off under reduced motion.
+import { reduceMotion } from '../lib/motion';
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 /** 0→1 progress of p inside [a, b]. */
@@ -18,7 +19,7 @@ function spin(truckEl: HTMLElement, travel: number) {
 }
 
 export function initStory() {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (reduceMotion()) return;
   const track = document.getElementById('sceneTrack');
   const frame = document.getElementById('sceneFrame');
   const stage = document.getElementById('sceneStage');

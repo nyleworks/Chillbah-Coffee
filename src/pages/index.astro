@@ -21,17 +21,20 @@ import Footer from '../components/Footer.astro';
 </Base>
 
 <script>
+  import { reduceMotion, initMotionToggle } from '../lib/motion';
   import { initScene } from '../scripts/scene';
-  import { drawArt, drawArtFaded, stopArtFade } from '../scripts/art';
+  import { drawArt, drawArtFaded, stopArtFade, initFireFlicker } from '../scripts/art';
   import { initThemeToggle, onThemeChange, isNight } from '../scripts/theme';
   import { initStory } from '../scripts/story';
   import { initCalendars } from '../scripts/calendar';
+  import { initPress } from '../scripts/press';
   import Lenis from 'lenis';
   import 'lenis/dist/lenis.css';
 
   const scene = initScene(document.getElementById('scene') as HTMLCanvasElement | null);
   drawArt();
   initThemeToggle(document.getElementById('themeBtn'));
+  initMotionToggle(document.getElementById('motionBtn'));
   onThemeChange(() => {
     scene.setNight(isNight());
     drawArtFaded();
@@ -40,8 +43,10 @@ import Footer from '../components/Footer.astro';
   addEventListener('resize', () => { clearTimeout(artTimer); artTimer = window.setTimeout(() => { stopArtFade(); drawArt(); }, 120); });
   initStory();
   initCalendars();
+  initPress();
+  initFireFlicker();
   // Smooth, eased scrolling for mouse wheels and anchor links (touch keeps the native feel). Off under reduced motion.
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (!reduceMotion()) {
     const lenis = new Lenis({ lerp: 0.08, wheelMultiplier: 0.9, anchors: { offset: -72 } });
     const raf = (time: number) => { lenis.raf(time); requestAnimationFrame(raf); };
     requestAnimationFrame(raf);

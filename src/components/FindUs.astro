@@ -13,6 +13,7 @@ const rows = [
   <div class="wrap">
     <!-- One floating card, centred: heading, intro, today's spot and the social links together. -->
     <div class="find-dock" id="findDock">
+      <div class="find-peek" id="findPeek">
       <div class="find-card" id="findCard">
         <div class="label kicker">Where we at</div>
         <h2>WE MOVE.<br />YOU FOLLOW.</h2>
@@ -26,10 +27,10 @@ const rows = [
           ))}
         </div>
         <div class="hours">
-          <div class="label hours-head">Opening hours <span>Placeholder</span></div>
+          <div class="label hours-head">Opening hours</div>
           <table>
             <tbody>
-              {hours.map((h) => <tr><th scope="row">{h.day}</th><td>{h.time}</td></tr>)}
+              {hours.map((h, i) => <tr data-day={(i + 1) % 7} class:list={{ closed: !h.place }}><th scope="row">{h.day}</th><td class="where">{h.place}</td><td class="time">{h.time}</td></tr>)}
             </tbody>
           </table>
         </div>
@@ -38,38 +39,52 @@ const rows = [
           <a class="cb-btn cb-btn--ghost" href={site.whatsapp}>WhatsApp</a>
         </div>
       </div>
+      </div>
     </div>
   </div>
-  <RoadLane dir="rtl" scenery="village" />
+  <RoadLane dir="ltr" scenery="village" />
 </section>
 </div>
 
 <script>
-  // While the visitor is still above this section, the card is lifted to dock on the bottom edge of the screen, showing only
-  // its top (kicker + first heading line), and bobs there. It stays docked while they scroll; once the card's real
-  // position reaches the dock it lets go and sits in place. The dock wrapper does the lifting and the (static) clipping,
-  // the card inside does the bobbing, so the slice always rises out of the same edge. Off under reduced motion.
+  // Highlight today's row in the opening hours (visitor's own clock).
+  document.querySelector(`.hours tr[data-day="${new Date().getDay()}"]`)?.classList.add('today');
+
+  // While the visitor is still above this section, the card docks on the bottom edge of the screen, showing only its top
+  // (kicker + first heading line), and bobs there. It stays docked while they scroll; once the card's real position reaches
+  // the dock it lets go and sits in place.
+  // Docked, the peek wrapper is position:fixed (so the phone's own scrolling can't make it shake, as a per-frame transform did
+  // on iOS) and does the static clipping; the dock keeps the card's height in the page; the card inside does the bobbing.
+  // Off under reduced motion.
   const dock = document.getElementById('findDock');
+  const peek = document.getElementById('findPeek');
   const card = document.getElementById('findCard');
-  if (dock && card && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (dock && peek && card && document.documentElement.dataset.motion !== 'reduce') {
     const h2 = card.querySelector('h2')!;
+    const stage = document.getElementById('sceneStage');
     const truck = document.getElementById('heroTruck');
     let raf = 0;
     const update = () => {
       raf = 0;
       const firstLine = parseFloat(getComputedStyle(h2).lineHeight) || h2.offsetHeight / 2;
-      const visible = Math.round(h2.offsetTop + firstLine + 10); // down to just under the first heading line
-      // rests on the bottom edge of the screen, but never higher than just under the hero truck's tyres
-      // (with room for the bob), so on short screens it doesn't cover the truck
-      const tyres = truck ? truck.getBoundingClientRect().bottom + 20 : 0;
-      const dockTop = Math.max(innerHeight - visible, tyres);
-      const wrap = dock.parentElement!; // untransformed, so it gives the dock's natural position
-      const naturalTop = wrap.getBoundingClientRect().top + dock.offsetTop - wrap.offsetTop;
-      const lift = Math.min(0, Math.round(dockTop - naturalTop));
-      const docked = lift < 0;
-      dock.style.transform = docked ? `translateY(${lift}px)` : '';
-      dock.style.clipPath = docked ? `polygon(-40px -60px, calc(100% + 40px) -60px, calc(100% + 40px) ${visible}px, -40px ${visible}px)` : '';
+      const visible = Math.round(h2.offsetTop + firstLine + 6); // down to just under the first heading line
+      // the layout viewport height: steady while the phone's address bar slides in and out
+      const screenH = document.documentElement.clientHeight;
+      // rests on the bottom edge of the screen, but never higher than just under the hero truck's tyres (with room for the
+      // bob). Measured from the stage plus the truck's untransformed offset, so the drive-off can't move it.
+      let tyres = 0;
+      if (stage && truck) tyres = stage.getBoundingClientRect().top + truck.offsetTop + truck.offsetHeight + 20;
+      const dockTop = Math.round(Math.max(screenH - visible, tyres));
+      const box = dock.getBoundingClientRect(); // the dock stays in the page flow, so this is the card's real position
+      const docked = dockTop < box.top - 1;
       dock.classList.toggle('docked', docked);
+      dock.style.height = docked ? `${card.offsetHeight}px` : '';
+      if (docked) {
+        Object.assign(peek.style, { position: 'fixed', top: `${dockTop}px`, left: `${box.left}px`, width: `${box.width}px`,
+          clipPath: `polygon(-40px -60px, calc(100% + 40px) -60px, calc(100% + 40px) ${visible}px, -40px ${visible}px)` });
+      } else {
+        Object.assign(peek.style, { position: '', top: '', left: '', width: '', clipPath: '' });
+      }
     };
     const request = () => { if (!raf) raf = requestAnimationFrame(update); };
     addEventListener('scroll', request, { passive: true });
@@ -94,8 +109,9 @@ const rows = [
     box-shadow: 8px 8px 0 var(--line), 16px 16px 0 rgba(18, 18, 13, .18); padding: clamp(24px, 5vw, 44px); }
   .find-card h2 { margin-top: 8px; }
   .spot { text-align: left; margin-top: 24px; padding-top: 20px; border-top: 3px solid var(--line); }
-  /* Docked (see script): the wrapper is lifted and clipped; the card bobs inside it, rising out of the clip edge. */
+  /* Docked (see script): the peek wrapper is fixed to the screen and clipped; the card bobs inside it, rising out of the clip edge. */
   .find-dock { position: relative; z-index: 6; }
+  .find-peek { z-index: 6; }
   .find-dock.docked { cursor: pointer; }
   .find-dock.docked .find-card { animation: card-bob 1.8s ease-in-out infinite; }
   @keyframes card-bob { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-16px); } 70% { transform: translateY(2px); } }
@@ -111,7 +127,12 @@ const rows = [
   .hours table { width: 100%; border-collapse: collapse; }
   .hours th, .hours td { padding: 9px 0; border-bottom: 2px dashed var(--line); font: 600 15px/1.2 var(--font-body); }
   .hours tr:last-child :is(th, td) { border-bottom: 0; }
-  .hours th { text-align: left; }
-  .hours td { text-align: right; color: var(--muted); }
+  .hours th { text-align: left; width: 3.2em; }
+  .hours td.where { color: var(--muted); font-weight: 500; font-size: 14px; padding-right: 10px; }
+  .hours td.time { text-align: right; white-space: nowrap; color: var(--ember-600); }
+  .hours tr.closed td.time { color: var(--text); text-transform: uppercase; letter-spacing: .06em; }
+  /* today's row (marked by the script below) */
+  .hours tr.today :is(th, td) { background: var(--surface-200); }
+  .hours tr.today th { box-shadow: inset 4px 0 0 var(--ember); padding-left: 10px; }
   .ctas { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 22px; }
 </style>

@@ -2,6 +2,7 @@
 import { Grid } from '../lib/pixel';
 import { cup, pine } from '../lib/sprites';
 import { isNight } from './theme';
+import { reduceMotion } from '../lib/motion';
 
 const ridge = [[52, 92], [70, 72], [84, 58], [94, 60], [102, 44], [110, 48], [116, 34], [122, 40], [128, 28], [134, 36], [140, 26], [146, 33], [152, 30], [160, 42], [170, 38], [180, 52], [196, 58], [214, 70], [240, 76]];
 const heightAt = (x: number) => {
@@ -17,7 +18,7 @@ const stars = Array.from({ length: 40 }, (_, i) => [(i * 53) % 240, 18 + ((i * 2
 export function initScene(canvas: HTMLCanvasElement | null) {
   const sx = canvas?.getContext('2d');
   if (!canvas || !sx) return { setNight(_n: boolean) {} };
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduce = reduceMotion();
   const p1 = pine(12, '#2b5615', '#244a12'), p2 = pine(9, '#4f7a2c', '#2b5615');
   p1.outline('#12120d'); p2.outline('#12120d');
   const sign = Grid(10, 14); sign.rect(1, 0, 8, 9, '#2a2620'); sign.rect(2, 2, 6, 1, '#e66f46'); sign.rect(2, 4, 5, 1, '#f4ebcd'); sign.rect(2, 6, 4, 1, '#f4ebcd'); sign.rect(1, 9, 1, 4, '#715542'); sign.rect(8, 9, 1, 4, '#715542'); sign.outline('#12120d');

@@ -1,5 +1,9 @@
 ---
-import { pastEvents } from '../data/events';
+import { events } from '../data/events';
+import { when } from '../lib/dates';
+// Events that finished before the site was built, newest first (rebuild the site to move newly finished events here).
+const today = new Date().toISOString().slice(0, 10);
+const pastEvents = events.filter((e) => (e.end || e.date) < today).sort((a, b) => b.date.localeCompare(a.date));
 ---
 <section id="past" class="past">
   <div class="wrap">
@@ -14,9 +18,9 @@ import { pastEvents } from '../data/events';
             ? <img src={e.photo} alt={e.name} loading="lazy" />
             : <div class="photo-ph" aria-hidden="true"><span class="label">Photo soon</span></div>}
           <div class="past-body">
-            <div class="label">{e.date}</div>
+            <div class="label">{when(e.date, e.end)}</div>
             <h3>{e.name}</h3>
-            <p>{e.place}</p>
+            {e.place && <p>{e.place}</p>}
           </div>
         </article>
       ))}
