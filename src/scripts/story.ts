@@ -81,15 +81,16 @@ export function initStory() {
   // the screen the page holds while the truck drives in from one edge and out the other, then scrolling carries on.
   // So each truck is gone before the next one shows up. The "arrive" lane (footer) rolls in and parks in the middle.
   // Screen height for the pins. Phones grow and shrink the visible area as the browser's address bar slides in and out
-  // while you scroll; following that would resize every pin mid-scroll and make the page jump. So use the *large*
-  // viewport height (address bar hidden, as it is while scrolling) and only re-measure when the width changes
-  // (rotation) or on a desktop window resize.
+  // while you scroll; following that would resize every pin mid-scroll and make the page jump, so the height is measured
+  // once and only re-measured when the width changes (rotation) or on a desktop window resize. It is the *small*
+  // viewport height (address bar showing): the road at the bottom of a pinned section then always sits above the
+  // browser's bottom bar (iOS Safari, Chrome with the bar at the bottom) instead of driving underneath it.
   const probe = document.createElement('div');
-  probe.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:100vh;height:100lvh;visibility:hidden;pointer-events:none';
+  probe.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:100vh;height:100svh;visibility:hidden;pointer-events:none';
   document.body.append(probe);
   const coarse = matchMedia('(pointer: coarse)').matches;
   let vh = 0, lastW = 0;
-  const measureVh = () => { vh = Math.max(innerHeight, probe.offsetHeight); lastW = innerWidth; };
+  const measureVh = () => { vh = probe.offsetHeight || innerHeight; lastW = innerWidth; };
   measureVh();
   const lanes = Array.from(document.querySelectorAll<HTMLElement>('.lane'));
   const pins = Array.from(document.querySelectorAll<HTMLElement>('.pin-track'));
