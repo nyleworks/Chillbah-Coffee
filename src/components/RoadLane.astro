@@ -28,4 +28,10 @@ const { dir, mode = 'pass', scenery, road = 'dirt' } = Astro.props;
   .lane :global(.lane-truck) { position: absolute; z-index: 1; left: 50%; bottom: 8px; width: clamp(220px, 30vw, 360px); height: auto; transform: translateX(-50%); }
   /* The art faces left; mirror it when driving right. */
   .lane[data-dir="ltr"] :global(.lane-truck) { transform: translateX(-50%) scaleX(-1); }
+  /* Phones: the scenery is drawn zoomed out (art.ts), so the truck is smaller too, to stay in scale with it. */
+  @media (max-width: 600px) {
+    .lane :global(.lane-truck) { width: 170px; }
+    /* Zoomed out, the kampung and the wedding are shorter, so their strips shrink to fit (no empty sky above). */
+    .lane:is([data-scenery-kind="village"], [data-scenery-kind="wedding"]) { height: 200px; }
+  }
 </style>

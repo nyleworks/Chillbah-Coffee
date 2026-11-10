@@ -27,9 +27,12 @@ export function drawArt() {
     }
   });
 
-  // Lane backdrops: one art pixel per 4 CSS px, sized to the lane so they run edge to edge.
+  // Lane backdrops: one art pixel per 4 CSS px, sized to the lane so they run edge to edge. On phones (lane 600px or
+  // narrower) one art pixel per 2 CSS px instead: the scene is "zoomed out", so about as much of it shows as on a laptop
+  // (Niekki, 2026-11-10). The road-lane truck shrinks to match (RoadLane.astro).
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-scenery]').forEach((cv) => {
-    const w = Math.max(1, Math.round(cv.clientWidth / 4)), h = Math.max(1, Math.round(cv.clientHeight / 4));
+    const px = cv.clientWidth <= 600 ? 2 : 4;
+    const w = Math.max(1, Math.round(cv.clientWidth / px)), h = Math.max(1, Math.round(cv.clientHeight / px));
     if (cv.width !== w) cv.width = w;
     if (cv.height !== h) cv.height = h;
     const ctx = cv.getContext('2d'); if (!ctx) return;

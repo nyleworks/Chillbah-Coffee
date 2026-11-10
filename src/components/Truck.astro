@@ -6,8 +6,8 @@
 // wider than the screen on phones; road-lane trucks are clamp(220px, 30vw, 360px). Lane trucks load lazily.
 interface Props { id?: string; class?: string; awning?: boolean; label?: string; lazy?: boolean; hero?: boolean }
 const { id, class: className, awning = false, label, lazy = false, hero = false } = Astro.props;
-const sizes = hero ? '(max-width: 720px) 52vw, 39vw' : '(max-width: 733px) 220px, (max-width: 1200px) 30vw, 360px';
-const wheelSizes = hero ? '(max-width: 720px) 8vw, 6vw' : '(max-width: 733px) 32px, (max-width: 1200px) 4.4vw, 52px';
+const sizes = hero ? '(max-width: 720px) 52vw, 39vw' : '(max-width: 600px) 170px, (max-width: 733px) 220px, (max-width: 1200px) 30vw, 360px';
+const wheelSizes = hero ? '(max-width: 720px) 8vw, 6vw' : '(max-width: 600px) 25px, (max-width: 733px) 32px, (max-width: 1200px) 4.4vw, 52px';
 const loading = lazy ? 'lazy' : 'eager';
 const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a subfolder (GitHub Pages)
 ---
