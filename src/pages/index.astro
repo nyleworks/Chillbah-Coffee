@@ -22,7 +22,8 @@ import Footer from '../components/Footer.astro';
 
 <script>
   import { reduceMotion, initMotionToggle } from '../lib/motion';
-  import { initScene } from '../scripts/scene';
+  import { initScene, sceneIcon, type SceneName } from '../scripts/scene';
+  import { paint } from '../lib/pixel';
   import { drawArt, drawArtFaded, stopArtFade, initFireFlicker } from '../scripts/art';
   import { initThemeToggle, onThemeChange, isNight } from '../scripts/theme';
   import { initStory } from '../scripts/story';
@@ -32,6 +33,18 @@ import Footer from '../components/Footer.astro';
   import 'lenis/dist/lenis.css';
 
   const scene = initScene(document.getElementById('scene') as HTMLCanvasElement | null);
+  // Scene switch (Hero.astro): mountain or jetty, remembered between visits.
+  const sceneBtns = [...document.querySelectorAll<HTMLButtonElement>('[data-scene]')];
+  const heroTruck = document.getElementById('heroTruck');
+  const markScene = (name: SceneName) => {
+    sceneBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.scene === name)));
+    heroTruck?.setAttribute('aria-label', name === 'jetty'
+      ? 'Pixel art of the white Chillbah Hilux with its tan side awning open on poles, parked on a jetty with the sea and small islands behind'
+      : 'Pixel art of the white Chillbah Hilux with its tan side awning open on poles, parked on grass with mountains behind');
+  };
+  document.querySelectorAll<HTMLCanvasElement>('canvas[data-scene-icon]').forEach((cv) => paint(cv, sceneIcon(cv.dataset.sceneIcon as SceneName)));
+  markScene(scene.scene());
+  sceneBtns.forEach((b) => b.addEventListener('click', () => { const name = b.dataset.scene as SceneName; scene.setScene(name); markScene(name); }));
   drawArt();
   initThemeToggle(document.getElementById('themeBtn'));
   initMotionToggle(document.getElementById('motionBtn'));

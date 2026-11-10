@@ -21,9 +21,45 @@ const heightAt = (x: number) => {
 const snow = [[100, 52, 10], [126, 38, 8], [148, 40, 10], [172, 50, 9]].map(([x, y, l]) => [x, Math.round(lift(y)), Math.max(3, Math.round(l * MT_SCALE))]);
 const clouds = [[20, 40, 1], [150, 24, 0.6], [200, 46, 0.8], [90, 30, 0.7]];
 
+// Jetty scene (Niekki, 2026-11-10, after a drone shot of Jesselton Point): the truck parks on a pier over the sea,
+// with hilly islands on the horizon. Same sky, sun and moon as the mountain scene. Horizon at y 86.
+const HORIZON = 86;
+const islands = [
+  [[10, 86], [20, 79], [32, 75], [44, 71], [56, 73], [68, 67], [82, 70], [96, 76], [110, 82], [124, 86]], // big one behind the sun
+  [[166, 86], [172, 83], [184, 81], [194, 82], [204, 86]], // flat islet
+  [[232, 86], [246, 78], [262, 73], [278, 77], [292, 82], [304, 86]], // wide screens only, from here out
+  [[-96, 86], [-86, 82], [-68, 80], [-56, 83], [-48, 86]],
+  [[330, 86], [340, 83], [356, 82], [366, 86]],
+  [[-170, 86], [-156, 78], [-140, 75], [-124, 80], [-112, 86]],
+];
+const islandTop = (pts: number[][], x: number) => {
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x1, y1] = pts[i], [x2, y2] = pts[i + 1];
+    if (x >= x1 && x <= x2) return Math.round(y1 + ((y2 - y1) * (x - x1)) / (x2 - x1) + ((x * 5) % 3 === 0 ? -1 : 0));
+  }
+  return 999;
+};
+export type SceneName = 'hills' | 'jetty';
+/** 12×10 icons for the scene switch: a snowy peak, and a pier over the sea under the sun. */
+export function sceneIcon(name: SceneName) {
+  const g = Grid(12, 10);
+  if (name === 'hills') {
+    for (let y = 1; y < 8; y++) g.rect(6 - y, y + 1, y * 2 - 1, 1, '#455976');
+    g.rect(5, 2, 1, 1, '#f4ebcd'); g.rect(4, 3, 3, 1, '#f4ebcd');
+    g.rect(0, 8, 12, 2, '#7fae45'); g.set(10, 6, '#2b5615'); g.rect(9, 7, 3, 1, '#2b5615');
+  } else {
+    g.disc(8, 2, 1, '#f2c94c');
+    g.rect(0, 5, 12, 5, '#3d8ca6'); g.rect(1, 6, 2, 1, '#a8dcdc'); g.rect(7, 8, 3, 1, '#a8dcdc');
+    g.rect(0, 4, 7, 1, '#bdb6a4'); g.rect(1, 5, 1, 4, '#6a6458'); g.rect(5, 5, 1, 4, '#6a6458');
+  }
+  return g;
+}
+const SCENE_KEY = 'chillbah-scene';
+export const savedScene = (): SceneName => { try { return localStorage.getItem(SCENE_KEY) === 'jetty' ? 'jetty' : 'hills'; } catch { return 'hills'; } };
+
 export function initScene(canvas: HTMLCanvasElement | null) {
   const sx = canvas?.getContext('2d');
-  if (!canvas || !sx) return { setNight(_n: boolean) {} };
+  if (!canvas || !sx) return { setNight(_n: boolean) {}, setScene(_s: SceneName) {}, scene: (): SceneName => 'hills' };
   const cv: HTMLCanvasElement = canvas; // non-null from here on, also inside the hoisted helpers below
   const reduce = reduceMotion();
   const p1 = pine(12, '#2b5615', '#244a12'), p2 = pine(9, '#4f7a2c', '#2b5615');
@@ -31,7 +67,13 @@ export function initScene(canvas: HTMLCanvasElement | null) {
   const sign = Grid(10, 14); sign.rect(1, 0, 8, 9, '#2a2620'); sign.rect(2, 2, 6, 1, '#e66f46'); sign.rect(2, 4, 5, 1, '#f4ebcd'); sign.rect(2, 6, 4, 1, '#f4ebcd'); sign.rect(1, 9, 1, 4, '#715542'); sign.rect(8, 9, 1, 4, '#715542'); sign.outline('#12120d');
   const stool = Grid(8, 9); stool.rect(0, 0, 8, 2, '#e66f46'); stool.rect(1, 2, 1, 6, '#715542'); stool.rect(6, 2, 1, 6, '#715542'); stool.outline('#12120d');
   const icedCup = cup('iced', '#a8742a');
+  // jetty props: a lamp post, a little speedboat and a ferry far out
+  const boat = Grid(16, 6); boat.rect(5, 0, 5, 2, '#e8e4d8'); boat.rect(6, 0, 3, 1, '#4f7fa8'); boat.rect(1, 2, 14, 2, '#f4f0e4'); boat.rect(2, 4, 12, 1, '#e66f46'); boat.set(0, 2, '#f4f0e4'); boat.outline('#12120d');
+  const boat2 = Grid(14, 6); boat2.rect(4, 0, 4, 2, '#e8e4d8'); boat2.set(5, 0, '#4f7fa8'); boat2.rect(1, 2, 12, 2, '#f4f0e4'); boat2.rect(2, 4, 10, 1, '#2f7d6a'); boat2.set(13, 2, '#f4f0e4'); boat2.outline('#12120d');
+  const ferry = Grid(14, 5); ferry.rect(3, 0, 8, 2, '#f4f0e4'); ferry.rect(4, 0, 6, 1, '#7d93a8'); ferry.rect(1, 2, 12, 2, '#e8e4d8'); ferry.outline('#3f5a6e');
   let frame = 0;
+  // Which scene is showing, and the wipe between them: `wipe` runs 0 → 1 while the new scene slides in from the right.
+  let scene: SceneName = savedScene(), prev: SceneName = scene, wipe = 1, wipeAnim = 0;
 
   function cloud(x: number, y: number, col: string) {
     const g = Grid(30, 12); g.disc(8, 7, 4, col); g.disc(15, 5, 5, col); g.disc(22, 7, 4, col); g.rect(4, 8, 22, 3, col);
@@ -105,6 +147,23 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     }
     const reps = Math.max(1, Math.round(W / 240)); // more clouds across a wide sky
     for (let r = 0; r < reps; r++) clouds.forEach(([x, y, sp]) => cloud(L + ((x + r * 240 * 0.37 + frame * sp * 0.25) % (W + 40)) - 30, y + (r % 2) * 6, mix('#f0f8f0', '#3a4a66')));
+    // The land under the sky. Mid-switch, the new scene is drawn over the old one from a wipe edge that moves right to left
+    // in whole pixels.
+    const sunX = (t < 0.5 ? 53 : 55) + skyX, sunY = t < 0.5 ? 29 + skyY + Math.round(ease(t / 0.5) * 80) : 29 + skyY + Math.round((1 - ease((t - 0.5) / 0.5)) * 80);
+    const land = (name: SceneName) => (name === 'jetty' ? drawJetty(ctx, L, R, W, H, sunX, sunY) : drawHills(ctx, L, R, W, H));
+    if (wipe >= 1 || prev === scene) land(scene);
+    else {
+      land(prev);
+      const edge = Math.round(R - ease(wipe) * (W + 2));
+      ctx.save(); ctx.beginPath(); ctx.rect(edge, 0, R - edge + 1, H + 20); ctx.clip();
+      land(scene);
+      ctx.restore();
+    }
+    const ground = scene === 'jetty' ? mix('#2f7f98', '#16233a') : mix('#7fae45', '#4c5f2c');
+    if (frameEl && ground !== lastGround) { frameEl.style.setProperty('--ground', ground); lastGround = ground; } // phones extend the ground below the art (Hero.astro)
+  }
+
+  function drawHills(ctx: CanvasRenderingContext2D, L: number, R: number, W: number, H: number) {
     // mountain
     const mt = mix('#455976', '#3c4c68');
     for (let x = 52; x < 284; x++) { const h = heightAt(x); if (h >= 92) continue; ctx.fillStyle = mt; ctx.fillRect(x, h, 1, 96 - h); ctx.fillStyle = '#12120d'; ctx.fillRect(x, h, 1, 1); }
@@ -118,14 +177,89 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     for (let x = 14, i = 0; x > L - 12; x -= 19 + (i % 3) * 4, i++) (i % 2 ? p2 : p1).draw(ctx, x, 77 + (i % 3) * 2);
     for (let x = 226, i = 0; x < R; x += 19 + (i % 3) * 4, i++) (i % 2 ? p1 : p2).draw(ctx, x, 77 + ((i + 1) % 3) * 2);
     // ground, road
-    const ground = mix('#7fae45', '#4c5f2c');
-    if (frameEl && ground !== lastGround) { frameEl.style.setProperty('--ground', ground); lastGround = ground; } // phones extend the grass below the art (Hero.astro)
-    ctx.fillStyle = ground; ctx.fillRect(L, 92, W, H - 92);
+    ctx.fillStyle = mix('#7fae45', '#4c5f2c'); ctx.fillRect(L, 92, W, H - 92);
     ctx.fillStyle = mix('#66882d', '#3a4a22');
     for (let x0 = Math.floor(L / 240) * 240; x0 < R; x0 += 240) for (let i = 0; i < 90; i++) { const x = x0 + ((i * 37) % 240), y = 95 + ((i * 11) % 32); ctx.fillRect(x, y, 1, 2); ctx.fillRect(x + 1, y + 1, 1, 1); }
     ctx.fillStyle = mix('#c9a27a', '#5a4632'); ctx.fillRect(L, 108, W, 6);
     ctx.fillStyle = mix('#b08560', '#4a3a2a'); for (let x = Math.floor(L / 9) * 9; x < R; x += 9) ctx.fillRect(x, 110, 4, 1);
     ctx.fillStyle = '#12120d'; ctx.fillRect(L, 92, W, 1);
+    sign.draw(ctx, 70, 96);
+    stool.draw(ctx, 172, 99); stool.draw(ctx, 186, 101);
+    icedCup.draw(ctx, 198, 94);
+  }
+
+  // The jetty: sea to the horizon with islands, the sun's (or moon's) glitter on the water, a concrete pier with a
+  // railing along its far edge, a lamp post and the ferry terminal's shed off to the right, piles down into the water.
+  function drawJetty(ctx: CanvasRenderingContext2D, L: number, R: number, W: number, H: number, sunX: number, sunY: number) {
+    // sea, in three bands that darken towards the viewer
+    const bands: [number, string][] = [[HORIZON, mix('#6fb8c4', '#2a3a58')], [92, mix('#4f9fb4', '#22314c')], [100, mix('#3d8ca6', '#1c2a42')], [110, mix('#2f7f98', '#16233a')]];
+    bands.forEach(([y, c], i) => { ctx.fillStyle = c; ctx.fillRect(L, y, W, (bands[i + 1]?.[0] ?? H) - y); });
+    // islands, hazy, with a dark outline on top like the mountain
+    const isl = mix('#5b8577', '#25344c'), islDark = mix('#4a7466', '#1e2b40');
+    islands.forEach((pts) => {
+      const x0 = Math.max(L, pts[0][0]), x1 = Math.min(R, pts[pts.length - 1][0]);
+      for (let x = x0; x < x1; x++) {
+        const h = islandTop(pts, x); if (h >= HORIZON) continue;
+        ctx.fillStyle = isl; ctx.fillRect(x, h, 1, HORIZON - h);
+        ctx.fillStyle = islDark; if ((x * 7) % 5 === 0) ctx.fillRect(x, h + 2 + (x % 3), 1, 2); // treetop texture
+        ctx.fillStyle = '#12120d'; ctx.fillRect(x, h, 1, 1);
+      }
+    });
+    // the islands' shadow line on the water
+    ctx.fillStyle = mix('#5a9fae', '#24344e'); ctx.fillRect(L, HORIZON, W, 1);
+    // glitter: little dashes drifting along the water
+    ctx.fillStyle = mix('#a8dcdc', '#3c5070');
+    for (let x0 = Math.floor(L / 120) * 120; x0 < R; x0 += 120) for (let i = 0; i < 26; i++) {
+      const y = HORIZON + 3 + ((i * 13) % 34), len = 2 + (i % 3) + (y > 100 ? 1 : 0);
+      ctx.fillRect(x0 + ((i * 47 + (frame >> 1) * (i % 2 ? 1 : -1)) % 120 + 120) % 120, y, len, 1);
+    }
+    // the sun's (or moon's) path of light on the water, under wherever it hangs; it fades as it sets
+    const lit = t < 0.5 ? Math.max(0, 1 - Math.max(0, sunY - 40) / 40) : Math.max(0, 1 - Math.max(0, sunY - 40) / 40) * 0.8;
+    if (lit > 0.05) {
+      ctx.fillStyle = t < 0.5 ? `rgba(242,201,76,${lit.toFixed(2)})` : `rgba(244,235,205,${lit.toFixed(2)})`;
+      for (let y = HORIZON + 1, i = 0; y < 104; y += 2, i++) {
+        const w = 2 + Math.round((y - HORIZON) / 5), wob = ((i + (frame >> 2)) % 3) - 1;
+        ctx.fillRect(sunX - (w >> 1) + wob, y, w - ((i + frame) % 2), 1);
+      }
+    }
+    // boats bobbing on the swell
+    const bob = (n: number) => (((frame >> 3) + n) % 4 < 2 ? 0 : 1);
+    ferry.draw(ctx, 176, HORIZON + 1 + bob(1));
+    for (let x0 = Math.floor((L - 60) / 260) * 260; x0 < R; x0 += 260) {
+      boat.draw(ctx, x0 + 37, 89 + bob(0)); if (x0) boat2.draw(ctx, x0 + 4, 92 + bob(2));
+    }
+    // ferry terminal shed on the pier, right of the stools (only part of it shows unless the screen is wide)
+    const wall = mix('#e8e4d8', '#5a5f6c'), roof = mix('#8fa6b8', '#3c4a60'), roofDark = mix('#6f8698', '#2e3a4e');
+    ctx.fillStyle = wall; ctx.fillRect(212, 84, 90, 18);
+    ctx.fillStyle = mix('#5a6878', '#1c2333'); for (let x = 218; x < 300; x += 12) ctx.fillRect(x, 90, 6, 6); // windows
+    if (t > 0.5) { ctx.fillStyle = `rgba(242,201,76,${((t - 0.5) * 2).toFixed(2)})`; for (let x = 218; x < 300; x += 12) ctx.fillRect(x, 90, 6, 6); } // lit at night
+    ctx.fillStyle = roof; ctx.fillRect(208, 78, 98, 6);
+    ctx.fillStyle = roofDark; ctx.fillRect(208, 83, 98, 1); for (let x = 210; x < 306; x += 4) ctx.fillRect(x, 79, 1, 4);
+    ctx.fillStyle = '#12120d'; ctx.fillRect(208, 77, 98, 1); ctx.fillRect(207, 77, 1, 7); ctx.fillRect(306, 77, 1, 7); ctx.fillRect(212, 84, 1, 18);
+    // pier deck: far edge railing, then the deck the truck stands on, its front face and the piles
+    const deckTop = 100, deckFront = 114;
+    ctx.fillStyle = mix('#bdb6a4', '#55524a'); ctx.fillRect(L, deckTop, W, deckFront - deckTop);
+    ctx.fillStyle = mix('#a9a28f', '#4a4740'); for (let x = Math.floor(L / 16) * 16; x < R; x += 16) ctx.fillRect(x, deckTop + 1, 1, deckFront - deckTop - 1); // slab joints
+    ctx.fillStyle = mix('#cfc8b6', '#625e55'); ctx.fillRect(L, deckTop, W, 1);
+    // railing (posts every 8 px, two rails)
+    const rail = mix('#e8e4d8', '#7a7a74');
+    ctx.fillStyle = '#12120d'; ctx.fillRect(L, 93, W, 1);
+    ctx.fillStyle = rail; ctx.fillRect(L, 94, W, 1); ctx.fillRect(L, 97, W, 1);
+    for (let x = Math.floor(L / 8) * 8; x < R; x += 8) { ctx.fillStyle = rail; ctx.fillRect(x, 94, 1, 6); ctx.fillStyle = '#12120d'; ctx.fillRect(x + 1, 95, 1, 5); }
+    // front face, piles, foam
+    ctx.fillStyle = '#12120d'; ctx.fillRect(L, deckFront, W, 1);
+    ctx.fillStyle = mix('#7a7466', '#34322e'); ctx.fillRect(L, deckFront + 1, W, 3);
+    ctx.fillStyle = '#12120d'; ctx.fillRect(L, deckFront + 4, W, 1);
+    for (let x = Math.floor(L / 14) * 14 + 4; x < R; x += 14) {
+      ctx.fillStyle = mix('#6a6458', '#2c2a26'); ctx.fillRect(x, deckFront + 5, 3, H - deckFront - 5);
+      ctx.fillStyle = '#12120d'; ctx.fillRect(x + 3, deckFront + 5, 1, H - deckFront - 5);
+      ctx.fillStyle = mix('#d8eeee', '#4a5a78'); ctx.fillRect(x - 1 + ((frame >> 3) % 2), deckFront + 8, 5, 1); // foam round the pile
+    }
+    // lamp post (lit at night)
+    ctx.fillStyle = '#12120d'; ctx.fillRect(56, 70, 3, 33); ctx.fillRect(53, 68, 9, 3);
+    ctx.fillStyle = mix('#7d93a8', '#4a5468'); ctx.fillRect(57, 71, 1, 31);
+    ctx.fillStyle = t > 0.5 ? '#f2c94c' : mix('#f4f0e4', '#f2c94c'); ctx.fillRect(54, 71, 7, 1);
+    if (t > 0.5) { ctx.fillStyle = `rgba(242,201,76,${((t - 0.5) * 0.22).toFixed(2)})`; ctx.fillRect(51, 101, 13, 13); ctx.fillRect(48, 104, 19, 8); } // pool of light on the deck
     sign.draw(ctx, 70, 96);
     stool.draw(ctx, 172, 99); stool.draw(ctx, 186, 101);
     icedCup.draw(ctx, 198, 94);
@@ -157,5 +291,21 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     };
     anim = requestAnimationFrame(step);
   }
-  return { setNight };
+  /** Switch between the mountain and the jetty: the new scene wipes in from the right (instant under reduced motion). */
+  function setScene(next: SceneName) {
+    if (next === scene && wipe >= 1) return;
+    try { localStorage.setItem(SCENE_KEY, next); } catch { /* storage blocked: just switch for this view */ }
+    cancelAnimationFrame(wipeAnim);
+    prev = wipe >= 1 ? scene : (wipe > 0.5 ? scene : prev);
+    scene = next;
+    if (reduce || prev === scene) { wipe = 1; draw(); return; }
+    wipe = 0;
+    const start = performance.now(), dur = 900;
+    const step = (now: number) => {
+      wipe = Math.min(1, (now - start) / dur); draw();
+      if (wipe < 1) wipeAnim = requestAnimationFrame(step);
+    };
+    wipeAnim = requestAnimationFrame(step);
+  }
+  return { setNight, setScene, scene: () => scene };
 }
