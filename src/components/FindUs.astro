@@ -37,8 +37,8 @@ import { hours } from '../data/events';
   document.querySelector(`.hours tr[data-day="${new Date().getDay()}"]`)?.classList.add('today');
 
   // While the visitor is still above this section, the card docks on the bottom edge of the screen, showing only its top
-  // (kicker + first heading line), and bobs there. It stays docked while they scroll; once the card's real position reaches
-  // the dock it lets go and sits in place.
+  // (kicker + first heading line), and bobs there. When the hero scene scrolls away the card glides after it (see below);
+  // once the card's real position reaches it, it lets go and sits in place.
   // Docked, the peek wrapper is position:fixed (so the phone's own scrolling can't make it shake, as a per-frame transform did
   // on iOS) and does the static clipping; the dock keeps the card's height in the page; the card inside does the bobbing.
   // Off under reduced motion.
@@ -49,6 +49,8 @@ import { hours } from '../data/events';
     const h2 = card.querySelector('h2')!;
     const stage = document.getElementById('sceneStage');
     const truck = document.getElementById('heroTruck');
+    const pin = document.getElementById('sceneFrame');
+    const heroTrack = document.getElementById('sceneTrack');
     let raf = 0;
     const update = () => {
       raf = 0;
@@ -58,51 +60,39 @@ import { hours } from '../data/events';
       const screenH = document.documentElement.clientHeight;
       // rests on the bottom edge of the screen, but never higher than just under the hero truck's tyres (with room for the
       // bob). Measured from the stage plus the truck's untransformed offset, so the drive-off can't move it.
+      // How far the page has scrolled since the hero scene stopped pinning (0 while it is still pinned).
+      let past = 0;
+      if (pin && heroTrack && document.documentElement.classList.contains('story')) {
+        const stickyTop = parseFloat(getComputedStyle(pin).top) || 0;
+        past = Math.max(0, stickyTop + pin.offsetHeight - heroTrack.getBoundingClientRect().bottom);
+      }
       let tyres = 0;
-      if (stage && truck) tyres = stage.getBoundingClientRect().top + truck.offsetTop + truck.offsetHeight + 20;
-      const dockTop = Math.round(Math.max(screenH - visible, tyres));
+      if (stage && truck) tyres = stage.getBoundingClientRect().top + past + truck.offsetTop + truck.offsetHeight + 20;
+      // Once the scene scrolls away, the card glides up at half the scroll speed and opens out, so it trails the scene
+      // down into this section instead of hanging at the bottom of the screen; it lets go where it meets its own place.
+      const dockTop = Math.round(Math.max(screenH - visible, tyres) - past / 2);
       const box = dock.getBoundingClientRect(); // the dock stays in the page flow, so this is the card's real position
       const docked = dockTop < box.top - 1;
       dock.classList.toggle('docked', docked);
+      dock.classList.toggle('gliding', docked && past > 0);
       dock.style.height = docked ? `${card.offsetHeight}px` : '';
       if (docked) {
+        const shown = visible + past; // more of the card opens up as the page moves on
         Object.assign(peek.style, { position: 'fixed', top: `${dockTop}px`, left: `${box.left}px`, width: `${box.width}px`,
-          clipPath: `polygon(-40px -60px, calc(100% + 40px) -60px, calc(100% + 40px) ${visible}px, -40px ${visible}px)` });
+          clipPath: `polygon(-40px -60px, calc(100% + 40px) -60px, calc(100% + 40px) ${shown}px, -40px ${shown}px)` });
       } else {
         Object.assign(peek.style, { position: '', top: '', left: '', width: '', clipPath: '' });
       }
     };
     const request = () => { if (!raf) raf = requestAnimationFrame(update); };
 
-    // Line the card's resting place up with its dock: when the hero scene stops pinning and starts scrolling away, the
-    // card is already where it was docked, so it lets go right then and rides up with the page, overlapping the bottom of
-    // the scene, with no empty band between the scene and the card. Measured on load and when the width changes.
-    const pin = document.getElementById('sceneFrame');
-    const heroTrack = document.getElementById('sceneTrack');
-    let alignedW = 0;
-    const align = () => {
-      alignedW = innerWidth;
-      dock.style.marginTop = '';
-      if (!pin || !heroTrack || !stage || !truck || !document.documentElement.classList.contains('story')) return;
-      const stickyTop = parseFloat(getComputedStyle(pin).top) || 0;
-      const pinBox = pin.getBoundingClientRect();
-      const endScroll = heroTrack.getBoundingClientRect().bottom + scrollY - (stickyTop + pin.offsetHeight); // pin lets go here
-      const firstLine = parseFloat(getComputedStyle(h2).lineHeight) || h2.offsetHeight / 2;
-      const visible = Math.round(h2.offsetTop + firstLine + 6);
-      const tyres = stickyTop + (stage.getBoundingClientRect().top - pinBox.top) + truck.offsetTop + truck.offsetHeight + 20;
-      const dockTop = Math.round(Math.max(document.documentElement.clientHeight - visible, tyres));
-      const natural = dock.getBoundingClientRect().top + scrollY;
-      const shift = Math.min(0, Math.round(endScroll + dockTop - natural));
-      if (shift) dock.style.marginTop = `${shift}px`;
-    };
     addEventListener('scroll', request, { passive: true });
-    addEventListener('resize', () => { if (innerWidth !== alignedW) align(); request(); });
-    align();
+    addEventListener('resize', request);
     update();
     // the page grows after load (fonts, scroll-story track sizing), which moves the card without a scroll event
     new ResizeObserver(request).observe(document.body);
-    addEventListener('load', () => { align(); request(); });
-    document.fonts?.ready.then(() => { align(); request(); });
+    addEventListener('load', request);
+    document.fonts?.ready.then(request);
     // tapping the docked slice scrolls down to the section
     dock.addEventListener('click', (e) => {
       if (!dock.classList.contains('docked') || (e.target as HTMLElement).closest('a')) return;
@@ -122,6 +112,7 @@ import { hours } from '../data/events';
   .find-peek { z-index: 6; }
   .find-dock.docked { cursor: pointer; }
   .find-dock.docked .find-card { animation: card-bob 1.8s ease-in-out infinite; }
+  .find-dock.gliding .find-card { animation: none; }
   @keyframes card-bob { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-16px); } 70% { transform: translateY(2px); } }
   @media (max-width: 560px) { .find-card { box-shadow: 5px 5px 0 var(--line), 10px 10px 0 rgba(18, 18, 13, .18); } }
   .hours { text-align: left; margin-top: 24px; padding-top: 20px; border-top: 3px solid var(--line); }
