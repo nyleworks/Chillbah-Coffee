@@ -15,7 +15,16 @@ import { site } from '../data/site';
       <Calendar data={events} label="Event calendar" />
       <div class="legend label"><span><i class="sw ev"></i>Event day</span></div>
       <ul class="event-list" data-event-list></ul>
-      <a class="cb-btn" href={site.whatsapp}>Book with us</a>
+      <!-- Booking: social links instead of a single button (links in data/site.ts). -->
+      <div class="book">
+        <p class="label book-head">Contact us to book your date</p>
+        <div class="socials">
+          <a class="soc" href={site.instagram} aria-label="Instagram" title="Instagram"><canvas data-social="instagram" width="14" height="14" aria-hidden="true"></canvas></a>
+          <a class="soc" href={site.tiktok} aria-label="TikTok" title="TikTok"><canvas data-social="tiktok" width="14" height="14" aria-hidden="true"></canvas></a>
+          <a class="soc" href={site.threads} aria-label="Threads" title="Threads"><canvas data-social="threads" width="14" height="14" aria-hidden="true"></canvas></a>
+          <a class="soc wa" href={site.whatsapp}><canvas data-social="whatsapp" width="14" height="14" aria-hidden="true"></canvas><span>WhatsApp</span></a>
+        </div>
+      </div>
       <!-- Event details popup, filled by scripts/calendar.ts when an event day is tapped. -->
       <dialog class="ev-pop" data-event-pop aria-labelledby="evPopName">
         <b id="evPopName" class="pop-day" data-pop-date></b>
@@ -38,6 +47,17 @@ import { site } from '../data/site';
   .sw { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--line); margin-right: 2px; }
   .sw.ev { background: var(--ember); }
   .event-list { list-style: none; margin: 16px 0 0; padding: 0; }
+  .book { margin-top: 22px; padding-top: 18px; border-top: 3px solid var(--line); text-align: center; }
+  .book-head { font-size: 12px; color: var(--ember-600); margin: 0 0 14px; }
+  .socials { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .soc { height: 60px; min-width: 60px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 0 10px;
+    border: 3px solid var(--line); background: var(--surface-200); box-shadow: 3px 3px 0 var(--line); color: var(--text); text-decoration: none; }
+  .soc canvas { width: 42px; height: 42px; image-rendering: pixelated; }
+  .soc span { font: 700 14px/1 var(--font-display); letter-spacing: .06em; text-transform: uppercase; }
+  .soc.wa { padding: 0 16px 0 12px; }
+  .soc:hover { background: var(--surface-300); }
+  .soc:active { transform: translate(3px, 3px); box-shadow: none; }
+  .soc:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
   .event-list :global(li) { display: grid; gap: 2px; padding: 10px 0; border-top: 2px dashed var(--line); }
   .event-list :global(li .label) { font-size: 10px; color: var(--ember-600); }
   .event-list :global(li b) { font: 700 15px/1.2 var(--font-body); }

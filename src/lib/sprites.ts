@@ -101,3 +101,82 @@ export function motionIcon(reduced: boolean, c: string): Grid {
   else { g.rect(2, 1, 2, 8, c); g.rect(6, 1, 2, 8, c); }
   return g;
 }
+
+export const SOCIAL_KINDS = ['instagram', 'tiktok', 'threads', 'whatsapp'] as const;
+export type SocialKind = (typeof SOCIAL_KINDS)[number];
+
+/** Social media icons, 14×14, drawn from text rows (one letter per pixel, '.' = empty). */
+export function social(kind: SocialKind): Grid {
+  const g = Grid(14, 14);
+  const rows: Record<SocialKind, string[]> = {
+    instagram: [],
+    tiktok: [
+      'kkkkkkkkkkkkkk',
+      'kkkkkkkCWkkkkk',
+      'kkkkkkkCWkkkkk',
+      'kkkkkkkCWWkkkk',
+      'kkkkkkkCWWWWRk',
+      'kkkkkkkCWkkWRk',
+      'kkkkkkkCWkkkkk',
+      'kkkkCCCCWkkkkk',
+      'kkkCWWWWWkkkkk',
+      'kkCWkkkCWRkkkk',
+      'kkCWkkkCWRkkkk',
+      'kkkWWWWWRkkkkk',
+      'kkkkRRRRkkkkkk',
+      'kkkkkkkkkkkkkk',
+    ],
+    threads: [
+      'kkkkkkkkkkkkkk',
+      'kkkkkWWWWkkkkk',
+      'kkkWWkkkkWWkkk',
+      'kkWkkkkkkkkWkk',
+      'kkWkkkWWWkkWkk',
+      'kWkkkWkkkWkkWk',
+      'kWkkkWkkkWkkWk',
+      'kWkkkkWWWWkkWk',
+      'kWkkkkkkkWkWkk',
+      'kkWkkkkkkWWkkk',
+      'kkWkkkkkkkkkkk',
+      'kkkWWkkkkWWkkk',
+      'kkkkkWWWWkkkkk',
+      'kkkkkkkkkkkkkk',
+    ],
+    whatsapp: [
+      '....gggggg....',
+      '..ggGGGGGGgg..',
+      '.gGGWWWWWWGGg.',
+      '.gGWWGGGGWWGg.',
+      'gGWWGWWGGGWWGg',
+      'gGWGGWWGGGGWGg',
+      'gGWGGGWGGGGWGg',
+      'gGWGGGGWGGGWGg',
+      'gGWGGGGGWWGWGg',
+      'gGWWGGGGWWWWGg',
+      '.gGWWGGGGWWGg.',
+      '.gWWWWWWWWGGg.',
+      'gWWgGGGGGGgg..',
+      'ggg.gggggg....',
+    ],
+  };
+  const pal: Record<string, string> = {
+    p: INK, P: '#8a3ab9', R: '#e1306c', O: '#f56040', Y: '#fcaf45', W: '#ffffff',
+    k: '#000000', C: '#25f4ee', g: INK, G: '#25d366',
+  };
+  if (kind === 'instagram') {
+    // Rounded square in the purple-to-yellow sunset, white camera frame, lens ring and flash dot.
+    const band = (y: number) => (y < 4 ? '#8a3ab9' : y < 7 ? '#e1306c' : y < 9 ? '#f56040' : '#fcaf45');
+    for (let y = 0; y < 14; y++) for (let x = 0; x < 14; x++) {
+      const corner = (x < 2 || x > 11) && (y < 2 || y > 11) && !((x === 1 || x === 12) && (y === 1 || y === 12));
+      if (!corner) g.set(x, y, band(y));
+    }
+    const W = '#ffffff';
+    g.rect(2, 2, 10, 1, W); g.rect(2, 11, 10, 1, W); g.rect(2, 2, 1, 10, W); g.rect(11, 2, 1, 10, W);
+    g.rect(5, 4, 4, 1, W); g.rect(5, 9, 4, 1, W); g.rect(4, 5, 1, 4, W); g.rect(9, 5, 1, 4, W);
+    g.set(9, 3, W);
+    g.outline(INK);
+    return g;
+  }
+  rows[kind].forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== '.') g.set(x, y, pal[ch]); }));
+  return g;
+}

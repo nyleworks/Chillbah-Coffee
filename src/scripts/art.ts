@@ -1,6 +1,6 @@
 // Paints every pixel sprite on the page: menu icons, logo, header button icons, lane scenery, footer grass.
 import { paint } from '../lib/pixel';
-import { cup, food, flame, themeIcon, motionIcon, type CupKind, type FoodKind } from '../lib/sprites';
+import { cup, food, flame, social, themeIcon, motionIcon, type CupKind, type FoodKind, type SocialKind } from '../lib/sprites';
 import { isNight } from './theme';
 import { drawTown, drawVillage, drawWedding, drawCamp, setFlicker } from '../lib/scenery';
 import { reduceMotion } from '../lib/motion';
@@ -12,6 +12,7 @@ export function drawArt() {
     paint(cv, cup(cv.dataset.cup as CupKind, cv.dataset.liquid || null)));
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-food]').forEach((cv) =>
     paint(cv, food(cv.dataset.food as FoodKind, cv.dataset.liquid || null)));
+  document.querySelectorAll<HTMLCanvasElement>('canvas[data-social]').forEach((cv) => paint(cv, social(cv.dataset.social as SocialKind)));
   const fl = flame();
   document.querySelectorAll<HTMLCanvasElement>('canvas[data-flame]').forEach((cv) => paint(cv, fl));
 
