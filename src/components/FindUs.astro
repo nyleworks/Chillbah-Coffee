@@ -1,12 +1,11 @@
 ---
-import { site } from '../data/site';
 import RoadLane from './RoadLane.astro';
-import { hours } from '../data/events';
+import { hours, maps } from '../data/events';
 ---
 <div class="pin-track">
 <section id="find" class="find">
   <div class="wrap">
-    <!-- One floating card, centred: heading, opening hours and the social links together. -->
+    <!-- One floating card, centred: heading, opening hours and the Google Maps button together. -->
     <div class="find-dock" id="findDock">
       <div class="find-peek" id="findPeek">
       <div class="find-card" id="findCard">
@@ -16,13 +15,12 @@ import { hours } from '../data/events';
           <div class="label hours-head">Opening hours</div>
           <table>
             <tbody>
-              {hours.map((h, i) => <tr data-day={(i + 1) % 7} class:list={{ closed: !h.place }}><th scope="row">{h.day}</th><td class="where">{h.place}</td><td class="time">{h.time}</td></tr>)}
+              {hours.map((h, i) => <tr data-day={(i + 1) % 7} class:list={{ closed: !h.place }}><th scope="row">{h.day}</th><td class="where">{h.place && maps[h.place] ? <a href={maps[h.place]} target="_blank" rel="noopener">{h.place}</a> : h.place}</td><td class="time">{h.time}</td></tr>)}
             </tbody>
           </table>
         </div>
         <div class="ctas">
-          <a class="cb-btn cb-btn--alt" href={site.instagram}>Instagram</a>
-          <a class="cb-btn cb-btn--ghost" href={site.whatsapp}>WhatsApp</a>
+          <a class="cb-btn cb-btn--alt" id="mapsBtn" href={maps.Homebased} target="_blank" rel="noopener" data-maps={JSON.stringify(hours.map((h) => (h.place && maps[h.place]) || ''))}>Open in Google Maps</a>
         </div>
       </div>
       </div>
@@ -35,6 +33,13 @@ import { hours } from '../data/events';
 <script>
   // Highlight today's row in the opening hours (visitor's own clock).
   document.querySelector(`.hours tr[data-day="${new Date().getDay()}"]`)?.classList.add('today');
+  // The map button goes to today's spot (Mon-Sun list); on a closed day, to the next day that's open.
+  const mapsBtn = document.getElementById('mapsBtn') as HTMLAnchorElement | null;
+  if (mapsBtn) {
+    const links: string[] = JSON.parse(mapsBtn.dataset.maps || '[]');
+    const today = (new Date().getDay() + 6) % 7; // Mon = 0
+    for (let k = 0; k < 7; k++) { const url = links[(today + k) % 7]; if (url) { mapsBtn.href = url; break; } }
+  }
 
   // While the visitor is still above this section, the card docks on the bottom edge of the screen, showing only its top
   // (kicker + first heading line), and bobs there. When the hero scene scrolls away the card glides after it (see below);
@@ -124,6 +129,8 @@ import { hours } from '../data/events';
   .hours tr:last-child :is(th, td) { border-bottom: 0; }
   .hours th { text-align: left; width: 3.2em; }
   .hours td.where { color: var(--muted); font-weight: 500; font-size: 14px; padding-right: 10px; }
+  .hours td.where a { color: inherit; text-decoration: underline dashed; text-underline-offset: 3px; }
+  .hours td.where a:hover { color: var(--ember-600); }
   .hours td.time { text-align: right; white-space: nowrap; color: var(--ember-600); }
   .hours tr.closed td.time { color: var(--text); text-transform: uppercase; letter-spacing: .06em; }
   /* today's row (marked by the script below) */
