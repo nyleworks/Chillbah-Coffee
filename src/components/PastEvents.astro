@@ -9,7 +9,6 @@ const pastEvents = events.filter((e) => (e.end || e.date) < today).sort((a, b) =
   <div class="wrap">
     <div class="sec-head">
       <div><div class="label kicker">Past events</div><h2>WHERE WE'VE BEEN</h2></div>
-      <p>A few of the spots and events the Hilux has rolled into.</p>
     </div>
     <div class="past-grid">
       {pastEvents.map((e) => (
