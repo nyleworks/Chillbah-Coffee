@@ -42,6 +42,17 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
   };
   const ease = (v: number) => v * v * (3 - 2 * v);
+  let lastSky = '', lastGround = '';
+  // How much of the stage is cropped off the left/top on narrow screens, in canvas px. Re-measured on resize only.
+  let cut = 0, cutTop = 0;
+  const measure = () => {
+    const stageEl = canvas.parentElement; if (!stageEl) return;
+    const px = stageEl.clientWidth / 180 || 1;
+    cut = stageEl.offsetLeft < 0 ? -stageEl.offsetLeft / px : 0;
+    cutTop = stageEl.offsetTop < 0 ? -stageEl.offsetTop / px : 0;
+  };
+  measure();
+  addEventListener('resize', () => { measure(); draw(); });
 
   function draw() {
     const ctx = sx!;
@@ -50,14 +61,12 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     const sky = mix('#8ad8d8', '#1f2b45');
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
     // the plain sky above the art (tall screens) must match the canvas sky exactly, frame by frame
-    if (frameEl) frameEl.style.backgroundColor = sky;
+    if (frameEl && sky !== lastSky) { frameEl.style.backgroundColor = sky; lastSky = sky; } // only when it changes (theme switch)
     // stars fade in late
     // On narrow screens the stage is wider than the screen and its left edge is cropped: keep the sun/moon in view.
-    const stageEl = canvas!.parentElement;
-    const cut = stageEl && stageEl.offsetLeft < 0 ? -stageEl.offsetLeft / (stageEl.clientWidth / 180) : 0; // hidden canvas px
+    // (measured in measure(), not every frame, so drawing never forces a layout)
     const skyX = Math.round(Math.max(0, cut + 4 - 2)); // extra world shift for the sun/moon
     // ...and when the scene is lifted (phones, Hero.astro) the top rows can be cut off too: drop them into view
-    const cutTop = stageEl && stageEl.offsetTop < 0 ? -stageEl.offsetTop / (stageEl.clientWidth / 180) : 0;
     const skyY = Math.round(Math.max(0, cutTop + 3));
     if (t > 0.6) { ctx.fillStyle = `rgba(244,235,205,${((t - 0.6) / 0.4).toFixed(2)})`; stars.forEach(([x, y], i) => { if ((i + (frame >> 3)) % 7) ctx.fillRect(x, y, 1, 1); }); }
     // sun sets during the first half, moon rises in the second (both slip behind the hills)
@@ -83,7 +92,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     [[36, 76], [46, 80], [184, 79], [196, 74], [208, 80]].forEach(([x, y], i) => (i % 2 ? p2 : p1).draw(ctx, x, y));
     // ground, road
     const ground = mix('#7fae45', '#4c5f2c');
-    if (frameEl) frameEl.style.setProperty('--ground', ground); // phones extend the grass below the art (Hero.astro)
+    if (frameEl && ground !== lastGround) { frameEl.style.setProperty('--ground', ground); lastGround = ground; } // phones extend the grass below the art (Hero.astro)
     ctx.fillStyle = ground; ctx.fillRect(0, 92, W, H - 92);
     ctx.fillStyle = mix('#66882d', '#3a4a22');
     for (let i = 0; i < 90; i++) { const x = (i * 37) % W, y = 95 + ((i * 11) % 32); ctx.fillRect(x, y, 1, 2); ctx.fillRect(x + 1, y + 1, 1, 1); }
@@ -96,7 +105,18 @@ export function initScene(canvas: HTMLCanvasElement | null) {
   }
 
   draw();
-  if (!reduce) setInterval(() => { frame++; draw(); }, 140);
+  // The idle animation (drifting clouds, twinkling stars) only runs while the hero is on screen and the tab is open.
+  if (!reduce) {
+    let timer = 0, onScreen = true;
+    const sync = () => {
+      const run = onScreen && !document.hidden;
+      if (run && !timer) timer = window.setInterval(() => { frame++; draw(); }, 140);
+      if (!run && timer) { clearInterval(timer); timer = 0; }
+    };
+    new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; sync(); }).observe(canvas);
+    document.addEventListener('visibilitychange', sync);
+    sync();
+  }
   /** Animate to day or night (instant under reduced motion). */
   function setNight(night: boolean) {
     const target = night ? 1 : 0;

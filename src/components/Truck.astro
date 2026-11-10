@@ -1,23 +1,32 @@
 ---
 // The Chillbah Hilux: Niekki's artwork as a body layer, plus spinning wheel layers, an optional awning
 // layer (hero only) and a headlight beam that shows in night mode. Art faces left; mirror the root to drive right.
-interface Props { id?: string; class?: string; awning?: boolean; label?: string }
-const { id, class: className, awning = false, label } = Astro.props;
+// Images come in two sizes (760px and the 1200px original; wheels 96px and 174px) and the browser picks the one that's
+// sharp enough for the screen. `sizes` is how wide the truck is drawn: the hero truck is 38.9% of the scene, which is
+// wider than the screen on phones; road-lane trucks are clamp(220px, 30vw, 360px). Lane trucks load lazily.
+interface Props { id?: string; class?: string; awning?: boolean; label?: string; lazy?: boolean; hero?: boolean }
+const { id, class: className, awning = false, label, lazy = false, hero = false } = Astro.props;
+const sizes = hero ? '(max-width: 720px) 52vw, 39vw' : '(max-width: 733px) 220px, (max-width: 1200px) 30vw, 360px';
+const wheelSizes = hero ? '(max-width: 720px) 8vw, 6vw' : '(max-width: 733px) 32px, (max-width: 1200px) 4.4vw, 52px';
+const loading = lazy ? 'lazy' : 'eager';
 ---
 <div id={id} class:list={['truck', className]} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : 'true'}>
   <div class="shadow"></div>
   <div class="pool"></div>
   <div class="beam"></div>
   <div class="rig">
-    <img class="body" src="/hilux-body.webp" width="1200" height="455" alt="" />
-    <img class="wheel front" src="/wheel-front.webp" width="174" height="174" alt="" />
-    <img class="wheel rear" src="/wheel-rear.webp" width="174" height="174" alt="" />
-    {awning && <img class="awning" src="/hilux-awning.webp" width="1200" height="455" alt="" />}
+    <img class="body" src="/hilux-body.webp" srcset="/hilux-body-760.webp 760w, /hilux-body.webp 1200w" sizes={sizes} width="1200" height="455" alt="" loading={loading} decoding="async" />
+    <img class="wheel front" src="/wheel-front.webp" srcset="/wheel-front-96.webp 96w, /wheel-front.webp 174w" sizes={wheelSizes} width="174" height="174" alt="" loading={loading} decoding="async" />
+    <img class="wheel rear" src="/wheel-rear.webp" srcset="/wheel-rear-96.webp 96w, /wheel-rear.webp 174w" sizes={wheelSizes} width="174" height="174" alt="" loading={loading} decoding="async" />
+    {awning && <img class="awning" src="/hilux-awning.webp" srcset="/hilux-awning-760.webp 760w, /hilux-awning.webp 1200w" sizes={sizes} width="1200" height="455" alt="" loading={loading} decoding="async" />}
   </div>
 </div>
 
 <style>
-  .truck { position: relative; will-change: transform; }
+  .truck { position: relative; }
+  /* Kept as a ready-to-move GPU layer only while the truck is near the screen (story.ts adds .near), so phones
+     don't hold all five trucks and their wheels in memory at once. */
+  .truck.near, .truck.near .wheel { will-change: transform; }
   .rig { position: relative; }
   /* Ground shadow: a flat, hard-edged pixel slab with stepped ends, tucked under the tyres. */
   .shadow { position: absolute; left: 2%; right: 3%; bottom: -1.2%; height: 5.5%; pointer-events: none;
@@ -25,7 +34,7 @@ const { id, class: className, awning = false, label } = Astro.props;
     clip-path: polygon(0 50%, 2% 50%, 2% 0, 98% 0, 98% 50%, 100% 50%, 100% 100%, 0 100%); }
   .body { display: block; width: 100%; height: auto; }
   /* Wheel centres measured on the 1200×455 art: front (190, 352), rear (877, 352), 174px across. */
-  .wheel { position: absolute; width: 14.5%; height: auto; top: calc(77.36% - 19.12%); will-change: transform; }
+  .wheel { position: absolute; width: 14.5%; height: auto; top: calc(77.36% - 19.12%); }
   .wheel.front { left: calc(15.83% - 7.25%); }
   .wheel.rear { left: calc(73.08% - 7.25%); }
   .awning { position: absolute; inset: 0; width: 100%; height: auto; transform-origin: 43% 11%; }

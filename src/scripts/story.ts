@@ -30,6 +30,11 @@ export function initStory() {
 
   document.documentElement.classList.add('story');
 
+  // Promote a truck to its own GPU layer only while it's within about a screen of view.
+  const near = new IntersectionObserver((entries) => entries.forEach((e) => e.target.classList.toggle('near', e.isIntersecting)),
+    { rootMargin: '100% 0px' });
+  document.querySelectorAll('.truck').forEach((t) => near.observe(t));
+
   const sizeTrack = () => track.style.setProperty('--frame-h', frame.offsetHeight + 'px');
 
   function hero() {
@@ -75,10 +80,20 @@ export function initStory() {
   // Road lanes. "pass" lanes sit at the bottom of a pinned section: once the section's bottom reaches the bottom of
   // the screen the page holds while the truck drives in from one edge and out the other, then scrolling carries on.
   // So each truck is gone before the next one shows up. The "arrive" lane (footer) rolls in and parks in the middle.
+  // Screen height for the pins. Phones grow and shrink the visible area as the browser's address bar slides in and out
+  // while you scroll; following that would resize every pin mid-scroll and make the page jump. So use the *large*
+  // viewport height (address bar hidden, as it is while scrolling) and only re-measure when the width changes
+  // (rotation) or on a desktop window resize.
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:100vh;height:100lvh;visibility:hidden;pointer-events:none';
+  document.body.append(probe);
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  let vh = 0, lastW = 0;
+  const measureVh = () => { vh = Math.max(innerHeight, probe.offsetHeight); lastW = innerWidth; };
+  measureVh();
   const lanes = Array.from(document.querySelectorAll<HTMLElement>('.lane'));
   const pins = Array.from(document.querySelectorAll<HTMLElement>('.pin-track'));
   function sizePins() {
-    const vh = innerHeight;
     for (const t of pins) {
       const sec = t.firstElementChild as HTMLElement | null; if (!sec) continue;
       const h = sec.offsetHeight;
@@ -88,7 +103,6 @@ export function initStory() {
     }
   }
   function roads() {
-    const vh = innerHeight;
     for (const lane of lanes) {
       const truckEl = lane.querySelector<HTMLElement>('.lane-truck'); if (!truckEl) continue;
       const ltr = lane.dataset.dir === 'ltr';
@@ -122,5 +136,8 @@ export function initStory() {
   const ro = new ResizeObserver(() => { sizePins(); request(); });
   pins.forEach((t) => t.firstElementChild && ro.observe(t.firstElementChild));
   addEventListener('scroll', request, { passive: true });
-  addEventListener('resize', () => { sizeTrack(); sizePins(); request(); });
+  addEventListener('resize', () => {
+    if (coarse && innerWidth === lastW) { request(); return; } // just the address bar moving: keep every size as it is
+    measureVh(); sizeTrack(); sizePins(); request();
+  });
 }

@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { site } from '../data/site';
+import pixelifyUrl from '../assets/fonts/pixelify-sans-700.woff2?url';
 interface Props { title?: string; description?: string }
 const { title = site.title, description = site.description } = Astro.props;
 ---
@@ -16,9 +17,9 @@ const { title = site.title, description = site.description } = Astro.props;
     <meta name="theme-color" content="#f4ebcd" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#211812" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@700&family=Silkscreen:wght@400;700&family=Nunito:wght@500;700&display=swap" rel="stylesheet" />
+    <!-- Fonts ship with the site (styles/tokens.css). Only the small heading font is fetched ahead, so the CHILLBAH title
+         doesn't flash in a stand-in font; the rest load alongside without competing with the stylesheet. -->
+    <link rel="preload" href={pixelifyUrl} as="font" type="font/woff2" crossorigin />
     <script is:inline>
       try { const t = localStorage.getItem('chillbah-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
       // Reduce motion: the header button's saved choice, else the device setting (src/lib/motion.ts).

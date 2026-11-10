@@ -1,6 +1,12 @@
 /* Chillbah design tokens — mirrors the Chillbah design system (tokens.json). Day = light, Night = dark. */
 /* Pixel Quest shows if installed or added under public/fonts later; Pixelify Sans stands in. */
 @font-face { font-family: "Pixel Quest"; src: local("Pixel Quest"), local("PixelQuest-Regular"), local("PixelQuest"); font-display: swap; }
+/* Web fonts bundled with the site (no Google Fonts request). All three are SIL Open Font License fonts, trimmed to
+   Latin letters and punctuation; Nunito keeps only its 500–700 weight range. Pixelify Sans is preloaded in Base.astro. */
+@font-face { font-family: "Pixelify Sans"; font-weight: 700; font-display: swap; src: url("../assets/fonts/pixelify-sans-700.woff2") format("woff2"); }
+@font-face { font-family: "Silkscreen"; font-weight: 400; font-display: swap; src: url("../assets/fonts/silkscreen-400.woff2") format("woff2"); }
+@font-face { font-family: "Silkscreen"; font-weight: 700; font-display: swap; src: url("../assets/fonts/silkscreen-700.woff2") format("woff2"); }
+@font-face { font-family: "Nunito"; font-weight: 500 700; font-display: swap; src: url("../assets/fonts/nunito-500-700.woff2") format("woff2"); }
 
 :root {
   --surface-100: #f4ebcd; --surface-200: #ebdfb6; --surface-300: #e2d39f;

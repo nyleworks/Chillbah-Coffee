@@ -40,15 +40,35 @@ import Footer from '../components/Footer.astro';
     drawArtFaded();
   });
   let artTimer = 0;
-  addEventListener('resize', () => { clearTimeout(artTimer); artTimer = window.setTimeout(() => { stopArtFade(); drawArt(); }, 120); });
+  let artW = innerWidth;
+  addEventListener('resize', () => {
+    if (innerWidth === artW) return; // phones fire resize when the address bar slides; the art only depends on width
+    artW = innerWidth;
+    clearTimeout(artTimer); artTimer = window.setTimeout(() => { stopArtFade(); drawArt(); }, 120);
+  });
   initStory();
   initCalendars();
   initPress();
   initFireFlicker();
-  // Smooth, eased scrolling for mouse wheels and anchor links (touch keeps the native feel). Off under reduced motion.
-  if (!reduceMotion()) {
+  // Smooth, eased scrolling for mouse wheels and anchor links. Desktop only (touch screens keep their own scrolling,
+  // so Lenis isn't loaded into the loop there at all). Off under reduced motion.
+  // Its frame loop only runs while a scroll is actually happening, then stops, so a still page costs nothing.
+  if (!reduceMotion() && matchMedia('(hover: hover) and (pointer: fine)').matches) {
     const lenis = new Lenis({ lerp: 0.08, wheelMultiplier: 0.9, anchors: { offset: -72 } });
-    const raf = (time: number) => { lenis.raf(time); requestAnimationFrame(raf); };
-    requestAnimationFrame(raf);
+    let running = false, quiet = 0;
+    const loop = (time: number) => {
+      lenis.raf(time);
+      quiet = lenis.isScrolling ? 0 : quiet + 1;
+      if (quiet < 12) requestAnimationFrame(loop); else running = false; // a few spare frames, then sleep
+    };
+    const wake = () => {
+      quiet = 0;
+      if (running) return;
+      running = true;
+      (lenis as unknown as { time: number }).time = performance.now(); // so the first frame after a nap doesn't count the nap as elapsed time (that would make the scroll jump)
+      requestAnimationFrame(loop);
+    };
+    ['wheel', 'keydown', 'click', 'pointerdown', 'scroll'].forEach((ev) => addEventListener(ev, wake, { passive: true, capture: true }));
+    wake();
   }
 </script>

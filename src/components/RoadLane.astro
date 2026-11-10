@@ -9,7 +9,7 @@ const { dir, mode = 'pass', scenery, road = 'dirt' } = Astro.props;
 <div class="lane" data-dir={dir} data-mode={mode} data-road={road} data-has-scenery={scenery ? '' : undefined} data-scenery-kind={scenery} aria-hidden="true">
   {scenery && <canvas class="scenery" data-scenery={scenery} width="320" height="40"></canvas>}
   {road === 'dirt' && <canvas class="grass" data-grass width="320" height="8"></canvas>}
-  <Truck class="lane-truck" />
+  <Truck class="lane-truck" lazy />
 </div>
 
 <style>
