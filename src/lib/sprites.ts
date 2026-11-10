@@ -24,14 +24,6 @@ export function cup(kind: CupKind, liquid: string | null = null): Grid {
   return g;
 }
 
-/** Small inline icons (8×8) and step icons (18×18). `c` is the accent colour. */
-export const icons = {
-  pin(c: string) { const g = Grid(8, 8); g.rect(2, 0, 4, 1, c); g.rect(1, 1, 6, 3, c); g.rect(2, 4, 4, 1, c); g.rect(3, 5, 2, 2, c); g.rect(3, 2, 2, 1, CREAM); return g; },
-  clock(c: string) { const g = Grid(8, 8); g.disc(4, 4, 3, c); g.rect(4, 2, 1, 3, CREAM); g.set(5, 4, CREAM); return g; },
-  truck(c: string) { const g = Grid(8, 8); g.rect(0, 2, 5, 3, c); g.rect(5, 3, 3, 2, c); g.set(6, 3, '#8ad8d8'); g.set(1, 6, '#2a2620'); g.set(6, 6, '#2a2620'); g.rect(0, 5, 8, 1, c); return g; },
-};
-export type IconName = keyof typeof icons;
-
 /** Day: sun. Night: crescent moon. 10×10. */
 export function themeIcon(night: boolean): Grid {
   const g = Grid(10, 10);

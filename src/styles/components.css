@@ -16,9 +16,6 @@
 .cb-card__price { font: 700 18px/1 var(--font-pixel); color: var(--forest); }
 
 .cb-tag { display: inline-block; font: 400 11px/1 var(--font-pixel); text-transform: uppercase; padding: 4px 6px; border: 2px solid var(--line); background: var(--surface-100); color: var(--text); }
-.cb-tag--live { display: inline-flex; align-items: center; gap: 8px; border: 0; padding: 0; background: none; font-size: 12px; letter-spacing: .06em; }
-.cb-tag--live::before { content: ""; width: 10px; height: 10px; background: var(--ember); box-shadow: 0 0 0 2px var(--line); animation: cb-blink 1.2s steps(2) infinite; }
-@keyframes cb-blink { 50% { opacity: .2; } }
 
 /* Click animation (scripts/press.ts adds .is-pressed): squash down, then pop back with a small overshoot, in pixel steps. */
 .is-pressed { animation: cb-press .32s steps(4, end); }
@@ -29,6 +26,5 @@
   100% { transform: none; }
 }
 
-html[data-motion="reduce"] .cb-tag--live::before { animation: none; }
 html[data-motion="reduce"] .cb-btn { transition: none; }
 html[data-motion="reduce"] .is-pressed { animation: none; }

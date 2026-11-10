@@ -24,6 +24,7 @@ const clouds = [[20, 40, 1], [150, 24, 0.6], [200, 46, 0.8], [90, 30, 0.7]];
 export function initScene(canvas: HTMLCanvasElement | null) {
   const sx = canvas?.getContext('2d');
   if (!canvas || !sx) return { setNight(_n: boolean) {} };
+  const cv: HTMLCanvasElement = canvas; // non-null from here on, also inside the hoisted helpers below
   const reduce = reduceMotion();
   const p1 = pine(12, '#2b5615', '#244a12'), p2 = pine(9, '#4f7a2c', '#2b5615');
   p1.outline('#12120d'); p2.outline('#12120d');
@@ -78,7 +79,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     const ctx = sx!;
     const H = 130;
     // World x 40 is the art's left edge; L..R is the world span the canvas shows (wider than the art on wide screens).
-    const L = Math.floor(40 - ox), R = Math.ceil(40 - ox + canvas.width), W = R - L;
+    const L = Math.floor(40 - ox), R = Math.ceil(40 - ox + cv.width), W = R - L;
     ctx.imageSmoothingEnabled = false;
     ctx.setTransform(1, 0, 0, 1, Math.round(ox) - 40, -18);
     const sky = mix('#8ad8d8', '#1f2b45');

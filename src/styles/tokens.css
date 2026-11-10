@@ -22,7 +22,7 @@
   --font-pixel: "Silkscreen", ui-monospace, monospace;
   --font-body: "Nunito", system-ui, sans-serif;
 
-  --space-2: 8px; --space-6: 24px; --space-20: 80px;
+  --space-6: 24px; --space-20: 80px;
   --shadow-px: 4px 4px 0 var(--line);
   --shadow-px-lg: 6px 6px 0 var(--line);
   --road: #c9a27a; --road-dash: #b08560;

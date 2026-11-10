@@ -14,20 +14,24 @@ The site for Chillbah, a mobile coffee kiosk run from the back of a 4x4 Toyota H
 npm install
 npm run dev      # http://localhost:4321
 npm run build    # outputs dist/
+npm run check    # checks the code for mistakes (types, missing imports) without building
 ```
 
 ## Where to edit
 
 | What | File |
 | --- | --- |
+| Opening hours and events (upcoming and past) | `src/data/events.ts` |
 | Menu items and prices | `src/data/menu.ts` |
 | Instagram / WhatsApp links, page title, ticker words | `src/data/site.ts` |
 | Colours, fonts, spacing | `src/styles/tokens.css` |
-| Buttons, menu card, badge | `src/styles/components.css` |
+| Buttons, menu card, tag | `src/styles/components.css` |
 | Page sections | `src/components/*.astro` |
 | Hero scene and sprites | `src/scripts/scene.ts`, `src/lib/sprites.ts` |
-| Section scenery (town, kampung) | `src/lib/scenery.ts` |
-| Scroll animation | `src/scripts/story.ts` |
+| Road-lane scenery (village, wedding, town, camp) | `src/lib/scenery.ts` |
+| Scroll animation (awning fold, truck drives) | `src/scripts/story.ts` |
+| Truck images (body, wheels, awning) | `public/*.webp`, laid out in `src/components/Truck.astro` |
+| Reduce motion button | `src/lib/motion.ts` |
 
 ## Open items
 
