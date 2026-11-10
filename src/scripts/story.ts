@@ -13,7 +13,7 @@ const seg = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
 
 /** Spin a truck's wheels for the distance it has driven forward (the art faces left, so forward = anticlockwise). */
 function spin(truckEl: HTMLElement, travel: number) {
-  const d = truckEl.offsetWidth * 0.145; // wheel diameter
+  const d = truckEl.offsetWidth * 0.157; // tyre diameter
   const deg = -(travel / (Math.PI * d)) * 360;
   truckEl.querySelectorAll<HTMLElement>('.wheel').forEach((w) => (w.style.transform = `rotate(${deg}deg)`));
 }

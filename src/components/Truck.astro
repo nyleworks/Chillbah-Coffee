@@ -1,7 +1,7 @@
 ---
 // The Chillbah Hilux: Niekki's artwork as a body layer, plus spinning wheel layers, an optional awning
 // layer (hero only) and a headlight beam that shows in night mode. Art faces left; mirror the root to drive right.
-// Images come in two sizes (760px and the 1200px original; wheels 96px and 174px) and the browser picks the one that's
+// Images come in two sizes (760px and 1200px; wheels 96px and 151px) and the browser picks the one that's
 // sharp enough for the screen. `sizes` is how wide the truck is drawn: the hero truck is 38.9% of the scene, which is
 // wider than the screen on phones; road-lane trucks are clamp(220px, 30vw, 360px). Lane trucks load lazily.
 interface Props { id?: string; class?: string; awning?: boolean; label?: string; lazy?: boolean; hero?: boolean }
@@ -16,10 +16,10 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
   <div class="pool"></div>
   <div class="beam"></div>
   <div class="rig">
-    <img class="body" src={`${B}hilux-body.webp`} srcset={`${B}hilux-body-760.webp 760w, ${B}hilux-body.webp 1200w`} sizes={sizes} width="1200" height="455" alt="" loading={loading} decoding="async" />
-    <img class="wheel front" src={`${B}wheel-front.webp`} srcset={`${B}wheel-front-96.webp 96w, ${B}wheel-front.webp 174w`} sizes={wheelSizes} width="174" height="174" alt="" loading={loading} decoding="async" />
-    <img class="wheel rear" src={`${B}wheel-rear.webp`} srcset={`${B}wheel-rear-96.webp 96w, ${B}wheel-rear.webp 174w`} sizes={wheelSizes} width="174" height="174" alt="" loading={loading} decoding="async" />
-    {awning && <img class="awning" src={`${B}hilux-awning.webp`} srcset={`${B}hilux-awning-760.webp 760w, ${B}hilux-awning.webp 1200w`} sizes={sizes} width="1200" height="455" alt="" loading={loading} decoding="async" />}
+    <img class="body" src={`${B}hilux-body.webp`} srcset={`${B}hilux-body-760.webp 760w, ${B}hilux-body.webp 1200w`} sizes={sizes} width="1200" height="469" alt="" loading={loading} decoding="async" />
+    <img class="wheel front" src={`${B}wheel-front.webp`} srcset={`${B}wheel-front-96.webp 96w, ${B}wheel-front.webp 151w`} sizes={wheelSizes} width="151" height="151" alt="" loading={loading} decoding="async" />
+    <img class="wheel rear" src={`${B}wheel-rear.webp`} srcset={`${B}wheel-rear-96.webp 96w, ${B}wheel-rear.webp 151w`} sizes={wheelSizes} width="151" height="151" alt="" loading={loading} decoding="async" />
+    {awning && <img class="awning" src={`${B}hilux-awning.webp`} srcset={`${B}hilux-awning-760.webp 707w, ${B}hilux-awning.webp 1115w`} sizes={sizes} width="1115" height="530" alt="" loading={loading} decoding="async" />}
   </div>
 </div>
 
@@ -34,19 +34,22 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
     background: rgba(18, 18, 13, .28);
     clip-path: polygon(0 50%, 2% 50%, 2% 0, 98% 0, 98% 50%, 100% 50%, 100% 100%, 0 100%); }
   .body { display: block; width: 100%; height: auto; }
-  /* Wheel centres measured on the 1200×455 art: front (190, 352), rear (877, 352), 174px across. */
-  .wheel { position: absolute; width: 14.5%; height: auto; top: calc(77.36% - 19.12%); }
-  .wheel.front { left: calc(15.83% - 7.25%); }
-  .wheel.rear { left: calc(73.08% - 7.25%); }
-  .awning { position: absolute; inset: 0; width: 100%; height: auto; transform-origin: 43% 11%; }
+  /* Spinning hubs: the rim and inner tyre of each wheel, cut from the body art (1200×469). The outer tread stays in the body
+     so the wheel-arch flares that overlap the tyre are never covered. */
+  .wheel { position: absolute; width: 12.584%; height: auto; }
+  .wheel.front { left: 10.637%; top: 63.854%; }
+  .wheel.rear { left: 70.637%; top: 63.95%; }
+  /* Opened tan awning with its poles (from Niekki's open-awning art), lined up on the body; it overhangs the back of the
+     truck. It folds toward the roll on the roof (story.ts). */
+  .awning { position: absolute; left: 24.607%; top: -1.342%; width: 92.884%; height: auto; transform-origin: 42% 4.5%; }
 
   /* Engine idle shake (story.ts adds .idling). */
   .truck.idling .rig { animation: idle .14s linear infinite; }
   @keyframes idle { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-1px, -2px) rotate(-.3deg); } 50% { transform: translate(1px, 0); } 75% { transform: translate(0, -1px) rotate(.3deg); } }
 
-  /* Headlights: a warm cone from the lamp (≈3%, 44% of the art) down onto the road ahead, plus a pool of light.
+  /* Headlights: a warm cone from the lamp (≈5%, 44% of the art) down onto the road ahead, plus a pool of light.
      Only at night, and only once the engine is on (story.ts adds .lights). */
-  .beam { position: absolute; z-index: 0; right: 96.5%; top: 41%; width: 105%; height: 59%; opacity: 0; pointer-events: none;
+  .beam { position: absolute; z-index: 0; right: 95%; top: 42%; width: 105%; height: 59%; opacity: 0; pointer-events: none;
     background: linear-gradient(to left, rgba(255, 236, 130, .95), rgba(255, 220, 90, .45) 55%, rgba(255, 214, 90, 0));
     clip-path: polygon(100% 0%, 100% 14%, 0% 100%, 0% 38%);
     mix-blend-mode: screen; transition: opacity .25s steps(3); }
@@ -54,7 +57,7 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
   .pool { position: absolute; z-index: 0; right: 86%; bottom: -2%; width: 130%; height: 26%; opacity: 0; pointer-events: none;
     background: radial-gradient(closest-side, rgba(255, 230, 110, .85), rgba(255, 214, 80, .4) 65%, rgba(255, 214, 80, 0));
     mix-blend-mode: screen; transition: opacity .25s steps(3); }
-  .truck::after { content: ""; position: absolute; left: 1.5%; top: 40%; width: 6%; height: 12%; border-radius: 50%; opacity: 0; pointer-events: none;
+  .truck::after { content: ""; position: absolute; left: 3%; top: 39%; width: 6%; height: 12%; border-radius: 50%; opacity: 0; pointer-events: none;
     background: radial-gradient(closest-side, rgba(255, 245, 190, .95), rgba(255, 220, 100, 0)); mix-blend-mode: screen; transition: opacity .25s steps(3); }
   :global(:root[data-theme="dark"]) .truck.lights :is(.beam, .pool), :global(:root[data-theme="dark"]) .truck.lights::after { opacity: 1; }
   @media (prefers-color-scheme: dark) {
