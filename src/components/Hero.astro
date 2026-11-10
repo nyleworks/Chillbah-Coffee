@@ -12,11 +12,8 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
       <Truck id="heroTruck" class="hilux" awning hero label="Pixel art of the white Chillbah Hilux with its tan side awning open on poles, parked on grass with mountains behind" />
       <img class="barista" id="barista" src={`${B}barista.png`} width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
       </div>
-      <!-- Scene switch on the right edge: the mountain or the jetty (scene.ts draws both; index.astro wires the buttons). -->
-      <div class="scene-switch" role="group" aria-label="Scene">
-        <button type="button" data-scene="hills" aria-pressed="true" title="Mountain scene"><canvas data-scene-icon="hills" width="12" height="10" aria-hidden="true"></canvas><span>Hills</span></button>
-        <button type="button" data-scene="jetty" aria-pressed="false" title="Jetty scene"><canvas data-scene-icon="jetty" width="12" height="10" aria-hidden="true"></canvas><span>Jetty</span></button>
-      </div>
+      <!-- Scene switch on the right edge: flips between the mountain and the jetty (scene.ts draws both; index.astro wires it). -->
+      <button class="scene-btn" id="sceneBtn" type="button" aria-label="Change scene to the jetty">Change scene</button>
       <!-- The open sky above the mountain peak; the wordmark and buttons are centred in it. -->
       <div class="hero-copy">
         <h1 class="title">CHILLBAH</h1>
@@ -59,16 +56,15 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
   .stage :global(.hilux) { position: absolute; left: 25.6%; width: 38.9%; bottom: 5.8cqw; }
   .barista { position: absolute; left: 65%; width: 6.1%; height: auto; bottom: 6.07cqw; image-rendering: pixelated; will-change: transform; }
 
-  /* Scene switch: a pixel tab stuck to the right edge, about level with the truck's roof. */
-  .scene-switch { position: absolute; z-index: 3; right: 0; top: max(calc(100% - var(--lift) - var(--art-h) * 0.62), 116px); display: grid;
-    border: 3px solid var(--line); border-right: 0; background: var(--line); gap: 3px; box-shadow: -3px 3px 0 rgb(18 18 13 / .35); }
-  .scene-switch button { display: grid; justify-items: center; gap: 4px; width: 64px; padding: 8px 4px 7px; border: 0; background: var(--surface-100); color: var(--text);
-    font: 700 10px/1 var(--font-pixel); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
-  .scene-switch button[aria-pressed="true"] { background: var(--ember); color: var(--on-ember); }
-  .scene-switch button:hover:not([aria-pressed="true"]) { background: var(--surface-200); }
-  .scene-switch button:focus-visible { outline: 3px dashed var(--forest); outline-offset: -6px; }
-  .scene-switch canvas { width: 36px; height: 30px; image-rendering: pixelated; }
-  @media (max-width: 560px) { .scene-switch button { width: 48px; padding: 6px 3px 5px; font-size: 9px; } .scene-switch canvas { width: 24px; height: 20px; } }
+  /* Scene switch: a pixel button tucked against the right edge, about level with the truck's roof. */
+  .scene-btn { position: absolute; z-index: 3; right: 0; top: max(calc(100% - var(--lift) - var(--art-h) * 0.62), 116px); padding: 10px 12px;
+    border: 3px solid var(--line); border-right: 0; background: var(--surface-100); color: var(--text); box-shadow: -3px 3px 0 rgb(18 18 13 / .35);
+    font: 700 11px/1 var(--font-pixel); text-transform: uppercase; letter-spacing: .06em; cursor: pointer;
+    transition: transform .08s steps(2); }
+  @media (hover: hover) { .scene-btn:hover { background: var(--ember); color: var(--on-ember); transform: translateX(-3px); } }
+  .scene-btn:active { transform: translateX(0); }
+  .scene-btn:focus-visible { outline: 3px dashed var(--forest); outline-offset: 3px; }
+  @media (max-width: 560px) { .scene-btn { padding: 8px 9px; font-size: 10px; } }
 
   /* Wordmark and buttons sit in the open sky: centred between the header and the mountain peak (the peak is about 30% down
      the art), with at least 24px clear above. */

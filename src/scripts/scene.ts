@@ -40,19 +40,26 @@ const islandTop = (pts: number[][], x: number) => {
   return 999;
 };
 export type SceneName = 'hills' | 'jetty';
-/** 12×10 icons for the scene switch: a snowy peak, and a pier over the sea under the sun. */
-export function sceneIcon(name: SceneName) {
-  const g = Grid(12, 10);
-  if (name === 'hills') {
-    for (let y = 1; y < 8; y++) g.rect(6 - y, y + 1, y * 2 - 1, 1, '#455976');
-    g.rect(5, 2, 1, 1, '#f4ebcd'); g.rect(4, 3, 3, 1, '#f4ebcd');
-    g.rect(0, 8, 12, 2, '#7fae45'); g.set(10, 6, '#2b5615'); g.rect(9, 7, 3, 1, '#2b5615');
-  } else {
-    g.disc(8, 2, 1, '#f2c94c');
-    g.rect(0, 5, 12, 5, '#3d8ca6'); g.rect(1, 6, 2, 1, '#a8dcdc'); g.rect(7, 8, 3, 1, '#a8dcdc');
-    g.rect(0, 4, 7, 1, '#bdb6a4'); g.rect(1, 5, 1, 4, '#6a6458'); g.rect(5, 5, 1, 4, '#6a6458');
+
+/** The scene change, pixel style: the picture breaks up into chunky blocks (1 → 8 px and back), and mid-way the
+ *  blocks flip from the old scene to the new one in a scattered checker, like an old console loading a level. */
+const BLOCKS = [1, 2, 3, 4, 6, 8];
+function pixelSwap(a: ImageData, b: ImageData, p: number) {
+  const w = a.width, h = a.height, out = new ImageData(w, h);
+  const size = BLOCKS[Math.min(BLOCKS.length - 1, Math.round(Math.sin(Math.PI * p) * (BLOCKS.length - 1)))];
+  const k = Math.min(1, Math.max(0, (p - 0.3) / 0.4)); // share of cells already showing the new scene
+  const cell = 8;
+  for (let y = 0; y < h; y++) {
+    const sy = y - (y % size);
+    for (let x = 0; x < w; x++) {
+      const sx = x - (x % size);
+      const cx = (sx / cell) | 0, cy = (sy / cell) | 0;
+      const r = (((cx * 73856093) ^ (cy * 19349663)) >>> 0) % 997 / 997; // fixed scatter order per cell
+      const src = r < k ? b : a, i = (sy * w + sx) * 4, o = (y * w + x) * 4;
+      out.data[o] = src.data[i]; out.data[o + 1] = src.data[i + 1]; out.data[o + 2] = src.data[i + 2]; out.data[o + 3] = 255;
+    }
   }
-  return g;
+  return out;
 }
 const SCENE_KEY = 'chillbah-scene';
 export const savedScene = (): SceneName => { try { return localStorage.getItem(SCENE_KEY) === 'jetty' ? 'jetty' : 'hills'; } catch { return 'hills'; } };
@@ -72,7 +79,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
   const boat2 = Grid(14, 6); boat2.rect(4, 0, 4, 2, '#e8e4d8'); boat2.set(5, 0, '#4f7fa8'); boat2.rect(1, 2, 12, 2, '#f4f0e4'); boat2.rect(2, 4, 10, 1, '#2f7d6a'); boat2.set(13, 2, '#f4f0e4'); boat2.outline('#12120d');
   const ferry = Grid(14, 5); ferry.rect(3, 0, 8, 2, '#f4f0e4'); ferry.rect(4, 0, 6, 1, '#7d93a8'); ferry.rect(1, 2, 12, 2, '#e8e4d8'); ferry.outline('#3f5a6e');
   let frame = 0;
-  // Which scene is showing, and the wipe between them: `wipe` runs 0 → 1 while the new scene slides in from the right.
+  // Which scene is showing, and the change between them: `wipe` runs 0 → 1 during the pixel swap.
   let scene: SceneName = savedScene(), prev: SceneName = scene, wipe = 1, wipeAnim = 0;
 
   function cloud(x: number, y: number, col: string) {
@@ -147,17 +154,17 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     }
     const reps = Math.max(1, Math.round(W / 240)); // more clouds across a wide sky
     for (let r = 0; r < reps; r++) clouds.forEach(([x, y, sp]) => cloud(L + ((x + r * 240 * 0.37 + frame * sp * 0.25) % (W + 40)) - 30, y + (r % 2) * 6, mix('#f0f8f0', '#3a4a66')));
-    // The land under the sky. Mid-switch, the new scene is drawn over the old one from a wipe edge that moves right to left
-    // in whole pixels.
+    // The land under the sky. Mid-switch, both scenes are painted and blended pixel-style (see pixelSwap).
     const sunX = (t < 0.5 ? 53 : 55) + skyX, sunY = t < 0.5 ? 29 + skyY + Math.round(ease(t / 0.5) * 80) : 29 + skyY + Math.round((1 - ease((t - 0.5) / 0.5)) * 80);
     const land = (name: SceneName) => (name === 'jetty' ? drawJetty(ctx, L, R, W, H, sunX, sunY) : drawHills(ctx, L, R, W, H));
     if (wipe >= 1 || prev === scene) land(scene);
     else {
-      land(prev);
-      const edge = Math.round(R - ease(wipe) * (W + 2));
-      ctx.save(); ctx.beginPath(); ctx.rect(edge, 0, R - edge + 1, H + 20); ctx.clip();
-      land(scene);
-      ctx.restore();
+      const cw = cv.width, ch = cv.height;
+      const skyImg = ctx.getImageData(0, 0, cw, ch);
+      land(prev); const a = ctx.getImageData(0, 0, cw, ch);
+      ctx.putImageData(skyImg, 0, 0);
+      land(scene); const b = ctx.getImageData(0, 0, cw, ch);
+      ctx.putImageData(pixelSwap(a, b, wipe), 0, 0);
     }
     const ground = scene === 'jetty' ? mix('#2f7f98', '#16233a') : mix('#7fae45', '#4c5f2c');
     if (frameEl && ground !== lastGround) { frameEl.style.setProperty('--ground', ground); lastGround = ground; } // phones extend the ground below the art (Hero.astro)
@@ -237,7 +244,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     ctx.fillStyle = roofDark; ctx.fillRect(208, 83, 98, 1); for (let x = 210; x < 306; x += 4) ctx.fillRect(x, 79, 1, 4);
     ctx.fillStyle = '#12120d'; ctx.fillRect(208, 77, 98, 1); ctx.fillRect(207, 77, 1, 7); ctx.fillRect(306, 77, 1, 7); ctx.fillRect(212, 84, 1, 18);
     // pier deck: far edge railing, then the deck the truck stands on, its front face and the piles
-    const deckTop = 100, deckFront = 114;
+    const deckTop = 100, deckFront = 118; // deep enough that the awning poles (down to about y 117) stand on it
     ctx.fillStyle = mix('#bdb6a4', '#55524a'); ctx.fillRect(L, deckTop, W, deckFront - deckTop);
     ctx.fillStyle = mix('#a9a28f', '#4a4740'); for (let x = Math.floor(L / 16) * 16; x < R; x += 16) ctx.fillRect(x, deckTop + 1, 1, deckFront - deckTop - 1); // slab joints
     ctx.fillStyle = mix('#cfc8b6', '#625e55'); ctx.fillRect(L, deckTop, W, 1);
@@ -253,13 +260,13 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     for (let x = Math.floor(L / 14) * 14 + 4; x < R; x += 14) {
       ctx.fillStyle = mix('#6a6458', '#2c2a26'); ctx.fillRect(x, deckFront + 5, 3, H - deckFront - 5);
       ctx.fillStyle = '#12120d'; ctx.fillRect(x + 3, deckFront + 5, 1, H - deckFront - 5);
-      ctx.fillStyle = mix('#d8eeee', '#4a5a78'); ctx.fillRect(x - 1 + ((frame >> 3) % 2), deckFront + 8, 5, 1); // foam round the pile
+      ctx.fillStyle = mix('#d8eeee', '#4a5a78'); ctx.fillRect(x - 1 + ((frame >> 3) % 2), deckFront + 7, 5, 1); // foam round the pile
     }
     // lamp post (lit at night)
     ctx.fillStyle = '#12120d'; ctx.fillRect(56, 70, 3, 33); ctx.fillRect(53, 68, 9, 3);
     ctx.fillStyle = mix('#7d93a8', '#4a5468'); ctx.fillRect(57, 71, 1, 31);
     ctx.fillStyle = t > 0.5 ? '#f2c94c' : mix('#f4f0e4', '#f2c94c'); ctx.fillRect(54, 71, 7, 1);
-    if (t > 0.5) { ctx.fillStyle = `rgba(242,201,76,${((t - 0.5) * 0.22).toFixed(2)})`; ctx.fillRect(51, 101, 13, 13); ctx.fillRect(48, 104, 19, 8); } // pool of light on the deck
+    if (t > 0.5) { ctx.fillStyle = `rgba(242,201,76,${((t - 0.5) * 0.22).toFixed(2)})`; ctx.fillRect(51, 101, 13, 17); ctx.fillRect(48, 104, 19, 11); } // pool of light on the deck
     sign.draw(ctx, 70, 96);
     stool.draw(ctx, 172, 99); stool.draw(ctx, 186, 101);
     icedCup.draw(ctx, 198, 94);
@@ -291,18 +298,18 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     };
     anim = requestAnimationFrame(step);
   }
-  /** Switch between the mountain and the jetty: the new scene wipes in from the right (instant under reduced motion). */
+  /** Switch between the mountain and the jetty with the pixel swap (instant under reduced motion). */
   function setScene(next: SceneName) {
     if (next === scene && wipe >= 1) return;
     try { localStorage.setItem(SCENE_KEY, next); } catch { /* storage blocked: just switch for this view */ }
     cancelAnimationFrame(wipeAnim);
-    prev = wipe >= 1 ? scene : (wipe > 0.5 ? scene : prev);
+    prev = wipe >= 1 || wipe > 0.5 ? scene : prev;
     scene = next;
     if (reduce || prev === scene) { wipe = 1; draw(); return; }
     wipe = 0;
-    const start = performance.now(), dur = 900;
+    const start = performance.now(), dur = 1100, tick = 70; // stepped frames, like the rest of the scene
     const step = (now: number) => {
-      wipe = Math.min(1, (now - start) / dur); draw();
+      wipe = Math.min(1, Math.floor((now - start) / tick) * tick / dur); draw();
       if (wipe < 1) wipeAnim = requestAnimationFrame(step);
     };
     wipeAnim = requestAnimationFrame(step);
