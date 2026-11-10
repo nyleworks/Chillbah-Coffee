@@ -12,8 +12,8 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
       <Truck id="heroTruck" class="hilux" awning hero label="Pixel art of the white Chillbah Hilux with its tan side awning open on poles, parked on grass with mountains behind" />
       <img class="barista" id="barista" src={`${B}barista.png`} width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
       </div>
-      <!-- Scene switch on the right edge: flips between the mountain and the jetty (scene.ts draws both; index.astro wires it). -->
-      <button class="scene-btn" id="sceneBtn" type="button" aria-label="Change scene to the jetty">Change scene</button>
+      <!-- Scene switch, bottom right of the hero: flips between the mountain and the jetty (scene.ts draws both; index.astro wires it). -->
+      <button class="cb-btn cb-btn--alt scene-btn" id="sceneBtn" type="button" aria-label="Change scene to the jetty">Change scene</button>
       <!-- The open sky above the mountain peak; the wordmark and buttons are centred in it. -->
       <div class="hero-copy">
         <h1 class="title">CHILLBAH</h1>
@@ -56,15 +56,9 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
   .stage :global(.hilux) { position: absolute; left: 25.6%; width: 38.9%; bottom: 5.8cqw; }
   .barista { position: absolute; left: 65%; width: 6.1%; height: auto; bottom: 6.07cqw; image-rendering: pixelated; will-change: transform; }
 
-  /* Scene switch: a pixel button tucked against the right edge, about level with the truck's roof. */
-  .scene-btn { position: absolute; z-index: 3; right: 0; top: max(calc(100% - var(--lift) - var(--art-h) * 0.62), 116px); padding: 10px 12px;
-    border: 3px solid var(--line); border-right: 0; background: var(--surface-100); color: var(--text); box-shadow: -3px 3px 0 rgb(18 18 13 / .35);
-    font: 700 11px/1 var(--font-pixel); text-transform: uppercase; letter-spacing: .06em; cursor: pointer;
-    transition: transform .08s steps(2); }
-  @media (hover: hover) { .scene-btn:hover { background: var(--ember); color: var(--on-ember); transform: translateX(-3px); } }
-  .scene-btn:active { transform: translateX(0); }
-  .scene-btn:focus-visible { outline: 3px dashed var(--forest); outline-offset: 3px; }
-  @media (max-width: 560px) { .scene-btn { padding: 8px 9px; font-size: 10px; } }
+  /* Scene switch: the green pixel button, bottom right of the hero (on phones, just above the grass/sea strip). */
+  .scene-btn { position: absolute; z-index: 3; right: 16px; bottom: calc(var(--lift) + 16px); padding: 10px 14px; font-size: 12px; }
+  @media (max-width: 560px) { .scene-btn { right: 12px; bottom: calc(var(--lift) + 10px); padding: 8px 10px; font-size: 10px; box-shadow: 3px 3px 0 var(--line); } }
 
   /* Wordmark and buttons sit in the open sky: centred between the header and the mountain peak (the peak is about 30% down
      the art), with at least 24px clear above. */

@@ -23,8 +23,10 @@ const other = (pages: typeof drinks, i: number) => pages[(i + 1) % pages.length]
     {panels.map((panel, k) => (
       <div class="menu-panel" id={`panel-${panel.id}`} role="tabpanel" aria-labelledby={`tab-${panel.id}`} data-pager data-page="0" hidden={k > 0}>
         <div class="side prev">
-          <button class="arrow" data-step="-1" aria-label={`Show ${other(panel.pages, 0)}`}><span class="chev" aria-hidden="true"></span></button>
-          <span class="tag label" aria-hidden="true" data-other>{other(panel.pages, 0)}</span>
+          <div class="stick">
+            <button class="arrow" data-step="-1" aria-label={`Show ${other(panel.pages, 0)}`}><span class="chev" aria-hidden="true"></span></button>
+            <span class="tag label" aria-hidden="true" data-other>{other(panel.pages, 0)}</span>
+          </div>
         </div>
         <div class="pages-view">
           <div class="pages">
@@ -39,8 +41,10 @@ const other = (pages: typeof drinks, i: number) => pages[(i + 1) % pages.length]
           </div>
         </div>
         <div class="side next">
-          <button class="arrow" data-step="1" aria-label={`Show ${other(panel.pages, 0)}`}><span class="chev" aria-hidden="true"></span></button>
-          <span class="tag label" aria-hidden="true" data-other>{other(panel.pages, 0)}</span>
+          <div class="stick">
+            <button class="arrow" data-step="1" aria-label={`Show ${other(panel.pages, 0)}`}><span class="chev" aria-hidden="true"></span></button>
+            <span class="tag label" aria-hidden="true" data-other>{other(panel.pages, 0)}</span>
+          </div>
         </div>
       </div>
     ))}
@@ -112,11 +116,10 @@ const other = (pages: typeof drinks, i: number) => pages[(i + 1) % pages.length]
   .menu-panel { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; gap: 12px; --page: 0; }
   .menu-panel[hidden] { display: none; }
   .side { position: relative; }
-  /* The arrow and its tag stay in view while a long page scrolls past. */
-  .side > * { position: sticky; }
-  .side { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-  .side .arrow { top: 45vh; }
-  .side .arrow { margin-top: 140px; width: 48px; height: 48px; display: grid; place-items: center; padding: 0; cursor: pointer;
+  /* The arrow and its tag stay in view while a long page scrolls past. They stick as one block, so at the bottom of the
+     section the tag can't slide up over the arrow (it did when each stuck on its own). */
+  .stick { position: sticky; top: 45vh; margin-top: 140px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .side .arrow { width: 48px; height: 48px; display: grid; place-items: center; padding: 0; cursor: pointer;
     background: var(--surface-100); color: var(--text); border: 3px solid var(--line); box-shadow: var(--shadow-px); }
   .side .arrow:hover { background: var(--ember); color: #fff6dc; }
   .side .arrow:active { transform: translate(3px, 3px); box-shadow: none; }
@@ -126,7 +129,7 @@ const other = (pages: typeof drinks, i: number) => pages[(i + 1) % pages.length]
     clip-path: polygon(0 0, 29% 0, 29% 10%, 43% 10%, 43% 20%, 57% 20%, 57% 30%, 71% 30%, 71% 40%, 100% 40%, 100% 60%, 71% 60%, 71% 70%, 57% 70%, 57% 80%, 43% 80%, 43% 90%, 29% 90%, 29% 100%, 0 100%); }
   .prev .chev { transform: scaleX(-1); }
   /* Tag under each arrow: the page it leads to, written down the side. */
-  .side .tag { top: calc(45vh + 60px); writing-mode: vertical-rl; font-size: 11px; letter-spacing: .14em; color: var(--ember-600); padding: 8px 4px;
+  .side .tag { writing-mode: vertical-rl; font-size: 11px; letter-spacing: .14em; color: var(--ember-600); padding: 8px 4px;
     border: 2px solid var(--line); background: var(--surface-200); }
   .prev .tag { transform: rotate(180deg); }
 
@@ -144,8 +147,9 @@ const other = (pages: typeof drinks, i: number) => pages[(i + 1) % pages.length]
   /* Phones: two across (still row by row), slimmer arrow columns. */
   @media (max-width: 640px) {
     .menu-panel { grid-template-columns: 40px minmax(0, 1fr) 40px; gap: 8px; }
-    .side .arrow { width: 38px; height: 38px; margin-top: 60px; }
-    .side .tag { font-size: 9px; top: calc(45vh + 48px); }
+    .stick { margin-top: 60px; }
+    .side .arrow { width: 38px; height: 38px; }
+    .side .tag { font-size: 9px; }
     .menu-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
   }
 </style>
