@@ -62,7 +62,7 @@ function pixelSwap(a: ImageData, b: ImageData, p: number) {
   return out;
 }
 const SCENE_KEY = 'chillbah-scene';
-export const savedScene = (): SceneName => { try { return localStorage.getItem(SCENE_KEY) === 'jetty' ? 'jetty' : 'hills'; } catch { return 'hills'; } };
+const savedScene = (): SceneName => { try { return localStorage.getItem(SCENE_KEY) === 'jetty' ? 'jetty' : 'hills'; } catch { return 'hills'; } };
 
 export function initScene(canvas: HTMLCanvasElement | null) {
   const sx = canvas?.getContext('2d');

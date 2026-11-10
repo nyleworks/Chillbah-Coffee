@@ -21,9 +21,9 @@ npm run check    # checks the code for mistakes (types, missing imports) without
 
 | What | File |
 | --- | --- |
-| Opening hours and events (upcoming and past) | `src/data/events.ts` |
+| Opening hours, Google Maps links, events (upcoming and past) | `src/data/events.ts` |
 | Menu drinks (Coffee / Non-coffee pages), snacks, prices and HOT badges | `src/data/menu.ts` |
-| Instagram / WhatsApp links, page title, ticker words | `src/data/site.ts` |
+| Instagram, TikTok, Threads and WhatsApp links, page title, ticker words | `src/data/site.ts` |
 | Colours, fonts, spacing | `src/styles/tokens.css` |
 | Buttons, menu card, HOT badge | `src/styles/components.css` |
 | Page sections | `src/components/*.astro` |
@@ -35,5 +35,5 @@ npm run check    # checks the code for mistakes (types, missing imports) without
 
 ## Open items
 
-- Instagram and WhatsApp links are placeholders (`#`).
+- Instagram, TikTok, Threads and WhatsApp links are placeholders (`#`).
 - Header font: Pixel Quest isn't bundled yet, so Pixelify Sans stands in. To use it, add the font file under `public/fonts/`, add an `@font-face` `src: url(...)` in `tokens.css`, and check its FontSpace licence allows commercial use.

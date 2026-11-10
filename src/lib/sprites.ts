@@ -102,7 +102,7 @@ export function motionIcon(reduced: boolean, c: string): Grid {
   return g;
 }
 
-export const SOCIAL_KINDS = ['instagram', 'tiktok', 'threads', 'whatsapp'] as const;
+const SOCIAL_KINDS = ['instagram', 'tiktok', 'threads', 'whatsapp'] as const;
 export type SocialKind = (typeof SOCIAL_KINDS)[number];
 
 /** Social media icons, 14×14, drawn from text rows (one letter per pixel, '.' = empty). */
