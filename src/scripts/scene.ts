@@ -77,6 +77,12 @@ export function initScene(canvas: HTMLCanvasElement | null) {
   // jetty props: a lamp post, a little speedboat and a ferry far out
   const boat = Grid(16, 6); boat.rect(5, 0, 5, 2, '#e8e4d8'); boat.rect(6, 0, 3, 1, '#4f7fa8'); boat.rect(1, 2, 14, 2, '#f4f0e4'); boat.rect(2, 4, 12, 1, '#e66f46'); boat.set(0, 2, '#f4f0e4'); boat.outline('#12120d');
   const boat2 = Grid(14, 6); boat2.rect(4, 0, 4, 2, '#e8e4d8'); boat2.set(5, 0, '#4f7fa8'); boat2.rect(1, 2, 12, 2, '#f4f0e4'); boat2.rect(2, 4, 10, 1, '#2f7d6a'); boat2.set(13, 2, '#f4f0e4'); boat2.outline('#12120d');
+  // a wooden sampan moored under the pier (phones show the water below the deck; see measure())
+  const sampan = Grid(26, 9);
+  sampan.rect(7, 0, 10, 1, '#3d6f9a'); sampan.rect(6, 1, 12, 3, '#4f86b4'); sampan.rect(7, 2, 10, 1, '#3d6f9a'); // canopy
+  sampan.rect(7, 4, 1, 1, '#5a3a22'); sampan.rect(16, 4, 1, 1, '#5a3a22');
+  sampan.rect(1, 5, 24, 2, '#a0703f'); sampan.set(0, 4, '#a0703f'); sampan.set(25, 4, '#a0703f'); sampan.rect(2, 7, 22, 1, '#7a5030'); sampan.rect(1, 5, 24, 1, '#e66f46');
+  sampan.outline('#12120d');
   const ferry = Grid(14, 5); ferry.rect(3, 0, 8, 2, '#f4f0e4'); ferry.rect(4, 0, 6, 1, '#7d93a8'); ferry.rect(1, 2, 12, 2, '#e8e4d8'); ferry.outline('#3f5a6e');
   let frame = 0;
   // Which scene is showing, and the change between them: `wipe` runs 0 → 1 during the pixel swap.
@@ -102,10 +108,16 @@ export function initScene(canvas: HTMLCanvasElement | null) {
   // How much of the stage is cropped off the left/top on narrow screens, in canvas px. Re-measured on resize only.
   // On wide screens the art (stage) is narrower than the frame: the canvas then spans the whole frame width and the
   // 180px of art is drawn `ox` canvas px in from its left edge, with sky, ground and road carrying on to both edges.
-  let cut = 0, cutTop = 0, ox = 0;
+  let cut = 0, cutTop = 0, ox = 0, below = 0;
   const measure = () => {
     const stageEl = canvas.parentElement; if (!stageEl) return;
     const px = stageEl.clientWidth / 180 || 1;
+    // Phones lift the art above a strip at the bottom of the hero (Hero.astro): grow the canvas down over it, so the
+    // grass carries on under the mountain and the jetty shows the water under the pier.
+    const lifted = frameEl ? frameEl.clientHeight - (stageEl.offsetTop + stageEl.offsetHeight) : 0;
+    below = lifted > 1 ? Math.ceil(lifted / px) : 0;
+    if (canvas.height !== 106 + below) canvas.height = 106 + below;
+    canvas.style.height = below ? `${(106 + below) * px}px` : '';
     const left = stageEl.offsetLeft;
     cut = left < 0 ? -left / px : 0;
     cutTop = stageEl.offsetTop < 0 ? -stageEl.offsetTop / px : 0;
@@ -126,7 +138,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
 
   function draw() {
     const ctx = sx!;
-    const H = 130;
+    const H = 130 + below; // world rows down to the bottom of the canvas (it starts at world y 18)
     // World x 40 is the art's left edge; L..R is the world span the canvas shows (wider than the art on wide screens).
     const L = Math.floor(40 - ox), R = Math.ceil(40 - ox + cv.width), W = R - L;
     ctx.imageSmoothingEnabled = false;
@@ -186,7 +198,8 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     // ground, road
     ctx.fillStyle = mix('#7fae45', '#4c5f2c'); ctx.fillRect(L, 92, W, H - 92);
     ctx.fillStyle = mix('#66882d', '#3a4a22');
-    for (let x0 = Math.floor(L / 240) * 240; x0 < R; x0 += 240) for (let i = 0; i < 90; i++) { const x = x0 + ((i * 37) % 240), y = 95 + ((i * 11) % 32); ctx.fillRect(x, y, 1, 2); ctx.fillRect(x + 1, y + 1, 1, 1); }
+    const span = Math.max(32, H - 98), tufts = Math.round(90 * span / 32); // more rows of tufts when phones show grass below the art
+    for (let x0 = Math.floor(L / 240) * 240; x0 < R; x0 += 240) for (let i = 0; i < tufts; i++) { const x = x0 + ((i * 37) % 240), y = 95 + ((i * 11) % span); ctx.fillRect(x, y, 1, 2); ctx.fillRect(x + 1, y + 1, 1, 1); }
     ctx.fillStyle = mix('#c9a27a', '#5a4632'); ctx.fillRect(L, 108, W, 6);
     ctx.fillStyle = mix('#b08560', '#4a3a2a'); for (let x = Math.floor(L / 9) * 9; x < R; x += 9) ctx.fillRect(x, 110, 4, 1);
     ctx.fillStyle = '#12120d'; ctx.fillRect(L, 92, W, 1);
@@ -257,10 +270,39 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     ctx.fillStyle = '#12120d'; ctx.fillRect(L, deckFront, W, 1);
     ctx.fillStyle = mix('#7a7466', '#34322e'); ctx.fillRect(L, deckFront + 1, W, 3);
     ctx.fillStyle = '#12120d'; ctx.fillRect(L, deckFront + 4, W, 1);
+    // Under the deck (only phones see this far down): the pier's shadow on the water, the piles standing in it with foam
+    // at the waterline and wobbly reflections, slow rows of ripples, the sun's or moon's glitter, and a moored sampan.
+    const water = deckFront + 12;
+    if (H > water) {
+      ctx.fillStyle = mix('#2f7f98', '#16233a'); ctx.fillRect(L, deckFront + 5, W, H - deckFront - 5);
+      ctx.fillStyle = mix('#1f6680', '#101a2c'); ctx.fillRect(L, deckFront + 5, W, water - deckFront - 5); // shade under the deck
+      ctx.fillStyle = mix('#5aa8bc', '#2a3c5c');
+      for (let y = water + 3, r = 0; y < H; y += 4 + (r % 2), r++) {
+        const drift = (frame >> 2) * (r % 2 ? 1 : -1);
+        for (let x0 = Math.floor(L / 23) * 23; x0 < R; x0 += 23) ctx.fillRect(x0 + (((r * 9 + drift) % 23) + 23) % 23, y, 3 + (r % 3), 1);
+      }
+      if (lit > 0.05) {
+        ctx.fillStyle = t < 0.5 ? `rgba(242,201,76,${(lit * 0.8).toFixed(2)})` : `rgba(244,235,205,${(lit * 0.7).toFixed(2)})`;
+        for (let y = water + 2, i = 0; y < H; y += 3, i++) ctx.fillRect(sunX - 3 + (((i + (frame >> 2)) % 3) - 1) * 2, y, 3 + (i % 3), 1);
+      }
+    }
+    const pileH = Math.max(0, Math.min(H, water) - deckFront - 5);
     for (let x = Math.floor(L / 14) * 14 + 4; x < R; x += 14) {
-      ctx.fillStyle = mix('#6a6458', '#2c2a26'); ctx.fillRect(x, deckFront + 5, 3, H - deckFront - 5);
-      ctx.fillStyle = '#12120d'; ctx.fillRect(x + 3, deckFront + 5, 1, H - deckFront - 5);
-      ctx.fillStyle = mix('#d8eeee', '#4a5a78'); ctx.fillRect(x - 1 + ((frame >> 3) % 2), deckFront + 7, 5, 1); // foam round the pile
+      ctx.fillStyle = mix('#6a6458', '#2c2a26'); ctx.fillRect(x, deckFront + 5, 3, pileH);
+      ctx.fillStyle = '#12120d'; ctx.fillRect(x + 3, deckFront + 5, 1, pileH);
+      if (H > water) {
+        ctx.fillStyle = mix('#245f74', '#0e1828'); // reflection, breaking up as it goes down
+        for (let k = 0; k < 7; k++) ctx.fillRect(x + ((k + (frame >> 2)) % 2), water + 1 + k * 2, 3 - (k >> 2), 1);
+      }
+      ctx.fillStyle = mix('#d8eeee', '#4a5a78'); ctx.fillRect(x - 1 + ((frame >> 3) % 2), water, 5, 1); // foam round the pile
+    }
+    if (H > water + 10) {
+      const by = water + 6 + bob(3), bx = 108;
+      ctx.fillStyle = mix('#c9a27a', '#6a5a48'); // mooring rope from the pile to the bow
+      for (let i = 0; i <= 6; i++) ctx.fillRect(105 + i, water - 4 + Math.round((by + 5 - (water - 4)) * i / 6), 1, 1);
+      ctx.fillStyle = mix('#1f6680', '#101a2c'); ctx.fillRect(bx + 1, by + 9, 24, 1); // its shadow on the water
+      sampan.draw(ctx, bx, by);
+      if (t > 0.5) { ctx.fillStyle = `rgba(242,201,76,${((t - 0.5) * 2).toFixed(2)})`; ctx.fillRect(bx + 11, by + 2, 2, 1); } // lantern at night
     }
     // lamp post (lit at night)
     ctx.fillStyle = '#12120d'; ctx.fillRect(56, 70, 3, 33); ctx.fillRect(53, 68, 9, 3);

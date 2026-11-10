@@ -45,11 +45,13 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
   .stage { position: absolute; bottom: 0; width: var(--stage-w); aspect-ratio: 180 / 106; left: clamp(calc(100% - var(--stage-w)), calc(50% - 0.48 * var(--stage-w)), 0px); container-type: inline-size; }
   /* Screens wider than the art (wide monitors): the art is as tall as the screen and sits in the middle. */
   @container (min-aspect-ratio: 180 / 106) { .stage { left: calc(50% - var(--stage-w) / 2); } }
-  /* Phones: lift the scene above a plain grass strip so the docked Where we at card (FindUs.astro) shows in full under the truck. */
+  /* Phones: lift the scene above a strip of ground so the docked Where we at card (FindUs.astro) shows in full under the truck. */
   @media (max-width: 560px) {
     .stage { bottom: 96px; }
     .scene-frame { --lift: 96px; }
-    .scene-frame::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 97px; background: var(--ground, #7fae45); }
+    /* scene.ts grows the canvas down over the strip (grass under the mountain, the water under the jetty); this is only the
+       backdrop until it paints */
+    .scene-frame { background: linear-gradient(to top, var(--ground, #7fae45) 97px, var(--sky) 97px); }
   }
   .stage canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; } /* scene.ts widens it to the frame on wide screens */
   /* Sizes are in cqw (stage width) so the truck and barista stay on the road. */
