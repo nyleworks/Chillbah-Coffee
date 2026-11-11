@@ -154,7 +154,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     const sky = mix('#8ad8d8', '#1f2b45');
     ctx.fillStyle = sky; ctx.fillRect(L, 0, W, H);
     // the plain sky above the art (tall screens) must match the canvas sky exactly, frame by frame
-    if (frameEl && sky !== lastSky) { frameEl.style.backgroundColor = sky; lastSky = sky; } // only when it changes (theme switch)
+    if (frameEl && sky !== lastSky) { frameEl.style.backgroundColor = sky; frameEl.style.setProperty('--sky', sky); lastSky = sky; } // only on change (theme switch); --sky too, as phones paint a gradient from it (Hero.astro)
     // stars fade in late
     // On narrow screens the stage is wider than the screen and its left edge is cropped: keep the sun/moon in view.
     // (measured in measure(), not every frame, so drawing never forces a layout)
