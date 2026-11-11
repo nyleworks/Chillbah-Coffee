@@ -39,7 +39,9 @@ const islandTop = (pts: number[][], x: number) => {
   }
   return 999;
 };
-export type SceneName = 'hills' | 'jetty';
+export type SceneName = 'hills' | 'jetty' | 'market';
+/** The order the Change scene button cycles through. */
+export const SCENES: SceneName[] = ['hills', 'jetty', 'market'];
 
 /** The scene change, pixel style: the picture breaks up into chunky blocks (1 → 8 px and back), and mid-way the
  *  blocks flip from the old scene to the new one in a scattered checker, like an old console loading a level. */
@@ -62,7 +64,7 @@ function pixelSwap(a: ImageData, b: ImageData, p: number) {
   return out;
 }
 const SCENE_KEY = 'chillbah-scene';
-const savedScene = (): SceneName => { try { return localStorage.getItem(SCENE_KEY) === 'jetty' ? 'jetty' : 'hills'; } catch { return 'hills'; } };
+const savedScene = (): SceneName => { try { const v = localStorage.getItem(SCENE_KEY) as SceneName; return SCENES.includes(v) ? v : 'hills'; } catch { return 'hills'; } };
 
 export function initScene(canvas: HTMLCanvasElement | null) {
   const sx = canvas?.getContext('2d');
@@ -168,7 +170,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     for (let r = 0; r < reps; r++) clouds.forEach(([x, y, sp]) => cloud(L + ((x + r * 240 * 0.37 + frame * sp * 0.25) % (W + 40)) - 30, y + (r % 2) * 6, mix('#f0f8f0', '#3a4a66')));
     // The land under the sky. Mid-switch, both scenes are painted and blended pixel-style (see pixelSwap).
     const sunX = (t < 0.5 ? 53 : 55) + skyX, sunY = t < 0.5 ? 29 + skyY + Math.round(ease(t / 0.5) * 80) : 29 + skyY + Math.round((1 - ease((t - 0.5) / 0.5)) * 80);
-    const land = (name: SceneName) => (name === 'jetty' ? drawJetty(ctx, L, R, W, H, sunX, sunY) : drawHills(ctx, L, R, W, H));
+    const land = (name: SceneName) => (name === 'jetty' ? drawJetty(ctx, L, R, W, H, sunX, sunY) : name === 'market' ? drawMarket(ctx, L, R, W, H) : drawHills(ctx, L, R, W, H));
     if (wipe >= 1 || prev === scene) land(scene);
     else {
       const cw = cv.width, ch = cv.height;
@@ -178,7 +180,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
       land(scene); const b = ctx.getImageData(0, 0, cw, ch);
       ctx.putImageData(pixelSwap(a, b, wipe), 0, 0);
     }
-    const ground = scene === 'jetty' ? mix('#2f7f98', '#16233a') : mix('#7fae45', '#4c5f2c');
+    const ground = scene === 'jetty' ? mix('#2f7f98', '#16233a') : scene === 'market' ? mix('#5e5d62', '#2a2930') : mix('#7fae45', '#4c5f2c');
     if (frameEl && ground !== lastGround) { frameEl.style.setProperty('--ground', ground); lastGround = ground; } // phones extend the ground below the art (Hero.astro)
   }
 
@@ -203,6 +205,94 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     ctx.fillStyle = mix('#c9a27a', '#5a4632'); ctx.fillRect(L, 108, W, 6);
     ctx.fillStyle = mix('#b08560', '#4a3a2a'); for (let x = Math.floor(L / 9) * 9; x < R; x += 9) ctx.fillRect(x, 110, 4, 1);
     ctx.fillStyle = '#12120d'; ctx.fillRect(L, 92, W, 1);
+    sign.draw(ctx, 70, 96);
+    stool.draw(ctx, 172, 99); stool.draw(ctx, 186, 101);
+    icedCup.draw(ctx, 198, 94);
+  }
+
+  // Night market in town (Niekki, 2026-11-11): a row of shophouses, striped market stalls along the five-foot way, string
+  // lights strung across, sate smoke, people browsing, and the truck parked on the street in front. By day it's a quiet
+  // street; at night the bulbs and windows light up, warm pools spill onto the pavement and more people come out.
+  function drawMarket(ctx: CanvasRenderingContext2D, L: number, R: number, W: number, H: number) {
+    const md = (a: number, n: number) => ((a % n) + n) % n; // world x can be negative on wide screens
+    const night = Math.max(0, (t - 0.4) / 0.6); // lights come on in the second half of the day → night blend
+    const dim = (hex: string, f: number) => '#' + [1, 3, 5].map((o) => Math.round(parseInt(hex.slice(o, o + 2), 16) * f).toString(16).padStart(2, '0')).join('');
+    const glow = (a: number) => `rgba(246,180,84,${(a * night).toFixed(2)})`;
+    // shophouses, 30 px each, with a little variety in height and colour
+    const fronts = [['#e8c9a0', '#5a4c3e'], ['#cfe0c8', '#46523f'], ['#f0d9b5', '#5e5240'], ['#c9d8e8', '#424e5e'], ['#e6b8a8', '#5a4440']];
+    for (let x0 = Math.floor(L / 30) * 30, i = Math.floor(L / 30); x0 < R; x0 += 30, i++) {
+      const k = md(i, 5), top = 52 + md(i * 7, 3) * 4;
+      const wall = mix(fronts[k][0], fronts[k][1]);
+      ctx.fillStyle = wall; ctx.fillRect(x0, top, 30, 92 - top);
+      ctx.fillStyle = mix('#b8573a', '#4a2a22'); ctx.fillRect(x0, top - 3, 30, 3); // tiled roof edge
+      ctx.fillStyle = '#12120d'; ctx.fillRect(x0, top - 4, 30, 1); ctx.fillRect(x0, top - 3, 1, 95 - top);
+      ctx.fillStyle = mix('#f4ebcd', '#6a5e50'); ctx.fillRect(x0 + 1, top, 29, 1); // parapet ledge
+      // upper floor: two shuttered windows, some lit at night
+      for (const wx of [6, 18]) {
+        const on = md(i * 3 + wx, 4) !== 0;
+        ctx.fillStyle = mix('#3a4a5a', '#1c2230'); ctx.fillRect(x0 + wx, top + 6, 6, 8);
+        if (on) { ctx.fillStyle = glow(0.9); ctx.fillRect(x0 + wx, top + 6, 6, 8); }
+        ctx.fillStyle = mix('#3f7a4a', '#24402a'); ctx.fillRect(x0 + wx - 2, top + 6, 2, 8); ctx.fillRect(x0 + wx + 6, top + 6, 2, 8); // shutters
+        ctx.fillStyle = '#12120d'; ctx.fillRect(x0 + wx - 2, top + 14, 10, 1);
+      }
+      // ground floor: the shaded five-foot way behind its arches
+      ctx.fillStyle = mix('#6a5848', '#221a16'); ctx.fillRect(x0 + 2, 79, 26, 13);
+      ctx.fillStyle = wall; ctx.fillRect(x0 + 2, 79, 26, 2); ctx.fillRect(x0 + 2, 81, 2, 1); ctx.fillRect(x0 + 26, 81, 2, 1);
+      ctx.fillStyle = glow(0.22); ctx.fillRect(x0 + 4, 82, 22, 10); // shops lit inside
+    }
+    // pavement (five-foot way in front), kerb, then the street the truck stands on
+    ctx.fillStyle = mix('#c9c2b2', '#4c4842'); ctx.fillRect(L, 92, W, 9);
+    ctx.fillStyle = mix('#b3ac9c', '#403c37'); for (let x = Math.floor(L / 8) * 8; x < R; x += 8) ctx.fillRect(x, 93, 1, 8); ctx.fillRect(L, 96, W, 1);
+    ctx.fillStyle = '#12120d'; ctx.fillRect(L, 92, W, 1); ctx.fillRect(L, 101, W, 1);
+    ctx.fillStyle = mix('#e4ded0', '#5c5850'); ctx.fillRect(L, 102, W, 2); // kerb
+    ctx.fillStyle = mix('#5e5d62', '#2a2930'); ctx.fillRect(L, 104, W, H - 104);
+    ctx.fillStyle = mix('#545358', '#25242a'); for (let i = 0, n = Math.round(W * (H - 104) / 60); i < n; i++) ctx.fillRect(L + ((i * 37) % W), 106 + ((i * 13) % Math.max(1, H - 108)), 2, 1); // asphalt grit
+    ctx.fillStyle = mix('#e8e4d8', '#8a8676'); if (H > 121) for (let x = Math.floor(L / 16) * 16; x < R; x += 16) ctx.fillRect(x, 120, 8, 1); // lane dashes
+    // market stalls along the pavement: striped canopy, scalloped edge, poles, a counter with goods
+    const stripes = [['#e66f46', '#fbf6e8'], ['#f2c94c', '#fbf6e8'], ['#3f7a4a', '#fbf6e8'], ['#4f7fa8', '#fbf6e8']];
+    for (let x0 = Math.floor((L - 10) / 34) * 34 + 6, i = Math.floor((L - 10) / 34); x0 < R; x0 += 34, i++) {
+      // at night the canopies stay colourful (lit by the bulbs), just a shade darker
+      const [c1, c2] = stripes[md(i, 4)], a = mix(c1, dim(c1, 0.8)), b = mix(c2, '#cfc2a6');
+      for (let x = 0; x < 28; x++) { ctx.fillStyle = ((x >> 2) % 2) ? b : a; ctx.fillRect(x0 + x, 75, 1, 5); if (x % 2 === 0) ctx.fillRect(x0 + x, 80, 1, 1); }
+      ctx.fillStyle = '#12120d'; ctx.fillRect(x0 - 1, 74, 30, 1); ctx.fillRect(x0, 81, 1, 18); ctx.fillRect(x0 + 27, 81, 1, 18); // canopy top, poles
+      ctx.fillStyle = mix('#8a6a4e', '#3a2c22'); ctx.fillRect(x0 + 2, 91, 24, 7); // counter
+      ctx.fillStyle = mix('#6e523c', '#2c221a'); ctx.fillRect(x0 + 2, 94, 24, 1);
+      ctx.fillStyle = '#12120d'; ctx.fillRect(x0 + 2, 90, 24, 1);
+      const goods = ['#e66f46', '#f2c94c', '#7fae45', '#e0566b', '#c98a4a'];
+      for (let g = 0; g < 6; g++) { ctx.fillStyle = mix(goods[md(i + g, 5)], '#3a2e2a'); ctx.fillRect(x0 + 4 + g * 4, 88, 2, 2); }
+      ctx.fillStyle = glow(0.14); ctx.fillRect(x0 - 2, 92, 32, 9); // warm pool on the pavement
+      if (((i % 3) + 3) % 3 === 1) { // a grill stall: sate smoke curling up
+        for (let p = 0; p < 4; p++) {
+          const ph = (frame + p * 6) % 24, y = 72 - ph, x = x0 + 14 + Math.round(Math.sin((ph + p) / 3) * 2);
+          ctx.fillStyle = `rgba(232,228,216,${(0.55 * (1 - ph / 24)).toFixed(2)})`; ctx.fillRect(x, y, 2 + (ph >> 3), 2);
+        }
+      }
+    }
+    // string lights swinging between poles across the whole street
+    for (let x0 = Math.floor(L / 48) * 48; x0 < R; x0 += 48) {
+      ctx.fillStyle = '#12120d'; ctx.fillRect(x0, 60, 1, 14);
+      for (let x = 0; x < 48; x++) {
+        const y = 61 + Math.round(Math.sin((Math.PI * x) / 48) * 6);
+        ctx.fillStyle = '#12120d'; ctx.fillRect(x0 + x, y, 1, 1);
+        if (x % 4 === 2) {
+          const bulb = ['#f2c94c', '#e66f46', '#7fae45', '#f4ebcd'][md((x >> 2) + (x0 >> 4), 4)];
+          const twinkle = night > 0.5 && ((x + frame) % 11 === 0) ? 0.5 : 1;
+          ctx.fillStyle = mix('#8a8676', bulb); ctx.globalAlpha = night > 0 ? twinkle : 1; ctx.fillRect(x0 + x, y + 1, 1, 2); ctx.globalAlpha = 1;
+        }
+      }
+    }
+    // people browsing along the pavement: one or two by day, a crowd at night
+    const crowd = 2 + Math.round(night * 5);
+    const shirts = ['#e66f46', '#4f7fa8', '#f2c94c', '#3f7a4a', '#e0566b', '#f4ebcd', '#7a4a8a'];
+    for (let n = 0; n < crowd; n++) {
+      const span = W + 20, dir = n % 2 ? 1 : -1, speed = 0.25 + (n % 3) * 0.1;
+      const x = L - 10 + ((((n * 53 + frame * speed * dir) % span) + span) % span) | 0, y = 88 + (n % 3);
+      const step = ((frame >> 1) + n) % 2;
+      ctx.fillStyle = '#12120d'; ctx.fillRect(x, y, 4, 3); // hair
+      ctx.fillStyle = mix('#d9a77a', '#7a5a44'); ctx.fillRect(x + (dir > 0 ? 1 : 0), y + 1, 3, 2); // face
+      ctx.fillStyle = mix(shirts[n % 7], '#3a3434'); ctx.fillRect(x, y + 3, 4, 4); // shirt
+      ctx.fillStyle = mix('#3a4a5a', '#1c2230'); ctx.fillRect(x + step, y + 7, 1, 3); ctx.fillRect(x + 3 - step, y + 7, 1, 3); // legs
+    }
     sign.draw(ctx, 70, 96);
     stool.draw(ctx, 172, 99); stool.draw(ctx, 186, 101);
     icedCup.draw(ctx, 198, 94);
@@ -340,7 +430,7 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     };
     anim = requestAnimationFrame(step);
   }
-  /** Switch between the mountain and the jetty with the pixel swap (instant under reduced motion). */
+  /** Switch scenes (mountain, jetty, night market) with the pixel swap (instant under reduced motion). */
   function setScene(next: SceneName) {
     if (next === scene && wipe >= 1) return;
     try { localStorage.setItem(SCENE_KEY, next); } catch { /* storage blocked: just switch for this view */ }

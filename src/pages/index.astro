@@ -22,7 +22,7 @@ import Footer from '../components/Footer.astro';
 
 <script>
   import { reduceMotion, initMotionToggle } from '../lib/motion';
-  import { initScene, type SceneName } from '../scripts/scene';
+  import { initScene, SCENES, type SceneName } from '../scripts/scene';
   import { drawArt, drawArtFaded, stopArtFade, initFireFlicker } from '../scripts/art';
   import { initThemeToggle, onThemeChange, isNight } from '../scripts/theme';
   import { initStory } from '../scripts/story';
@@ -32,17 +32,22 @@ import Footer from '../components/Footer.astro';
   import 'lenis/dist/lenis.css';
 
   const scene = initScene(document.getElementById('scene') as HTMLCanvasElement | null);
-  // Scene switch (Hero.astro): "Change scene" flips between the mountain and the jetty, remembered between visits.
+  // Scene switch (Hero.astro): "Change scene" cycles mountain → jetty → night market, remembered between visits.
   const sceneBtn = document.getElementById('sceneBtn');
   const heroTruck = document.getElementById('heroTruck');
+  const nextScene = (name: SceneName) => SCENES[(SCENES.indexOf(name) + 1) % SCENES.length];
+  const NAMES: Record<SceneName, string> = { hills: 'the mountain', jetty: 'the jetty', market: 'the night market' };
+  const LABELS: Record<SceneName, string> = {
+    hills: 'parked on grass with mountains behind',
+    jetty: 'parked on a jetty with the sea and small islands behind',
+    market: 'parked on a town street in front of market stalls and shophouses',
+  };
   const markScene = (name: SceneName) => {
-    sceneBtn?.setAttribute('aria-label', name === 'jetty' ? 'Change scene to the mountain' : 'Change scene to the jetty');
-    heroTruck?.setAttribute('aria-label', name === 'jetty'
-      ? 'Pixel art of the white Chillbah Hilux with its tan side awning open on poles, parked on a jetty with the sea and small islands behind'
-      : 'Pixel art of the white Chillbah Hilux with its tan side awning open on poles, parked on grass with mountains behind');
+    sceneBtn?.setAttribute('aria-label', `Change scene to ${NAMES[nextScene(name)]}`);
+    heroTruck?.setAttribute('aria-label', `Pixel art of the white Chillbah Hilux with its tan side awning open on poles, ${LABELS[name]}`);
   };
   markScene(scene.scene());
-  sceneBtn?.addEventListener('click', () => { const name: SceneName = scene.scene() === 'jetty' ? 'hills' : 'jetty'; scene.setScene(name); markScene(name); });
+  sceneBtn?.addEventListener('click', () => { const name = nextScene(scene.scene()); scene.setScene(name); markScene(name); });
   drawArt();
   initThemeToggle(document.getElementById('themeBtn'));
   initMotionToggle(document.getElementById('motionBtn'));
