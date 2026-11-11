@@ -11,6 +11,11 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
       <canvas id="scene" width="180" height="106" aria-hidden="true"></canvas>
       <Truck id="heroTruck" class="hilux" awning hero label="Pixel art of the white Chillbah Hilux with its tan side awning open on poles, parked on grass with mountains behind" />
       <img class="barista" id="barista" src={`${B}barista.png`} width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
+      <!-- The menu stand: tap it and it bobs, then the page goes to the menu. A bouncing "Menu" arrow above hints that it's tappable. -->
+      <button class="menu-stand" id="menuStand" type="button" aria-label="See the menu">
+        <span class="stand-hint" aria-hidden="true"><b>Menu</b><i></i></span>
+        <canvas id="standArt" width="10" height="14" aria-hidden="true"></canvas>
+      </button>
       </div>
       <!-- Scene switch, bottom right of the hero: flips between the mountain and the jetty (scene.ts draws both; index.astro wires it). -->
       <button class="cb-btn cb-btn--alt scene-btn" id="sceneBtn" type="button" aria-label="Change scene to the jetty">
@@ -61,6 +66,26 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
   /* Sizes are in cqw (stage width) so the truck and barista stay on the road. */
   .stage :global(.hilux) { position: absolute; left: 25.6%; width: 38.9%; bottom: 5.8cqw; }
   .barista { position: absolute; left: 65%; width: 6.1%; height: auto; bottom: 6.07cqw; image-rendering: pixelated; will-change: transform; }
+
+  /* Menu stand: sits exactly where the board used to be painted (world 70,96, 10×14 art px; 1 art px = 100cqw / 180). */
+  .menu-stand { position: absolute; z-index: 2; left: calc(30cqw * 100 / 180); top: calc(78cqw * 100 / 180); width: calc(10cqw * 100 / 180); height: calc(14cqw * 100 / 180);
+    padding: 0; border: 0; background: none; cursor: pointer; }
+  .menu-stand canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+  .menu-stand:hover canvas { transform: translateY(calc(-100cqw / 180)); }
+  .menu-stand:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
+  .menu-stand.bob canvas { animation: stand-bob .48s steps(1) both; }
+  @keyframes stand-bob { 0% { transform: translateY(0); } 17% { transform: translateY(calc(-200cqw / 180)); } 34% { transform: translateY(0); }
+    51% { transform: translateY(calc(-100cqw / 180)); } 68%, 100% { transform: translateY(0); } }
+  /* The hint: a small "Menu" tag with a pixel arrow pointing down at the board, hopping every couple of seconds. */
+  .stand-hint { position: absolute; left: 50%; bottom: calc(100% + 4px); display: grid; justify-items: center; gap: 3px; pointer-events: none;
+    transform: translateX(-50%); animation: hint-hop 1.6s steps(1) infinite; }
+  .stand-hint b { padding: 3px 5px; background: var(--ember); color: #fff6dc; border: 2px solid var(--line); box-shadow: 2px 2px 0 var(--line);
+    font: 700 11px/1 var(--font-pixel); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+  .stand-hint i { width: 18px; height: 10px; background: var(--ember); clip-path: polygon(0 0, 100% 0, 100% 25%, 86% 25%, 86% 50%, 71% 50%, 71% 75%, 57% 75%, 57% 100%, 43% 100%, 43% 75%, 29% 75%, 29% 50%, 14% 50%, 14% 25%, 0 25%); }
+  @keyframes hint-hop { 0%, 60%, 100% { transform: translate(-50%, 0); } 70% { transform: translate(-50%, -5px); } 80% { transform: translate(-50%, 0); } 90% { transform: translate(-50%, -3px); } }
+  .menu-stand.bob .stand-hint { opacity: 0; }
+  :global(html[data-motion="reduce"]) .stand-hint, :global(html[data-motion="reduce"]) .menu-stand.bob canvas { animation: none; }
+  @media (max-width: 560px) { .stand-hint b { font-size: 9px; padding: 2px 4px; } }
 
   /* Scene switch: the green pixel button, bottom right of the hero (on phones, just above the grass/sea strip). */
   .scene-btn { position: absolute; z-index: 3; right: 16px; bottom: calc(var(--lift) + 16px); padding: 10px 14px; font-size: 12px; }

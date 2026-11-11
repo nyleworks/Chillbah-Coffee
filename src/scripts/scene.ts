@@ -66,6 +66,13 @@ function pixelSwap(a: ImageData, b: ImageData, p: number) {
 const SCENE_KEY = 'chillbah-scene';
 const savedScene = (): SceneName => { try { const v = localStorage.getItem(SCENE_KEY) as SceneName; return SCENES.includes(v) ? v : 'hills'; } catch { return 'hills'; } };
 
+/** The menu stand (A-frame board) beside the truck, 10×14 at world (70, 96). It isn't painted into the scene: it's a
+ *  button of its own over the canvas (Hero.astro #menuStand) so it can bob when tapped and take you to the menu. */
+export function menuSign() {
+  const sign = Grid(10, 14); sign.rect(1, 0, 8, 9, '#2a2620'); sign.rect(2, 2, 6, 1, '#e66f46'); sign.rect(2, 4, 5, 1, '#f4ebcd'); sign.rect(2, 6, 4, 1, '#f4ebcd'); sign.rect(1, 9, 1, 4, '#715542'); sign.rect(8, 9, 1, 4, '#715542'); sign.outline('#12120d');
+  return sign;
+}
+
 export function initScene(canvas: HTMLCanvasElement | null) {
   const sx = canvas?.getContext('2d');
   if (!canvas || !sx) return { setNight(_n: boolean) {}, setScene(_s: SceneName) {}, scene: (): SceneName => 'hills' };
@@ -73,7 +80,6 @@ export function initScene(canvas: HTMLCanvasElement | null) {
   const reduce = reduceMotion();
   const p1 = pine(12, '#2b5615', '#244a12'), p2 = pine(9, '#4f7a2c', '#2b5615');
   p1.outline('#12120d'); p2.outline('#12120d');
-  const sign = Grid(10, 14); sign.rect(1, 0, 8, 9, '#2a2620'); sign.rect(2, 2, 6, 1, '#e66f46'); sign.rect(2, 4, 5, 1, '#f4ebcd'); sign.rect(2, 6, 4, 1, '#f4ebcd'); sign.rect(1, 9, 1, 4, '#715542'); sign.rect(8, 9, 1, 4, '#715542'); sign.outline('#12120d');
   const stool = Grid(8, 9); stool.rect(0, 0, 8, 2, '#e66f46'); stool.rect(1, 2, 1, 6, '#715542'); stool.rect(6, 2, 1, 6, '#715542'); stool.outline('#12120d');
   const icedCup = cup('iced', '#a8742a');
   // jetty props: a lamp post, a little speedboat and a ferry far out
@@ -205,7 +211,6 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     ctx.fillStyle = mix('#c9a27a', '#5a4632'); ctx.fillRect(L, 108, W, 6);
     ctx.fillStyle = mix('#b08560', '#4a3a2a'); for (let x = Math.floor(L / 9) * 9; x < R; x += 9) ctx.fillRect(x, 110, 4, 1);
     ctx.fillStyle = '#12120d'; ctx.fillRect(L, 92, W, 1);
-    sign.draw(ctx, 70, 96);
     stool.draw(ctx, 172, 99); stool.draw(ctx, 186, 101);
     icedCup.draw(ctx, 198, 94);
   }
@@ -293,7 +298,6 @@ export function initScene(canvas: HTMLCanvasElement | null) {
       ctx.fillStyle = mix(shirts[n % 7], '#3a3434'); ctx.fillRect(x, y + 3, 4, 4); // shirt
       ctx.fillStyle = mix('#3a4a5a', '#1c2230'); ctx.fillRect(x + step, y + 7, 1, 3); ctx.fillRect(x + 3 - step, y + 7, 1, 3); // legs
     }
-    sign.draw(ctx, 70, 96);
     stool.draw(ctx, 172, 99); stool.draw(ctx, 186, 101);
     icedCup.draw(ctx, 198, 94);
   }
@@ -399,7 +403,6 @@ export function initScene(canvas: HTMLCanvasElement | null) {
     ctx.fillStyle = mix('#7d93a8', '#4a5468'); ctx.fillRect(57, 71, 1, 31);
     ctx.fillStyle = t > 0.5 ? '#f2c94c' : mix('#f4f0e4', '#f2c94c'); ctx.fillRect(54, 71, 7, 1);
     if (t > 0.5) { ctx.fillStyle = `rgba(242,201,76,${((t - 0.5) * 0.22).toFixed(2)})`; ctx.fillRect(51, 101, 13, 17); ctx.fillRect(48, 104, 19, 11); } // pool of light on the deck
-    sign.draw(ctx, 70, 96);
     stool.draw(ctx, 172, 99); stool.draw(ctx, 186, 101);
     icedCup.draw(ctx, 198, 94);
   }

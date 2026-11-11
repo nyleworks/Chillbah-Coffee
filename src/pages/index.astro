@@ -22,7 +22,8 @@ import Footer from '../components/Footer.astro';
 
 <script>
   import { reduceMotion, initMotionToggle } from '../lib/motion';
-  import { initScene, SCENES, type SceneName } from '../scripts/scene';
+  import { initScene, SCENES, menuSign, type SceneName } from '../scripts/scene';
+  import { paint } from '../lib/pixel';
   import { drawArt, drawArtFaded, stopArtFade, initFireFlicker } from '../scripts/art';
   import { initThemeToggle, onThemeChange, isNight } from '../scripts/theme';
   import { initStory } from '../scripts/story';
@@ -49,6 +50,19 @@ import Footer from '../components/Footer.astro';
   };
   markScene(scene.scene());
   sceneBtn?.addEventListener('click', () => { const name = nextScene(scene.scene()); scene.setScene(name); markScene(name); });
+  // Menu stand (Hero.astro): bob, then go to the menu the same way an anchor link would (smooth scroll / Lenis).
+  const stand = document.getElementById('menuStand');
+  const standArt = document.getElementById('standArt') as HTMLCanvasElement | null;
+  if (standArt) paint(standArt, menuSign());
+  stand?.addEventListener('click', () => {
+    if (stand.classList.contains('bob')) return;
+    stand.classList.add('bob');
+    const go = () => {
+      const a = document.createElement('a'); a.href = '#menu'; a.hidden = true; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => stand.classList.remove('bob'), 600);
+    };
+    if (reduceMotion()) go(); else setTimeout(go, 480);
+  });
   drawArt();
   initThemeToggle(document.getElementById('themeBtn'));
   initMotionToggle(document.getElementById('motionBtn'));
