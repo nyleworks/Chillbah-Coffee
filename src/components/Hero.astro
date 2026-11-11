@@ -13,7 +13,11 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
       <img class="barista" id="barista" src={`${B}barista.png`} width="32" height="64" alt="Pixel art of the Chillbah barista in a green Chillbah apron with a backpack, standing beside the truck" />
       </div>
       <!-- Scene switch, bottom right of the hero: flips between the mountain and the jetty (scene.ts draws both; index.astro wires it). -->
-      <button class="cb-btn cb-btn--alt scene-btn" id="sceneBtn" type="button" aria-label="Change scene to the jetty">Change scene</button>
+      <button class="cb-btn cb-btn--alt scene-btn" id="sceneBtn" type="button" aria-label="Change scene to the jetty">
+        <!-- Which scene is showing: 1 Mount Kinabalu, 2 the jetty, 3 the night market (index.astro marks the current one). -->
+        <span class="scene-dots" aria-hidden="true"><i data-n="hills">1</i><i data-n="jetty">2</i><i data-n="market">3</i></span>
+        Change scene
+      </button>
       <!-- The open sky above the mountain peak; the wordmark and buttons are centred in it. -->
       <div class="hero-copy">
         <h1 class="title">CHILLBAH</h1>
@@ -61,6 +65,13 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
   /* Scene switch: the green pixel button, bottom right of the hero (on phones, just above the grass/sea strip). */
   .scene-btn { position: absolute; z-index: 3; right: 16px; bottom: calc(var(--lift) + 16px); padding: 10px 14px; font-size: 12px; }
   /* Tablets: the docked Where we at card is nearly as wide as the screen, so the button sits above where it peeks in. */
+  /* Scene number tab tucked over the button's top-left corner, like the menu's HOT stickers; the current scene is lit. */
+  .scene-dots { position: absolute; top: -19px; left: -8px; display: flex; gap: 2px; padding: 2px; background: var(--line);
+    border: 2px solid var(--line); box-shadow: 2px 2px 0 var(--line); }
+  .scene-dots i { display: grid; place-items: center; width: 15px; height: 15px; font: 700 10px/1 var(--font-pixel); font-style: normal;
+    background: var(--surface-100); color: var(--muted); }
+  .scene-dots i.on { background: var(--ember); color: #fff6dc; }
+  @media (max-width: 560px) { .scene-dots { top: -17px; left: -6px; } .scene-dots i { width: 13px; height: 13px; font-size: 9px; } }
   @media (min-width: 561px) and (max-width: 1060px) { .scene-btn { bottom: 64px; } }
   @media (max-width: 560px) { .scene-btn { right: 12px; bottom: calc(var(--lift) + 10px); padding: 8px 10px; font-size: 10px; box-shadow: 3px 3px 0 var(--line); } }
 
