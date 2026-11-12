@@ -10,7 +10,7 @@ const { data, label } = Astro.props;
     <div class="cal-month label" aria-live="polite"></div>
     <button type="button" class="cal-nav" data-next aria-label={`Next month, ${label}`}>▶</button>
   </div>
-  <div class="cal-grid" role="grid" aria-label={label}>
+  <div class="cal-grid">
     {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => <div class="cal-dow label" aria-hidden="true">{d.slice(0, 2)}</div>)}
   </div>
 </div>

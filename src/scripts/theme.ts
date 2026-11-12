@@ -23,8 +23,11 @@ export function initThemeToggle(btn: HTMLElement | null) {
   btn?.addEventListener('click', () => {
     const next = isNight() ? 'light' : 'dark';
     startFade();
-    document.documentElement.dataset.theme = next;
-    try { localStorage.setItem(KEY, next); } catch { /* storage blocked: still switches for this visit */ }
+    // Picking what the device already uses means "back to the device setting": forget the choice instead of pinning it.
+    const system = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const root = document.documentElement;
+    if (next === system) delete root.dataset.theme; else root.dataset.theme = next;
+    try { if (next === system) localStorage.removeItem(KEY); else localStorage.setItem(KEY, next); } catch { /* storage blocked: still switches for this visit */ }
     listeners.forEach((fn) => fn());
   });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { startFade(); listeners.forEach((fn) => fn()); });

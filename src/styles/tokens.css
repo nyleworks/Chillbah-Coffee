@@ -27,7 +27,7 @@
   --shadow-px-lg: 6px 6px 0 var(--line);
   --road: #c9a27a; --road-dash: #b08560;
   --asphalt: #45484d; --asphalt-line: #eeeee4;
-  color-scheme: light;
+  color-scheme: light dark; /* follow the device until the day/night button picks one */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -42,6 +42,7 @@
     color-scheme: dark;
   }
 }
+:root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"] {
   --surface-100: #211812; --surface-200: #2c2019; --surface-300: #382a20;
   --text: #f4ebcd; --muted: #cfc3a0; --line: #050604;

@@ -110,7 +110,9 @@ const other = (pages: typeof drinks, i: number) => pages[(i + 1) % pages.length]
   #menu :global(.lane) { margin-top: 56px; }
 
   .menu-tabs { display: flex; justify-content: center; gap: 14px; margin-bottom: 28px; }
-  .menu-tabs .cb-btn { min-width: 132px; }
+  .menu-tabs .cb-btn { min-width: 132px; position: relative; }
+  /* Selected tab: a bar under it as well as the fill, so it still shows when High Contrast mode drops backgrounds. */
+  .menu-tabs [aria-selected="true"]::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -17px; border-bottom: 4px solid var(--line); }
 
   /* Pager: arrow column | sliding pages | arrow column. */
   .menu-panel { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; gap: 12px; --page: 0; }

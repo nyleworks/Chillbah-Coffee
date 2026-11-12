@@ -63,7 +63,6 @@ export function initCalendars() {
         const el = document.createElement(evs.length ? 'button' : 'div');
         el.className = 'cal-day';
         el.textContent = String(d);
-        el.setAttribute('role', 'gridcell');
         if (key === todayIso) el.classList.add('today');
         if (key < todayIso) el.classList.add('past');
         if (evs.length) {
@@ -79,8 +78,15 @@ export function initCalendars() {
 
     root.querySelector('[data-prev]')?.addEventListener('click', () => { m--; if (m < 0) { m = 11; y--; } render(); });
     root.querySelector('[data-next]')?.addEventListener('click', () => { m++; if (m > 11) { m = 0; y++; } render(); });
-    // a tap on the dark backdrop closes the popup too
-    pop?.addEventListener('click', (e) => { if (e.target === pop) pop.close(); });
+    // A tap on the dark backdrop closes the popup: closedby="any" does it natively (Events.astro). Fallback for Safari:
+    // only close when the tap lands outside the popup box (taps on its padding also target the dialog itself).
+    if (pop && !('closedBy' in HTMLDialogElement.prototype)) {
+      pop.addEventListener('click', (e) => {
+        if (e.target !== pop) return;
+        const r = pop.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) pop.close();
+      });
+    }
     render();
   });
 }

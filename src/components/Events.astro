@@ -26,10 +26,10 @@ import { site } from '../data/site';
         </div>
       </div>
       <!-- Event details popup, filled by scripts/calendar.ts when an event day is tapped. -->
-      <dialog class="ev-pop" data-event-pop aria-labelledby="evPopName">
+      <dialog class="ev-pop" data-event-pop aria-labelledby="evPopName" closedby="any" data-lenis-prevent>
         <b id="evPopName" class="pop-day" data-pop-date></b>
         <ul class="event-list" data-pop-list></ul>
-        <form method="dialog"><button class="cb-btn cb-btn--ghost">Close</button></form>
+        <form method="dialog"><button class="cb-btn cb-btn--ghost" autofocus>Close</button></form>
       </dialog>
     </article>
   </div>
@@ -67,7 +67,8 @@ import { site } from '../data/site';
   .cal-card .cb-btn { width: 100%; justify-content: center; }
   .ev-pop { width: min(360px, calc(100vw - 32px)); border: 3px solid var(--line); background: var(--surface-100); color: var(--text); box-shadow: var(--shadow-px-lg); padding: 24px; }
   .ev-pop[open] { display: grid; gap: 6px; }
-  .ev-pop::backdrop { background: rgba(18, 18, 13, .45); }
+  .ev-pop:modal { overscroll-behavior: contain; } /* scrolling in the popup never scrolls the page behind */
+  .ev-pop::backdrop { background: rgba(18, 18, 13, .45); overflow: hidden; overscroll-behavior: contain; }
   .ev-pop .pop-day { font: 700 16px/1.2 var(--font-display); color: var(--forest); letter-spacing: .03em; }
   .ev-pop .event-list { margin-top: 8px; }
   .ev-pop form { margin-top: 14px; }

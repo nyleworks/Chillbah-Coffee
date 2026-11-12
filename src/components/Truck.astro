@@ -16,7 +16,7 @@ const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a s
   <div class="pool"></div>
   <div class="beam"></div>
   <div class="rig">
-    <img class="body" src={`${B}hilux-body.webp`} srcset={`${B}hilux-body-760.webp 760w, ${B}hilux-body.webp 1200w`} sizes={sizes} width="1200" height="469" alt="" loading={loading} decoding="async" />
+    <img class="body" src={`${B}hilux-body.webp`} srcset={`${B}hilux-body-760.webp 760w, ${B}hilux-body.webp 1200w`} sizes={sizes} width="1200" height="469" alt="" loading={loading} fetchpriority={hero ? 'high' : undefined} decoding="async" />
     <img class="wheel front" src={`${B}wheel-front.webp`} srcset={`${B}wheel-front-96.webp 96w, ${B}wheel-front.webp 151w`} sizes={wheelSizes} width="151" height="151" alt="" loading={loading} decoding="async" />
     <img class="wheel rear" src={`${B}wheel-rear.webp`} srcset={`${B}wheel-rear-96.webp 96w, ${B}wheel-rear.webp 151w`} sizes={wheelSizes} width="151" height="151" alt="" loading={loading} decoding="async" />
     {awning && <img class="awning" src={`${B}hilux-awning.webp`} srcset={`${B}hilux-awning-760.webp 707w, ${B}hilux-awning.webp 1115w`} sizes={sizes} width="1115" height="530" alt="" loading={loading} decoding="async" />}
