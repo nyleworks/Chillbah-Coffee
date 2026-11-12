@@ -32,6 +32,9 @@ npm run check    # checks the code for mistakes (types, missing imports) without
 | Scroll animation (awning fold, truck drives) | `src/scripts/story.ts` |
 | Truck images (body, wheels, awning) | `public/*.webp`, laid out in `src/components/Truck.astro` |
 | Reduce motion button | `src/lib/motion.ts` |
+| Route Card (stamp card): the card on the site | `src/components/StampCard.astro` |
+| Route Card links to the Google Sheet backend | `src/data/stamps.ts` (setup: `STAMP-CARD-SETUP.md`) |
+| Route Card backend (rules, staff page) | `apps-script/Code.gs` |
 
 ## Open items
 

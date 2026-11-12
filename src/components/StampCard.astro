@@ -1,0 +1,545 @@
+---
+// Route Card: Chillbah's stamp card (based on Brew Addict's), with a truck twist. A tab on the left edge (and the
+// "Stamp card" nav link) opens it. Every stamp remembers where the truck was: Homebased, Jesselton Point or an event.
+// Rules (enforced by apps-script/Code.gs): 10 stamps = any drink free, one visit a day, events give 2 stamps,
+// stamps from 3 different places give 1 bonus stamp and an Explorer badge, a card lasts 2 months.
+import { hours, events } from '../data/events';
+import { stamps } from '../data/stamps';
+const schedule = JSON.stringify({ hours, events: events.map(({ date, end, name }) => ({ date, end, name })) });
+const config = JSON.stringify(stamps);
+---
+<button type="button" class="stamp-tab" id="stampTab" aria-controls="stampPanel" aria-expanded="false" data-schedule={schedule} data-config={config}>
+  <canvas class="stamp-tab__icon" width="12" height="12" data-stamp-icon="h" aria-hidden="true"></canvas>
+  <span class="stamp-tab__label">Stamp card</span>
+</button>
+<dialog class="stamp-panel" id="stampPanel" aria-labelledby="stampTitle" data-lenis-prevent>
+  <div class="stamp-head">
+    <div>
+      <div class="label kicker">Stamp card</div>
+      <h2 id="stampTitle">ROUTE CARD</h2>
+    </div>
+    <button type="button" class="stamp-close" id="stampClose" aria-label="Close">
+      <svg viewBox="0 0 10 10" width="18" height="18" aria-hidden="true" shape-rendering="crispEdges"><path d="M1 1h2v1h1v1h2V2h1V1h2v2H8v1H7v2h1v1h1v2H7V8H6V7H4v1H3v1H1V7h1V6h1V4H2V3H1z" fill="currentColor"/></svg>
+    </button>
+  </div>
+  <div class="stamp-body" id="stampBody"></div>
+</dialog>
+
+<script>
+  import qrcode from 'qrcode-generator';
+
+  type Hour = { day: string; place?: string; time: string };
+  type Ev = { date: string; end?: string; name: string };
+  type Spot = 'home' | 'jetty' | 'event';
+  type Where = { spot: Spot; place: string };
+  type Card = { stamps: number; size: number; expires: string | null; stampedToday: boolean; freeDrinks: number;
+    trail: string; places: number; explorer: boolean; badges: number };
+
+  const tab = document.getElementById('stampTab') as HTMLButtonElement | null;
+  const panel = document.getElementById('stampPanel') as HTMLDialogElement | null;
+  const body = document.getElementById('stampBody');
+  const closeBtn = document.getElementById('stampClose');
+
+  const SIZE = 10, EXPLORER = 3, MONTHS = 2;
+  const CARD_KEY = 'chillbah-card', STAFF_KEY = 'chillbah-staff-phone', DEMO_KEY = 'chillbah-card-demo';
+  const POLL_MS = 3000, POLL_FOR_MS = 3 * 60000;
+  const TZ = 'Asia/Kuching';
+
+  const cfg: { stampApi: string; staffUrl: string } = JSON.parse(tab?.dataset.config || '{}');
+  const sched: { hours: Hour[]; events: Ev[] } = JSON.parse(tab?.dataset.schedule || '{"hours":[],"events":[]}');
+  const API = cfg.stampApi || '', STAFF = cfg.staffUrl || '';
+
+  const store = (k: string, v: string | null) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* storage blocked */ } };
+  const load = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const validCode = (c: unknown): c is string => typeof c === 'string' && /^[A-Za-z0-9_-]{22}$/.test(c);
+  const esc = (s: unknown) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+  // ---- The truck's schedule (from src/data/events.ts), in Kota Kinabalu time ----
+  const PLACE_SPOT: Record<string, Spot> = { Homebased: 'home', 'Jesselton Point Ferry Terminal': 'jetty' };
+  const SHORT: Record<string, string> = { 'Jesselton Point Ferry Terminal': 'Jesselton Point' };
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function kkNow() {
+    const p: Record<string, number> = {};
+    new Intl.DateTimeFormat('en-GB', { timeZone: TZ, year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', hourCycle: 'h23' })
+      .formatToParts(new Date()).forEach((x) => { if (x.type !== 'literal') p[x.type] = Number(x.value); });
+    return p as { year: number; month: number; day: number; hour: number };
+  }
+  function dayAt(k: number) {
+    const n = kkNow(), d = new Date(Date.UTC(n.year, n.month - 1, n.day + k));
+    const iso = d.toISOString().slice(0, 10);
+    return { iso, dow: d.getUTCDay(), date: d.getUTCDate(), mon: d.getUTCMonth() };
+  }
+  /** Where the truck is on a given day: an event wins over the regular spot. */
+  function spotOn(iso: string, dow: number): (Where & { time: string; endHour: number }) | null {
+    const ev = sched.events.find((e) => e.date <= iso && iso <= (e.end || e.date));
+    if (ev) return { spot: 'event', place: ev.name, time: '', endHour: 24 };
+    const h = sched.hours[(dow + 6) % 7];
+    if (!h?.place) return null;
+    const m = /(\d+)\s*(AM|PM)\s*[–-]\s*(\d+)\s*(AM|PM)/i.exec(h.time);
+    const end = m ? (Number(m[3]) % 12) + (m[4].toUpperCase() === 'PM' ? 12 : 0) : 24;
+    return { spot: PLACE_SPOT[h.place] || 'home', place: h.place, time: h.time, endHour: end || 24 };
+  }
+  function today(): Where | null { const d = dayAt(0); return spotOn(d.iso, d.dow); }
+  function nextStop() {
+    const hour = kkNow().hour;
+    for (let k = 0; k < 21; k++) {
+      const d = dayAt(k), s = spotOn(d.iso, d.dow);
+      if (!s || (k === 0 && hour >= s.endHour)) continue;
+      const when = k === 0 ? 'Today' : k === 1 ? 'Tomorrow' : `${DAYS[d.dow]} ${d.date} ${MON[d.mon]}`;
+      return { ...s, when };
+    }
+    return null;
+  }
+
+  // ---- Arriving from a scanned QR code (#card=…) or the staff phone set-up link (#staff-phone=on|off) ----
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const query = new URLSearchParams(location.search);
+  const scanned = hash.get('card') || query.get('card');
+  const staffSetting = hash.get('staff-phone');
+  let handedOff = false;
+  if (validCode(scanned) && STAFF && load(STAFF_KEY) === '1') {
+    // The truck phone hands the card straight to the staff page, with today's spot from the schedule as a suggestion.
+    const t = today();
+    const q = new URLSearchParams({ card: scanned });
+    if (t) { q.set('spot', t.spot); q.set('place', t.place); }
+    handedOff = true;
+    location.replace(`${STAFF}?${q}`);
+  }
+
+  if (tab && panel && body && closeBtn && !handedOff) {
+    const state = {
+      code: load(CARD_KEY) as string | null,
+      card: null as Card | null,
+      msg: null as { text: string; ok: boolean } | null,
+      fresh: [] as number[],
+      paused: false,
+      error: false,
+      demoSpot: (today()?.spot || 'home') as Spot,
+    };
+    if (!validCode(state.code)) state.code = null;
+
+    function newCode() {
+      const b = new Uint8Array(16);
+      crypto.getRandomValues(b);
+      return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function ensureCode() { if (!state.code) { state.code = newCode(); store(CARD_KEY, state.code); } return state.code; }
+    const standalone = () => (navigator as Navigator & { standalone?: boolean }).standalone === true || matchMedia('(display-mode: standalone)').matches;
+    const cardLink = (code: string) => location.origin + location.pathname + '#card=' + code;
+
+    // ---- Talking to the sheet ----
+    function fetchCard(): Promise<Card | null> {
+      if (!state.code) return Promise.resolve(null);
+      if (!API) return Promise.resolve(demoView(demoGet(state.code)));
+      // A plain-text POST keeps this a "simple" request, which Apps Script web apps accept from any site
+      return fetch(API, { method: 'POST', body: JSON.stringify({ action: 'card', card: state.code }), redirect: 'follow' })
+        .then((r) => r.json()).then((r) => (r && r.ok ? (r.card as Card) : null)).catch(() => null);
+    }
+
+    // ---- Preview mode: the same rules as Code.gs, stored on this device ----
+    type Demo = { stamps: number; cardStart: string | null; freeDrinks: number; trail: string; places: string[]; explorer: boolean; badges: number; last: string };
+    const demoDb = (): Record<string, Partial<Demo>> => { try { return JSON.parse(load(DEMO_KEY) || '{}'); } catch { return {}; } };
+    const demoGet = (code: string): Demo => ({ stamps: 0, cardStart: null, freeDrinks: 0, trail: '', places: [], explorer: false, badges: 0, last: '', ...demoDb()[code] });
+    const demoPut = (code: string, c: Demo) => { const db = demoDb(); db[code] = c; store(DEMO_KEY, JSON.stringify(db)); };
+    function demoView(c: Demo): Card {
+      let end: Date | null = null;
+      if (c.cardStart) { end = new Date(c.cardStart); end.setMonth(end.getMonth() + MONTHS); }
+      return { stamps: c.stamps, size: SIZE, expires: c.stamps > 0 && c.stamps < SIZE && end ? end.toISOString() : null,
+        stampedToday: false, freeDrinks: c.freeDrinks, trail: c.trail, places: c.places.length, explorer: c.explorer, badges: c.badges };
+    }
+    const DEMO_PLACE: Record<Spot, string> = { home: 'Homebased', jetty: 'Jesselton Point Ferry Terminal', event: 'Event' };
+    function demoStamp() {
+      const c = demoGet(state.code!);
+      if (c.stamps >= SIZE) return;
+      const spot = state.demoSpot, t = today();
+      const place = spot === 'event' ? (t?.spot === 'event' ? t.place : 'Event ' + (c.places.filter((p) => !PLACE_SPOT[p]).length + 1)) : DEMO_PLACE[spot];
+      const k = spot === 'event' ? 'e' : spot === 'jetty' ? 'j' : 'h';
+      if (!c.stamps) c.cardStart = new Date().toISOString();
+      c.stamps++; c.trail += k;
+      if (spot === 'event' && c.stamps < SIZE) { c.stamps++; c.trail += k; }
+      if (!c.places.includes(place)) c.places.push(place);
+      if (!c.explorer && c.places.length >= EXPLORER && c.stamps < SIZE) { c.stamps++; c.trail += 'x'; c.explorer = true; c.badges++; }
+      demoPut(state.code!, c);
+    }
+    function demoFree() {
+      const c = demoGet(state.code!);
+      if (c.stamps < SIZE) return;
+      Object.assign(c, { stamps: 0, cardStart: null, trail: '', places: [], explorer: false });
+      c.freeDrinks++; demoPut(state.code!, c);
+    }
+
+    // ---- Applying a fresh look at the card: animates new stamps and says what changed ----
+    function apply(card: Card | null) {
+      if (!card) { state.error = true; return true; }
+      const before = state.card;
+      const changed = !before || state.error || before.stamps !== card.stamps || before.freeDrinks !== card.freeDrinks || before.stampedToday !== card.stampedToday;
+      state.error = false;
+      if (before) {
+        if (card.freeDrinks > before.freeDrinks) state.msg = { text: 'Enjoy your free drink! A new card has started.', ok: true };
+        else if (card.stamps > before.stamps) {
+          state.fresh = [];
+          for (let i = before.stamps; i < card.stamps; i++) state.fresh.push(i);
+          const added = card.trail.slice(before.stamps);
+          let text = `Stamp added! ${card.stamps} of ${SIZE}.`;
+          if (added.indexOf('e') !== added.lastIndexOf('e')) text += ' Event bonus: +1.';
+          if (added.includes('x')) text += ' Explorer bonus: +1, and a new badge!';
+          state.msg = { text, ok: true };
+        }
+      }
+      state.card = card;
+      return changed;
+    }
+
+    // ---- Pixel icons (12×12, drawn here so this script stands alone). Letters are colours; every icon gets an ink outline. ----
+    const INK = '#12120d';
+    const PAL: Record<string, string> = { w: '#fff6dc', c: '#715542', b: '#c9a27a', s: '#8ad8d8', a: '#5a6a7a', y: '#f2c94c', o: '#e66f46', r: '#d9452f', g: '#2b5615', k: '#12120d', t: '#c9a27a', e: '#45484d' };
+    const ICONS: Record<string, string[]> = {
+      // Homebased: a hot cup
+      h: ['....w..w....', '.....w..w...', '....w..w....', '............', '.wwwwwwww...', '.wccccccwww.', '.wwwwwwwwiw.', '.wwwwwwwwiw.', '.wwwwwwwwww.', '..wwwwwww...', 'bbbbbbbbbbb.', '............'],
+      // Jesselton Point: an anchor
+      j: ['.....aa.....', '....a..a....', '.....aa.....', '...aaaaaa...', '.....aa.....', '.....aa.....', '.a...aa...a.', '.aa..aa..aa.', '..aa.aa.aa..', '...aaaaaa...', '.....aa.....', '............'],
+      // Event: a star
+      e: ['.....yy.....', '.....yy.....', '....yyyy....', 'yyyyyyyyyyyy', '.yyyyyyyyyy.', '..yyyyyyyy..', '...yyyyyy...', '..yyyyyyyy..', '..yyy..yyy..', '.yyy....yyy.', '.yy......yy.', '............'],
+      // Explorer bonus: a compass
+      x: ['....wwww....', '..wwwwwwww..', '.wwwwrrwwww.', '.wwwwrrwwww.', 'wwwwwrrwwwww', 'wwwwkkkkwwww', 'wwwwkkkkwwww', 'wwwwwssswwww', '.wwwwsswwww.', '.wwwwsswwww.', '..wwwwwwww..', '....wwww....'],
+      // Free drink: an iced cup
+      f: ['.......oo...', '......o.....', '..wwwwowww..', '..wwwwowww..', '...sssoss...', '...sccccs...', '...scwccs...', '...sccccs...', '...sccccs...', '...sccccs...', '....ssss....', '............'],
+    };
+    // The little white Hilux that drives along the card (20×10), facing right.
+    const TRUCK = ['..........wwwww.....', '..........wssswww...', '..........wsssswwww.', 'wwwwwwwwwwwwwwwwwwww', 'wttttttttwwwwwwwwwwo', 'wttttttttwwwwwwwwwww', 'wwwwwwwwwwwwwwwwwwww', '..eee.........eee...', '.eekee.......eekee..', '..eee.........eee...'];
+    PAL.i = '#fff6dc';
+    function paintArt(cv: HTMLCanvasElement, rows: string[]) {
+      const h = rows.length, w = rows[0].length;
+      cv.width = w + 2; cv.height = h + 2;
+      const ctx = cv.getContext('2d'); if (!ctx) return;
+      const at = (x: number, y: number) => (y >= 0 && y < h && x >= 0 && x < w ? rows[y][x] !== '.' : false);
+      for (let y = -1; y <= h; y++) for (let x = -1; x <= w; x++) {
+        let col: string | null = null;
+        if (at(x, y)) col = PAL[rows[y][x]] || INK;
+        else if (at(x + 1, y) || at(x - 1, y) || at(x, y + 1) || at(x, y - 1)) col = INK;
+        if (col) { ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, 1, 1); }
+      }
+    }
+    const paintIcons = (root: ParentNode) => root.querySelectorAll<HTMLCanvasElement>('canvas[data-stamp-icon]').forEach((cv) => {
+      const k = cv.dataset.stampIcon!; paintArt(cv, k === 'truck' ? TRUCK : ICONS[k] || ICONS.h);
+    });
+
+    // ---- Rendering ----
+    const NAMES: Record<string, string> = { h: 'Homebased', j: 'Jesselton Point', e: 'Event', x: 'Explorer bonus' };
+    function fmtDate(iso: string) {
+      try { return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ }).format(new Date(iso)); }
+      catch { return iso.slice(0, 10); }
+    }
+    function route(c: Card) {
+      const at = Math.min(Math.max(c.stamps - 1, 0), SIZE - 1);
+      let h = `<ol class="route${c.stamps >= SIZE ? ' is-full' : ''}" aria-label="${c.stamps} of ${SIZE} stamps">`;
+      for (let i = 0; i < SIZE; i++) {
+        const on = i < c.stamps, k = c.trail[i] || 'h', last = i === SIZE - 1;
+        const row = i < 5 ? 1 : 2, col = i < 5 ? i + 1 : 10 - i;
+        h += `<li class="stop${on ? ' is-on stop--' + k : ''}${state.fresh.includes(i) ? ' is-new' : ''}${last ? ' stop--free' : ''}" style="grid-area:${row}/${col};--d:${state.fresh.indexOf(i) * 0.35}s"` +
+          ` title="${on ? esc(NAMES[k] || '') : 'Stop ' + (i + 1)}">` +
+          (on ? `<canvas data-stamp-icon="${k}" aria-hidden="true"></canvas>` : last ? `<canvas data-stamp-icon="f" aria-hidden="true"></canvas>` : `<span>${i + 1}</span>`) +
+          (last ? '<b class="stop__free">FREE</b>' : '') +
+          (i === at ? `<canvas class="truck${row === 2 ? ' truck--back' : ''}" data-stamp-icon="truck" aria-hidden="true"></canvas>` : '') +
+          '</li>';
+      }
+      return h + '</ol>';
+    }
+
+    let qrCache = { code: '', svg: '' };
+    function qrSvg(code: string) {
+      if (qrCache.code === code) return qrCache.svg;
+      const q = qrcode(0, 'M');
+      q.addData(cardLink(code));
+      q.make();
+      qrCache = { code, svg: q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }).replace('<svg ', '<svg role="img" aria-label="Your stamp card QR code" ') };
+      return qrCache.svg;
+    }
+
+    function render() {
+      let badge = tab!.querySelector<HTMLElement>('.stamp-tab__badge');
+      if (state.card && state.card.stamps > 0) {
+        if (!badge) { badge = document.createElement('span'); badge.className = 'stamp-tab__badge'; tab!.append(badge); }
+        badge.textContent = String(state.card.stamps);
+      } else badge?.remove();
+      tab!.setAttribute('aria-label', state.card?.stamps ? `Stamp card, ${state.card.stamps} of ${SIZE} stamps` : 'Stamp card');
+      if (!panel!.open) return;
+
+      let h = API ? '' : '<p class="stamp-demo">Preview mode: this card is saved on this device only. The buttons at the bottom pretend to be our staff.</p>';
+      const c = state.card;
+      if (!c) {
+        h += state.error ? '<p class="stamp-error" role="alert">Couldn\'t check your card. Check your internet and try again.</p><button class="cb-btn cb-btn--ghost" type="button" data-act="check">Check for stamps</button>'
+          : '<p class="stamp-muted">Loading your card…</p>';
+        body!.innerHTML = h;
+        return;
+      }
+      h += '<p class="stamp-lead">Catch the truck wherever it parks. 10 stamps = any drink free.</p>' + route(c) +
+        `<p class="stamp-count">${c.stamps} of ${SIZE} stamps</p>`;
+      if (c.stamps >= SIZE) h += '<p class="stamp-note"><b>Your free drink is ready!</b> Show this QR code to our staff.</p>';
+      else if (c.expires) h += `<p class="stamp-muted">This card ends on ${esc(fmtDate(c.expires))}.</p>`;
+      else h += '<p class="stamp-muted">Each card lasts 2 months from its first stamp.</p>';
+      if (c.stampedToday && c.stamps < SIZE) h += '<p class="stamp-note">Today\'s stamp is collected. Catch us again tomorrow!</p>';
+      if (state.msg) h += `<p class="stamp-msg${state.msg.ok ? ' stamp-msg--ok' : ''}" role="status">${esc(state.msg.text)}</p>`;
+
+      // Explorer progress and badges
+      const placesLeft = Math.max(0, EXPLORER - c.places);
+      h += '<div class="stamp-explorer"><canvas data-stamp-icon="x" aria-hidden="true"></canvas><p>' +
+        (c.explorer ? '<b>Explorer bonus collected</b> on this card.'
+          : `<b>Explorer:</b> catch us at ${EXPLORER} different places for a bonus stamp. ` + (c.places ? `${c.places} of ${EXPLORER} so far, ${placesLeft} to go.` : 'Homebased, Jesselton Point and any event each count.')) +
+        (c.badges ? ` <span class="stamp-badges">Explorer badge${c.badges > 1 ? 's' : ''}: ${c.badges}</span>` : '') + '</p></div>';
+
+      h += `<div class="stamp-qr">${qrSvg(state.code!)}</div>` +
+        '<p class="stamp-how">After you pay, show this QR code at the truck and we\'ll stamp it. One stamp a visit, one visit a day.</p>';
+      if (state.error) h += '<p class="stamp-error" role="alert">Couldn\'t check your card. Check your internet and try again.</p>';
+      h += state.paused || state.error
+        ? '<button class="stamp-link" type="button" data-act="check">Check for stamps</button>'
+        : '<p class="stamp-live"><span class="stamp-live__dot" aria-hidden="true"></span>Live: new stamps appear here</p>';
+
+      // Next stop, from the same schedule as Where we at and the event calendar
+      const n = nextStop();
+      if (n) {
+        h += `<div class="stamp-next"><div class="label">Next stop</div><canvas data-stamp-icon="${n.spot === 'event' ? 'e' : n.spot === 'jetty' ? 'j' : 'h'}" aria-hidden="true"></canvas>` +
+          `<p><b>${esc(n.when)}${n.time ? ', ' + esc(n.time) : ''}</b><br>${esc(SHORT[n.place] || n.place)}${n.spot === 'event' ? ' <span class="stamp-x2">2× stamps</span>' : ''}</p>` +
+          '<a class="stamp-link" href="#find" data-act="find">Where we at</a></div>';
+      }
+      h += '<ul class="stamp-rules"><li><canvas data-stamp-icon="e" aria-hidden="true"></canvas><span>Event days give <b>2 stamps</b>.</span></li>' +
+        '<li><canvas data-stamp-icon="x" aria-hidden="true"></canvas><span><b>3 different places</b> on one card give 1 bonus stamp and an Explorer badge.</span></li>' +
+        '<li><canvas data-stamp-icon="f" aria-hidden="true"></canvas><span>Stamp 10 is <b>any drink, free</b>.</span></li></ul>';
+
+      if (!API && c.stamps < SIZE) {
+        h += '<div class="stamp-sim"><p class="label">Preview: pretend the truck is at</p><div class="stamp-spots">' +
+          (['home', 'jetty', 'event'] as Spot[]).map((s) => `<button type="button" class="stamp-spot${state.demoSpot === s ? ' is-on' : ''}" data-act="spot" data-spot="${s}" aria-pressed="${state.demoSpot === s}">${{ home: 'Homebased', jetty: 'Jesselton Point', event: 'An event' }[s]}</button>`).join('') +
+          '</div><button class="cb-btn cb-btn--alt" type="button" data-act="sim-stamp">Pretend staff stamped it</button></div>';
+      } else if (!API) {
+        h += '<div class="stamp-sim"><button class="cb-btn cb-btn--alt" type="button" data-act="sim-free">Pretend staff gave the free drink</button></div>';
+      }
+      if (c.freeDrinks > 0) h += `<p class="stamp-muted stamp-note">Free drinks so far: ${c.freeDrinks}</p>`;
+      h += '<p class="stamp-small">Keep a screenshot of this card. If your phone ever loses it, scan the screenshot with your camera to bring it back.</p>' +
+        (c.stamps === 0 && !c.freeDrinks
+          ? `<p class="stamp-small">${standalone() ? 'Opened from your home screen and your stamps are missing? In your browser, open the card and tap “Copy my card link”. Then come back here and tap below.' : 'Already have a card with stamps on another app or browser? Copy its card link there, then tap below.'}</p>` +
+            '<button class="stamp-link" type="button" data-act="paste">Paste my card link</button>' : '') +
+        (standalone() ? '' : '<p class="stamp-small">Want your card on your home screen? Tap below first, so your stamps come with it.</p>' +
+          '<button class="stamp-link" type="button" data-act="home">Add my card to the home screen</button>' +
+          '<button class="stamp-link" type="button" data-act="copy">Copy my card link</button>') +
+        '<p class="stamp-small">No sign-up. We don\'t ask for your name or phone number.</p>';
+      body!.innerHTML = h;
+      paintIcons(body!);
+      state.fresh = []; // the stamp animation plays once
+    }
+
+    // ---- Live updates while the card is open ----
+    const poll = { timer: 0, until: 0, busy: false };
+    function startLive() {
+      poll.until = Date.now() + POLL_FOR_MS;
+      if (state.paused) { state.paused = false; render(); }
+      clearTimeout(poll.timer);
+      check();
+    }
+    function check() {
+      if (poll.busy) return;
+      poll.busy = true;
+      fetchCard().then((card) => {
+        poll.busy = false;
+        if (apply(card)) render();
+        clearTimeout(poll.timer);
+        if (!panel!.open || document.hidden) return;
+        if (Date.now() > poll.until) { state.paused = true; render(); return; }
+        poll.timer = window.setTimeout(check, POLL_MS);
+      });
+    }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && panel.open) startLive(); });
+
+    const say = (text: string, ok: boolean) => { state.msg = { text, ok }; render(); panel.scrollTop = 0; };
+    body.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLElement>('button, a[data-act]');
+      if (!b) return;
+      const act = b.dataset.act;
+      if (act === 'check') { state.msg = null; startLive(); }
+      else if (act === 'find') { close(); }
+      else if (act === 'spot') { state.demoSpot = b.dataset.spot as Spot; render(); }
+      else if (act === 'home') {
+        // A home screen icon gets its own storage on iPhones; putting the card in the address means the icon opens
+        // with this card. Added as ?card=… because a home screen icon may drop the part after #.
+        history.replaceState(null, '', location.pathname + '?card=' + state.code);
+        say('Ready. Now tap the Share button (or your browser\'s menu) and choose Add to Home Screen. Your card and stamps come with it.', true);
+      }
+      else if (act === 'copy') {
+        const link = cardLink(state.code!);
+        (navigator.clipboard?.writeText ? navigator.clipboard.writeText(link) : Promise.reject())
+          .then(() => say('Card link copied. Keep it somewhere safe, or paste it into the home screen app.', true), () => { window.prompt('Copy your card link:', link); });
+      }
+      else if (act === 'paste') {
+        const use = (text: string | null) => {
+          const m = /card=([A-Za-z0-9_-]{22})/.exec(text || '');
+          if (!m) { say('That isn\'t a card link. In your browser, open the card and tap “Copy my card link” first.', false); return; }
+          state.code = m[1]; store(CARD_KEY, m[1]); state.card = null;
+          say('Your card is back on this phone.', true); startLive();
+        };
+        if (navigator.clipboard?.readText) navigator.clipboard.readText().then(use, () => use(window.prompt('Paste your card link here:')));
+        else use(window.prompt('Paste your card link here:'));
+      }
+      else if (act === 'sim-stamp') { demoStamp(); check(); panel.scrollTo({ top: 0, behavior: 'smooth' }); }
+      else if (act === 'sim-free') { demoFree(); check(); panel.scrollTo({ top: 0, behavior: 'smooth' }); }
+    });
+
+    // ---- Opening and closing ----
+    function open() {
+      if (panel!.open) return;
+      ensureCode();
+      panel!.showModal();
+      tab!.setAttribute('aria-expanded', 'true');
+      closeBtn!.focus({ preventScroll: true });
+      render();
+      startLive();
+    }
+    function close() { if (panel!.open) panel!.close(); }
+    panel.addEventListener('close', () => {
+      clearTimeout(poll.timer);
+      tab.setAttribute('aria-expanded', 'false');
+      state.msg = null;
+    });
+    // A tap on the dark backdrop (outside the panel box) closes it
+    panel.addEventListener('click', (e) => {
+      if (e.target !== panel) return;
+      const r = panel.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) close();
+    });
+    tab.addEventListener('click', open);
+    closeBtn.addEventListener('click', close);
+    document.querySelectorAll('[data-stamp-open]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); open(); }));
+
+    // ---- Start ----
+    paintIcons(tab);
+    if (scanned || staffSetting) {
+      query.delete('card');
+      const qs = query.toString();
+      history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+    }
+    if (staffSetting === 'on' || staffSetting === 'off') {
+      store(STAFF_KEY, staffSetting === 'on' ? '1' : null);
+      state.msg = { text: staffSetting === 'on' ? 'This phone is now the truck phone. Scanning a customer\'s card will open the staff page.' : 'This phone is no longer the truck phone.', ok: true };
+      open();
+    } else if (validCode(scanned) && scanned !== state.code) {
+      // A customer scanned their own card (for example a screenshot): bring it back to this phone
+      fetchCard().then((current) => {
+        if (current && current.stamps > 0 && !window.confirm(`This phone already has a card with ${current.stamps} stamps. Replace it with the card you just scanned?`)) { apply(current); open(); return; }
+        state.code = scanned; store(CARD_KEY, scanned);
+        state.card = null;
+        state.msg = { text: 'Your card is back on this phone.', ok: true };
+        open();
+      });
+    } else if (state.code) {
+      fetchCard().then((card) => { if (card) { apply(card); render(); } });
+      if (scanned || location.hash === '#stamp') open();
+    } else if (location.hash === '#stamp') open();
+  }
+</script>
+
+<style>
+  /* The tab: a pixel sticker on the left edge of the screen, label running up the side. */
+  .stamp-tab { position: fixed; left: 0; top: 58%; z-index: 9; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 10px 7px 12px 6px; border: 3px solid var(--line); border-left: 0; background: var(--ember); color: var(--on-ember);
+    box-shadow: 3px 3px 0 var(--line); cursor: pointer; transition: transform .08s steps(2); }
+  .stamp-tab:hover { transform: translateX(3px); }
+  .stamp-tab:active { transform: translateX(-2px); box-shadow: none; }
+  .stamp-tab:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
+  .stamp-tab__icon { width: 28px; height: 28px; }
+  .stamp-tab__label { writing-mode: vertical-rl; transform: rotate(180deg); font: 700 12px/1 var(--font-pixel); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+  .stamp-tab__badge { position: absolute; top: -12px; right: -12px; min-width: 24px; height: 24px; padding: 0 4px; display: grid; place-items: center;
+    background: var(--forest); color: var(--on-forest); border: 2px solid var(--line); font: 700 12px/1 var(--font-pixel); }
+  @media (max-width: 560px) {
+    .stamp-tab { top: auto; bottom: 108px; padding: 8px 6px 8px 5px; }
+    .stamp-tab__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  }
+
+  /* The panel: slides in from the left, full height under the header on phones. */
+  .stamp-panel { margin: 0; inset: calc(var(--header-h) + 10px) auto 10px 0; width: min(420px, calc(100vw - 16px)); max-height: none; height: auto;
+    padding: 0; border: 3px solid var(--line); border-left: 0; background: var(--surface-100); color: var(--text);
+    box-shadow: 6px 6px 0 var(--line); overflow: auto; overscroll-behavior: contain; }
+  .stamp-panel[open] { animation: stamp-in .3s steps(5, end); }
+  @keyframes stamp-in { from { transform: translateX(-100%); } }
+  .stamp-panel::backdrop { background: rgba(18, 18, 13, .45); }
+  .stamp-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: start; justify-content: space-between; gap: 12px;
+    padding: 18px 18px 12px; background: var(--surface-100); border-bottom: 3px solid var(--line); }
+  .stamp-head .kicker { margin-bottom: 6px; }
+  .stamp-head h2 { font-size: 30px; }
+  .stamp-close { width: 40px; height: 40px; display: grid; place-items: center; border: 3px solid var(--line); background: var(--surface-200); color: var(--text);
+    box-shadow: 3px 3px 0 var(--line); cursor: pointer; padding: 0; }
+  .stamp-close:active { transform: translate(3px, 3px); box-shadow: none; }
+  .stamp-close:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
+  .stamp-body { padding: 16px 18px 24px; }
+  .stamp-body :global(p) { margin: 0; font-size: 15px; line-height: 1.45; }
+  .stamp-body :global(canvas) { image-rendering: pixelated; }
+  .stamp-body :global(.stamp-lead) { font-weight: 700; }
+  .stamp-body :global(.stamp-muted) { color: var(--muted); margin-top: 6px; }
+  .stamp-body :global(.stamp-note) { margin-top: 10px; }
+  .stamp-body :global(.stamp-count) { margin-top: 14px; font: 700 18px/1 var(--font-display); color: var(--forest); letter-spacing: .03em; }
+  .stamp-body :global(.stamp-demo) { margin-bottom: 14px; padding: 8px 10px; border: 2px dashed var(--muted); color: var(--muted); font-size: 13px; }
+  .stamp-body :global(.stamp-msg) { margin-top: 14px; padding: 10px 12px; border: 3px solid var(--line); font-weight: 700; }
+  .stamp-body :global(.stamp-msg--ok) { background: var(--forest); color: var(--on-forest); }
+  .stamp-body :global(.stamp-error) { margin-top: 10px; font-weight: 700; color: var(--ember-600); }
+
+  /* The route: 10 stops on a U-shaped road, 1–5 left to right, 6–10 back right to left. The truck sits on the latest stamp. */
+  .stamp-body :global(.route) { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: auto auto; gap: 22px 10px;
+    margin: 16px 0 0; padding: 14px 0 18px; list-style: none; }
+  .stamp-body :global(.route::before) { content: ''; position: absolute; left: 10%; right: 10%; top: calc(9px + (100% - 54px) / 4); bottom: calc(13px + (100% - 54px) / 4);
+    border: 10px solid var(--asphalt); border-left: 0; z-index: 0; }
+  .stamp-body :global(.route::after) { content: ''; position: absolute; left: 10%; right: calc(10% + 4px); top: calc(13px + (100% - 54px) / 4); bottom: calc(17px + (100% - 54px) / 4);
+    border: 2px dashed var(--asphalt-line); border-left: 0; z-index: 0; }
+  .stamp-body :global(.stop) { position: relative; z-index: 1; aspect-ratio: 1; display: grid; place-items: center; background: var(--surface-200);
+    border: 3px dashed var(--muted); color: var(--muted); font: 700 13px/1 var(--font-pixel); }
+  .stamp-body :global(.stop canvas:not(.truck)) { width: 70%; height: 70%; }
+  /* Stamped stops are stickers: the same day colours in both themes, so the ink-outlined icons always read. */
+  .stamp-body :global(.stop.is-on) { border: 3px solid var(--line); background: #f4ebcd; box-shadow: 3px 3px 0 var(--line); }
+  .stamp-body :global(.stop--e.is-on) { background: #e66f46; }
+  .stamp-body :global(.stop--j.is-on) { background: #8ad8d8; }
+  .stamp-body :global(.stop--x.is-on) { background: #96b04f; }
+  .stamp-body :global(.stop--free:not(.is-on) canvas) { opacity: .45; }
+  .stamp-body :global(.stop__free) { position: absolute; top: calc(100% + 3px); left: 50%; transform: translateX(-50%); font: 700 10px/1 var(--font-pixel); color: var(--ember-600); letter-spacing: .06em; }
+  .stamp-body :global(.truck) { position: absolute; z-index: 2; width: 44px; height: 24px; left: 50%; top: -20px; transform: translateX(-50%); pointer-events: none; }
+  .stamp-body :global(.truck--back) { transform: translateX(-50%) scaleX(-1); }
+  .stamp-body :global(.route.is-full .truck) { animation: truck-hop .5s steps(3) 2; }
+  @keyframes truck-hop { 50% { top: -26px; } }
+  /* A new stamp thumps down like a rubber stamp */
+  .stamp-body :global(.stop.is-new) { animation: stamp-thud .45s steps(4, end) var(--d, 0s) both; }
+  @keyframes stamp-thud { 0% { transform: scale(1.8) rotate(-12deg); opacity: 0; } 60% { transform: scale(.9) rotate(3deg); opacity: 1; } 100% { transform: none; } }
+
+  .stamp-body :global(.stamp-explorer) { display: flex; gap: 10px; align-items: start; margin-top: 16px; padding: 10px 12px; border: 3px solid var(--line); background: var(--surface-200); }
+  .stamp-body :global(.stamp-explorer canvas) { width: 28px; height: 28px; flex: none; padding: 2px; background: #f4ebcd; border: 2px solid var(--line); }
+  .stamp-body :global(.stamp-badges) { display: inline-block; margin-top: 4px; padding: 2px 6px; background: var(--forest); color: var(--on-forest); font: 700 11px/1.3 var(--font-pixel); text-transform: uppercase; }
+
+  .stamp-body :global(.stamp-qr) { width: min(220px, 70%); margin: 20px auto 10px; padding: 8px; background: #fff; border: 3px solid var(--line); box-shadow: var(--shadow-px); }
+  .stamp-body :global(.stamp-qr svg) { width: 100%; height: auto; display: block; }
+  .stamp-body :global(.stamp-qr svg path) { fill: #12120d; }
+  .stamp-body :global(.stamp-how) { text-align: center; font-weight: 700; }
+  .stamp-body :global(.stamp-live) { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; color: var(--muted); font-size: 13px; }
+  .stamp-body :global(.stamp-live__dot) { width: 8px; height: 8px; background: var(--forest); animation: stamp-pulse 1.6s steps(2) infinite; }
+  @keyframes stamp-pulse { 50% { opacity: .2; } }
+
+  .stamp-body :global(.stamp-next) { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 4px 10px; margin-top: 18px; padding: 12px; border: 3px solid var(--line); background: var(--surface-100); box-shadow: var(--shadow-px); }
+  .stamp-body :global(.stamp-next .label) { grid-column: 1 / -1; color: var(--ember-600); font-size: 11px; }
+  .stamp-body :global(.stamp-next canvas) { width: 32px; height: 32px; padding: 3px; background: #f4ebcd; border: 2px solid var(--line); }
+  .stamp-body :global(.stamp-next .stamp-link) { margin: 0; }
+  .stamp-body :global(.stamp-x2) { display: inline-block; padding: 1px 5px; background: var(--ember); color: var(--on-ember); border: 2px solid var(--line); font: 700 10px/1.3 var(--font-pixel); text-transform: uppercase; }
+  .stamp-body :global(.stamp-rules) { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; font-size: 14px; }
+  .stamp-body :global(.stamp-rules li) { display: flex; gap: 10px; align-items: center; }
+  .stamp-body :global(.stamp-rules canvas) { width: 26px; height: 26px; flex: none; padding: 2px; background: #f4ebcd; border: 2px solid var(--line); }
+
+  .stamp-body :global(.stamp-sim) { margin-top: 18px; padding: 12px; border: 2px dashed var(--muted); display: grid; gap: 10px; }
+  .stamp-body :global(.stamp-sim .label) { font-size: 11px; color: var(--muted); }
+  .stamp-body :global(.stamp-spots) { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .stamp-body :global(.stamp-spot) { padding: 8px 4px; border: 2px solid var(--line); background: var(--surface-200); color: var(--text); font: 700 13px/1.15 var(--font-body); cursor: pointer; }
+  .stamp-body :global(.stamp-spot.is-on) { background: var(--forest); color: var(--on-forest); }
+  .stamp-body :global(.stamp-sim .cb-btn) { justify-content: center; }
+  .stamp-body :global(.stamp-small) { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .stamp-body :global(.stamp-link) { display: block; margin: 8px 0 0; padding: 0; border: 0; background: none; color: var(--text); font: 700 14px/1.3 var(--font-body);
+    text-decoration: underline dashed; text-underline-offset: 3px; cursor: pointer; text-align: left; }
+  .stamp-body :global(.stamp-link:hover) { color: var(--ember-600); }
+
+  html:global([data-motion="reduce"]) .stamp-tab { transition: none; }
+  html:global([data-motion="reduce"]) .stamp-panel[open],
+  html:global([data-motion="reduce"]) .stamp-body :global(.stop.is-new),
+  html:global([data-motion="reduce"]) .stamp-body :global(.route.is-full .truck),
+  html:global([data-motion="reduce"]) .stamp-body :global(.stamp-live__dot) { animation: none; }
+</style>
