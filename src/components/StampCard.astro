@@ -261,7 +261,7 @@ const config = JSON.stringify(stamps);
       let badge = tab!.querySelector<HTMLElement>('.stamp-tab__badge');
       if (state.card && state.card.stamps > 0) {
         if (!badge) { badge = document.createElement('span'); badge.className = 'stamp-tab__badge'; tab!.append(badge); }
-        badge.textContent = String(state.card.stamps);
+        badge.innerHTML = `<i>${state.card.stamps}</i>`;
       } else badge?.remove();
       tab!.setAttribute('aria-label', state.card?.stamps ? `Stamp card, ${state.card.stamps} of ${SIZE} stamps` : 'Stamp card');
       if (!panel!.open) return;
@@ -446,11 +446,16 @@ const config = JSON.stringify(stamps);
   .stamp-tab:focus-visible { outline: 3px dashed var(--forest); outline-offset: 4px; }
   .stamp-tab__icon { width: 28px; height: 28px; }
   .stamp-tab__label { writing-mode: vertical-rl; transform: rotate(180deg); font: 700 12px/1 var(--font-pixel); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
-  .stamp-tab__badge { position: absolute; top: -12px; right: -12px; min-width: 24px; height: 24px; padding: 0 4px; display: grid; place-items: center;
-    background: var(--forest); color: var(--on-forest); border: 2px solid var(--line); font: 700 12px/1 var(--font-pixel); }
+  /* Stamp count: a small number chip in the same style as the hero's Change scene numbers. */
+  .stamp-tab :global(.stamp-tab__badge) { position: absolute; top: -17px; right: -10px; display: flex; padding: 2px; background: var(--line);
+    border: 2px solid var(--line); box-shadow: 2px 2px 0 var(--line); }
+  .stamp-tab :global(.stamp-tab__badge i) { display: grid; place-items: center; min-width: 15px; height: 15px; padding: 0 2px; font: 700 10px/1 var(--font-pixel); font-style: normal;
+    background: var(--ember); color: #fff6dc; }
   @media (max-width: 560px) {
     .stamp-tab { top: auto; bottom: 108px; padding: 8px 6px 8px 5px; }
     .stamp-tab__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .stamp-tab :global(.stamp-tab__badge) { top: -15px; right: -8px; }
+    .stamp-tab :global(.stamp-tab__badge i) { min-width: 13px; height: 13px; font-size: 9px; }
   }
 
   /* The panel: slides in from the left, full height under the header on phones. */
