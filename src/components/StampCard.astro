@@ -275,7 +275,7 @@ const config = JSON.stringify(stamps);
         return;
       }
       h += '<p class="stamp-lead">Catch the truck wherever it parks. 10 stamps = any drink free.</p>' + route(c) +
-        `<p class="stamp-count">${c.stamps} of ${SIZE} stamps</p>`;
+        `<p class="stamp-count" aria-label="${c.stamps} of ${SIZE} stamps"><span class="stamp-chips" aria-hidden="true"><i class="on">${c.stamps}</i><i class="sep">/</i><i>${SIZE}</i></span><span class="label" aria-hidden="true">stamps</span></p>`;
       if (c.stamps >= SIZE) h += '<p class="stamp-note"><b>Your free drink is ready!</b> Show this QR code to our staff.</p>';
       else if (c.expires) h += `<p class="stamp-muted">This card ends on ${esc(fmtDate(c.expires))}.</p>`;
       else h += '<p class="stamp-muted">Each card lasts 2 months from its first stamp.</p>';
@@ -474,7 +474,14 @@ const config = JSON.stringify(stamps);
   .stamp-body :global(.stamp-lead) { font-weight: 700; }
   .stamp-body :global(.stamp-muted) { color: var(--muted); margin-top: 6px; }
   .stamp-body :global(.stamp-note) { margin-top: 10px; }
-  .stamp-body :global(.stamp-count) { margin-top: 14px; font: 700 18px/1 var(--font-display); color: var(--forest); letter-spacing: .03em; }
+  /* Stamp count: small number chips, same style as the hero's Change scene numbers. */
+  .stamp-body :global(.stamp-count) { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .stamp-body :global(.stamp-chips) { display: inline-flex; gap: 2px; padding: 2px; background: var(--line); border: 2px solid var(--line); box-shadow: 2px 2px 0 var(--line); }
+  .stamp-body :global(.stamp-chips i) { display: grid; place-items: center; min-width: 17px; height: 17px; padding: 0 3px; font: 700 11px/1 var(--font-pixel); font-style: normal;
+    background: #f4ebcd; color: #5a4b3c; }
+  .stamp-body :global(.stamp-chips i.on) { background: var(--ember); color: #fff6dc; }
+  .stamp-body :global(.stamp-chips i.sep) { min-width: 11px; padding: 0; }
+  .stamp-body :global(.stamp-count .label) { font-size: 11px; color: var(--muted); }
   .stamp-body :global(.stamp-demo) { margin-bottom: 14px; padding: 8px 10px; border: 2px dashed var(--muted); color: var(--muted); font-size: 13px; }
   .stamp-body :global(.stamp-msg) { margin-top: 14px; padding: 10px 12px; border: 3px solid var(--line); font-weight: 700; }
   .stamp-body :global(.stamp-msg--ok) { background: var(--forest); color: var(--on-forest); }
