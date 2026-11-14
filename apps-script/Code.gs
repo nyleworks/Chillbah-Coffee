@@ -160,8 +160,10 @@ function lookup_(code) {
 function staffCard(code) {
   requireStaff_();
   if (!validCode_(code)) return { ok: false, error: "bad_card" };
-  var found = findCard_(cardsSheet_(), fingerprint_(code));
-  return { ok: true, card: view_(found ? found.data : blankCard_("")) };
+  var id = fingerprint_(code), found = findCard_(cardsSheet_(), id);
+  var card = view_(found ? found.data : blankCard_(""));
+  if (!card.stampedToday && found && stampedTodayInLog_(id)) card.stampedToday = true;
+  return { ok: true, card: card };
 }
 
 function staffStamp(code, spot, place) {
@@ -175,7 +177,10 @@ function staffStamp(code, spot, place) {
     var c = found.data, now = new Date(), today = todayStr_();
     expire_(c, now);
     if (c.stamps >= CARD_SIZE) { saveCard_(sh, found); return { ok: false, error: "full", card: view_(c) }; }
-    if (c.lastStampDate === today) { saveCard_(sh, found); return { ok: false, error: "today", card: view_(c) }; }
+    if (c.lastStampDate === today || stampedTodayInLog_(id)) {
+      c.lastStampDate = today; saveCard_(sh, found);
+      return { ok: false, error: "today", card: view_(c) };
+    }
     rememberSpot_(where);
     if (c.stamps === 0) c.cardStart = now.toISOString();
     var kind = where.spot === "event" ? "e" : where.spot === "jetty" ? "j" : "h";
@@ -381,6 +386,20 @@ function log_(now, id, event, stampNumber, where, drink, days) {
   ]);
 }
 
+// Second check for one visit a day: the Log tab. Its time column is a real date, so this works even if the
+// Cards tab's lastStampDate cell was ever changed or misread. Looks at this card's latest few Log rows.
+function stampedTodayInLog_(id) {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Log");
+  var last = sh ? sh.getLastRow() : 0;
+  if (last < 2) return false;
+  var cells = sh.getRange(2, 3, last - 1, 1).createTextFinder(id.slice(0, 12)).matchEntireCell(true).findAll();
+  var today = todayStr_();
+  for (var i = cells.length - 1; i >= 0 && i >= cells.length - 6; i--) {
+    var v = sh.getRange(cells[i].getRow(), 1, 1, 4).getValues()[0];
+    if (String(v[3]) === "stamp" && dayStr_(v[0]) === today) return true;
+  }
+  return false;
+}
 function todayStr_() { return Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd"); }
 // The sheet should keep dates as text, but if Sheets ever turns one into a real date, read it back the same way,
 // so the one-visit-a-day check can't be fooled into seeing a new day.

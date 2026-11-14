@@ -18,8 +18,9 @@ the **staff page**, where staff tap **Add stamp** or **Give free drink**. The cu
   (it can't be turned back into the code), the stamps, where they were collected and dates.
 - Cards with no activity for 6 months are deleted automatically every night.
 
-Until the setup below is done, the website runs the card in **preview mode**: it's saved on that phone only,
-and buttons pretend to be the staff (with a picker for where the truck is).
+There is no test or preview mode: the card only works once the two web app links below are in
+`src/data/stamps.ts`. Each card can get one visit stamped per day. The staff page checks both the card's last
+stamp date and the Log tab, and shows "This card already has today's stamp" on a second try.
 
 ## Before you start
 
