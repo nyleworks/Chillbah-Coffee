@@ -146,12 +146,12 @@ const config = JSON.stringify(stamps);
       let end: Date | null = null;
       if (c.cardStart) { end = new Date(c.cardStart); end.setMonth(end.getMonth() + MONTHS); }
       return { stamps: c.stamps, size: SIZE, expires: c.stamps > 0 && c.stamps < SIZE && end ? end.toISOString() : null,
-        stampedToday: false, freeDrinks: c.freeDrinks, trail: c.trail, places: c.places.length, explorer: c.explorer, badges: c.badges };
+        stampedToday: c.last === dayAt(0).iso, freeDrinks: c.freeDrinks, trail: c.trail, places: c.places.length, explorer: c.explorer, badges: c.badges };
     }
     const DEMO_PLACE: Record<Spot, string> = { home: 'Homebased', jetty: 'Jesselton Point Ferry Terminal', event: 'Event' };
     function demoStamp() {
       const c = demoGet(state.code!);
-      if (c.stamps >= SIZE) return;
+      if (c.stamps >= SIZE || c.last === dayAt(0).iso) return; // one visit a day, like Code.gs
       const spot = state.demoSpot, t = today();
       const place = spot === 'event' ? (t?.spot === 'event' ? t.place : 'Event ' + (c.places.filter((p) => !PLACE_SPOT[p]).length + 1)) : DEMO_PLACE[spot];
       const k = spot === 'event' ? 'e' : spot === 'jetty' ? 'j' : 'h';
@@ -160,6 +160,7 @@ const config = JSON.stringify(stamps);
       if (spot === 'event' && c.stamps < SIZE) { c.stamps++; c.trail += k; }
       if (!c.places.includes(place)) c.places.push(place);
       if (!c.explorer && c.places.length >= EXPLORER && c.stamps < SIZE) { c.stamps++; c.trail += 'x'; c.explorer = true; c.badges++; }
+      c.last = dayAt(0).iso;
       demoPut(state.code!, c);
     }
     function demoFree() {
@@ -310,7 +311,9 @@ const config = JSON.stringify(stamps);
       if (!API && c.stamps < SIZE) {
         h += '<div class="stamp-sim"><p class="label">Preview: pretend the truck is at</p><div class="stamp-spots">' +
           (['home', 'jetty', 'event'] as Spot[]).map((s) => `<button type="button" class="stamp-spot${state.demoSpot === s ? ' is-on' : ''}" data-act="spot" data-spot="${s}" aria-pressed="${state.demoSpot === s}">${{ home: 'Homebased', jetty: 'Jesselton Point', event: 'An event' }[s]}</button>`).join('') +
-          '</div><button class="cb-btn cb-btn--alt" type="button" data-act="sim-stamp">Pretend staff stamped it</button></div>';
+          '</div>' + (c.stampedToday
+            ? '<p class="stamp-muted">Staff phone says: already stamped today. One visit a day.</p><button class="stamp-link" type="button" data-act="sim-tomorrow">Preview only: skip to tomorrow</button></div>'
+            : '<button class="cb-btn cb-btn--alt" type="button" data-act="sim-stamp">Pretend staff stamped it</button></div>');
       } else if (!API) {
         h += '<div class="stamp-sim"><button class="cb-btn cb-btn--alt" type="button" data-act="sim-free">Pretend staff gave the free drink</button></div>';
       }
@@ -380,6 +383,7 @@ const config = JSON.stringify(stamps);
         else use(window.prompt('Paste your card link here:'));
       }
       else if (act === 'sim-stamp') { demoStamp(); check(); panel.scrollTo({ top: 0, behavior: 'smooth' }); }
+      else if (act === 'sim-tomorrow') { const d = demoGet(state.code!); d.last = ''; demoPut(state.code!, d); check(); }
       else if (act === 'sim-free') { demoFree(); check(); panel.scrollTo({ top: 0, behavior: 'smooth' }); }
     });
 

@@ -351,7 +351,7 @@ function blankCard_(id) {
 function parseList_(s) { try { var v = JSON.parse(s || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
 
 function toCard_(r) {
-  return { id: String(r[0]), stamps: Number(r[1]) || 0, cardStart: String(r[2] || ""), lastStampDate: String(r[3] || ""),
+  return { id: String(r[0]), stamps: Number(r[1]) || 0, cardStart: String(r[2] || ""), lastStampDate: dayStr_(r[3]),
     freeDrinks: Number(r[4]) || 0, createdAt: String(r[5] || ""), lastActivity: String(r[6] || ""),
     trail: String(r[7] || "").split(""), places: parseList_(r[8]), explorer: Number(r[9]) || 0, badges: Number(r[10]) || 0 };
 }
@@ -382,6 +382,13 @@ function log_(now, id, event, stampNumber, where, drink, days) {
 }
 
 function todayStr_() { return Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd"); }
+// The sheet should keep dates as text, but if Sheets ever turns one into a real date, read it back the same way,
+// so the one-visit-a-day check can't be fooled into seeing a new day.
+function dayStr_(v) {
+  if (v instanceof Date) return isNaN(v) ? "" : Utilities.formatDate(v, TZ, "yyyy-MM-dd");
+  var m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(v || "").trim());
+  return m ? m[1] + "-" + ("0" + m[2]).slice(-2) + "-" + ("0" + m[3]).slice(-2) : String(v || "");
+}
 
 // ---------------------------------------------------------------------------------------------------------
 // The staff page
