@@ -55,7 +55,7 @@ function setup() {
   log.getRange("B:D").setNumberFormat("@");
   log.getRange("F:F").setNumberFormat("@");
   log.getRange("H:J").setNumberFormat("@");
-  buildSummary_(ss);
+  restyle();
 
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === "housekeeping") ScriptApp.deleteTrigger(t);
@@ -77,47 +77,155 @@ function ensureSheet_(ss, name, headers) {
 function buildSummary_(ss) {
   var sh = ss.getSheetByName("Summary") || ss.insertSheet("Summary", 0);
   sh.clear();
+  sh.getBandings().forEach(function (b) { b.remove(); });
+  sh.clearConditionalFormatRules();
   var visit = 'Log!D2:D="stamp"';
-  var rows = [
-    ["Chillbah Route Card", ""],
-    ["Updates by itself from the Log tab. Please don't edit this tab.", ""],
-    ["", ""],
+  var c = function (ev) { return '=COUNTIF(Log!D2:D, "' + ev + '")'; };
+  // A4:B14 is also shown on the staff page (staffSummary), so keep those 11 rows where they are.
+  var stats = [
     ["Members (cards with at least 1 stamp)", '=IFERROR(COUNTUNIQUE(FILTER(Log!C2:C, ' + visit + ')), 0)'],
     ["Active members, last 30 days", '=IFERROR(COUNTUNIQUE(FILTER(Log!C2:C, ' + visit + ', Log!A2:A>=NOW()-30)), 0)'],
     ["Visits stamped this week (from Monday)", '=COUNTIFS(Log!D2:D, "stamp", Log!A2:A, ">="&(TODAY()-WEEKDAY(TODAY(), 3)))'],
     ["Visits stamped this month", '=COUNTIFS(Log!D2:D, "stamp", Log!A2:A, ">="&(EOMONTH(TODAY(), -1)+1))'],
-    ["Visits stamped, all time", '=COUNTIF(Log!D2:D, "stamp")'],
-    ["Event bonus stamps given", '=COUNTIF(Log!D2:D, "event_bonus")'],
-    ["Explorer badges earned", '=COUNTIF(Log!D2:D, "explorer_bonus")'],
+    ["Visits stamped, all time", c("stamp")],
+    ["Event bonus stamps given", c("event_bonus")],
+    ["Explorer badges earned", c("explorer_bonus")],
     ["Free drinks given this month", '=COUNTIFS(Log!D2:D, "free_drink", Log!A2:A, ">="&(EOMONTH(TODAY(), -1)+1))'],
-    ["Free drinks given, all time", '=COUNTIF(Log!D2:D, "free_drink")'],
-    ["Cards that expired unfinished", '=COUNTIF(Log!D2:D, "expired")'],
-    ["Average days to fill a card", '=IFERROR(ROUND(AVERAGEIF(Log!D2:D, "free_drink", Log!K2:K), 1), "-")'],
-    ["", ""],
-    ["Visits by spot", ""],
+    ["Free drinks given, all time", c("free_drink")],
+    ["Cards that expired unfinished", c("expired")],
+    ["Average days to fill a card", '=IFERROR(ROUND(AVERAGEIF(Log!D2:D, "free_drink", Log!K2:K), 1), "-")']
+  ];
+  var spots = [
     ["Homebased", '=COUNTIFS(Log!D2:D, "stamp", Log!H2:H, "home")'],
     ["Jesselton Point", '=COUNTIFS(Log!D2:D, "stamp", Log!H2:H, "jetty")'],
-    ["Events", '=COUNTIFS(Log!D2:D, "stamp", Log!H2:H, "event")'],
-    ["", ""],
-    ["Visits by day of the week", ""]
+    ["Events", '=COUNTIFS(Log!D2:D, "stamp", Log!H2:H, "event")']
   ];
-  ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].forEach(function (d) {
-    rows.push([d, '=COUNTIFS(Log!D2:D, "stamp", Log!F2:F, "' + d + '")']);
+  var days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(function (d) {
+    return [d, '=COUNTIFS(Log!D2:D, "stamp", Log!F2:F, "' + d + '")'];
   });
-  sh.getRange(1, 1, rows.length, 2).setValues(rows);
-  sh.getRange("A1").setFontSize(14).setFontWeight("bold");
-  sh.getRange("A2").setFontColor("#5a4b3c");
-  sh.getRange("A16").setFontWeight("bold");
-  sh.getRange("A21").setFontWeight("bold");
-  sh.getRange("D4").setValue("Visits by place").setFontWeight("bold");
-  sh.getRange("D5").setFormula("=IFERROR(QUERY(Log!D2:I, \"select I, count(D) where D = 'stamp' group by I order by count(D) desc label I 'Place', count(D) 'Visits'\", 0), \"No stamps yet\")");
-  sh.getRange("G4").setValue("Visits by hour").setFontWeight("bold");
-  sh.getRange("G5").setFormula("=IFERROR(QUERY(Log!D2:G, \"select G, count(D) where D = 'stamp' group by G order by G label G 'Hour', count(D) 'Visits'\", 0), \"No stamps yet\")");
-  sh.getRange("J4").setValue("Free drinks by drink").setFontWeight("bold");
-  sh.getRange("J5").setFormula("=IFERROR(QUERY(Log!D2:J, \"select J, count(D) where D = 'free_drink' and J <> '' group by J order by count(D) desc label J 'Drink', count(D) 'Free drinks'\", 0), \"None yet\")");
-  sh.setColumnWidth(1, 300);
-  sh.setColumnWidth(4, 240);
-  sh.setColumnWidth(10, 200);
+
+  // Layout: title bar, then boxes in columns A:B, E:F, I:J and M:N. Narrow columns C, G, K, O carry the
+  // pixel drop shadow; D, H, L are gaps. Rows 15, 21 and 31 are shadow rows under the boxes in A:B.
+  sh.getRange("A1").setValue("CHILLBAH ROUTE CARD");
+  sh.getRange("A2").setValue("Updates by itself from the Log tab. Please don't edit this tab.");
+  sh.getRange("A3").setValue("The numbers");
+  sh.getRange(4, 1, stats.length, 2).setValues(stats);
+  sh.getRange("A17").setValue("Visits by spot");
+  sh.getRange(18, 1, spots.length, 2).setValues(spots);
+  sh.getRange("A23").setValue("Visits by day of the week");
+  sh.getRange(24, 1, days.length, 2).setValues(days);
+  sh.getRange("E3").setValue("Visits by place");
+  sh.getRange("E4").setFormula("=IFERROR(QUERY(Log!D2:I, \"select I, count(D) where D = 'stamp' group by I order by count(D) desc label I 'Place', count(D) 'Visits'\", 0), \"No stamps yet\")");
+  sh.getRange("I3").setValue("Visits by hour");
+  sh.getRange("I4").setFormula("=IFERROR(QUERY(Log!D2:G, \"select G, count(D) where D = 'stamp' group by G order by G label G 'Hour', count(D) 'Visits'\", 0), \"No stamps yet\")");
+  sh.getRange("M3").setValue("Free drinks by drink");
+  sh.getRange("M4").setFormula("=IFERROR(QUERY(Log!D2:J, \"select J, count(D) where D = 'free_drink' and J <> '' group by J order by count(D) desc label J 'Drink', count(D) 'Free drinks'\", 0), \"None yet\")");
+  styleSummary_(sh);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Look: the website's pixel style (cream paper, ink outlines, forest/ember/sun, pixel fonts, hard shadows).
+// Run restyle() from the editor any time to repaint all three tabs. It never touches the data.
+// ---------------------------------------------------------------------------------------------------------
+var LOOK = {
+  paper: "#f4ebcd", paper2: "#ebdfb6", paper3: "#e2d39f", ink: "#12120d", text: "#2a2620", muted: "#5a4b3c",
+  forest: "#2b5615", ember: "#e66f46", sky: "#8ad8d8", sun: "#f2c94c", lime: "#96b04f",
+  pixel: "Silkscreen", title: "Pixelify Sans", body: "Nunito"
+};
+
+function restyle() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  buildSummary_(ss);
+  var cards = ss.getSheetByName("Cards"), log = ss.getSheetByName("Log");
+  if (cards) styleTable_(cards, CARD_HEADERS.length, LOOK.forest, LOOK.paper, [260, 70, 190, 110, 90, 190, 190, 120, 260, 80, 80]);
+  if (log) { styleTable_(log, LOG_HEADERS.length, LOOK.ember, LOOK.ink, [140, 100, 120, 130, 100, 80, 60, 80, 240, 180, 90]); styleLog_(log); }
+}
+
+function paint_(sh) {
+  sh.setHiddenGridlines(true);
+  sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns())
+    .setBackground(LOOK.paper).setFontFamily(LOOK.body).setFontColor(LOOK.text).setFontSize(10).setVerticalAlignment("middle");
+}
+
+// A boxed panel: thick ink outline, a coloured pixel-font header row, and a hard ink shadow right and below.
+function box_(sh, row, col, rows, cols, headBg, headInk) {
+  var all = sh.getRange(row, col, rows, cols);
+  all.setBorder(true, true, true, true, null, null, LOOK.ink, SpreadsheetApp.BorderStyle.SOLID_THICK);
+  if (rows > 2) sh.getRange(row + 1, col, rows - 1, cols).setBorder(null, null, null, null, null, true, LOOK.paper3, SpreadsheetApp.BorderStyle.DASHED);
+  sh.getRange(row, col, 1, cols).setBackground(headBg).setFontColor(headInk).setFontFamily(LOOK.pixel).setFontSize(10)
+    .setBorder(null, null, true, null, null, null, LOOK.ink, SpreadsheetApp.BorderStyle.SOLID_THICK);
+  sh.getRange(row + 1, col + cols, rows, 1).setBackground(LOOK.ink);
+  sh.getRange(row + rows, col + 1, 1, cols).setBackground(LOOK.ink);
+}
+
+function styleSummary_(sh) {
+  paint_(sh);
+  sh.setTabColor(LOOK.sun);
+  var W = { 1: 290, 2: 90, 3: 5, 4: 18, 5: 230, 6: 70, 7: 5, 8: 18, 9: 80, 10: 70, 11: 5, 12: 18, 13: 200, 14: 90, 15: 5 };
+  for (var k in W) sh.setColumnWidth(Number(k), W[k]);
+  // Title bar across the top, like the site's header
+  sh.setRowHeight(1, 54);
+  sh.getRange("A1:O1").setBackground(LOOK.forest).setBorder(true, true, true, true, null, null, LOOK.ink, SpreadsheetApp.BorderStyle.SOLID_THICK);
+  sh.getRange("A1").setFontFamily(LOOK.title).setFontSize(24).setFontColor(LOOK.paper);
+  sh.getRange("A2").setFontColor(LOOK.muted).setFontStyle("italic");
+  sh.setRowHeight(2, 30);
+  [3, 17, 23].forEach(function (r) { sh.setRowHeight(r, 30); });
+  [15, 21, 31].forEach(function (r) { sh.setRowHeight(r, 5); });
+  [16, 22].forEach(function (r) { sh.setRowHeight(r, 16); });
+  // Boxes in column A:B
+  box_(sh, 3, 1, 12, 2, LOOK.ember, LOOK.ink);
+  box_(sh, 17, 1, 4, 2, LOOK.sky, LOOK.ink);
+  box_(sh, 23, 1, 8, 2, LOOK.sun, LOOK.ink);
+  [[4, 11], [18, 3], [24, 7]].forEach(function (b) {
+    sh.getRange(b[0], 1, b[1], 1).setFontSize(11);
+    sh.getRange(b[0], 2, b[1], 1).setFontFamily(LOOK.title).setFontSize(15).setFontColor(LOOK.forest).setHorizontalAlignment("right");
+    for (var r = b[0]; r < b[0] + b[1]; r++) sh.setRowHeight(r, 28);
+  });
+  // Query boxes: header + 26 rows each
+  box_(sh, 3, 5, 28, 2, LOOK.forest, LOOK.paper);
+  box_(sh, 3, 9, 28, 2, LOOK.sky, LOOK.ink);
+  box_(sh, 3, 13, 28, 2, LOOK.ember, LOOK.ink);
+  [5, 9, 13].forEach(function (col) {
+    sh.getRange(4, col, 1, 2).setFontFamily(LOOK.pixel).setFontSize(8).setFontColor(LOOK.muted).setBackground(LOOK.paper2);
+    sh.getRange(5, col + 1, 26, 1).setFontFamily(LOOK.title).setFontSize(12).setFontColor(LOOK.forest).setHorizontalAlignment("right");
+  });
+}
+
+// Cards and Log: pixel-font header bar, cream rows banded like the menu cards, ink outline.
+function styleTable_(sh, cols, headBg, headInk, widths) {
+  paint_(sh);
+  sh.setTabColor(headBg);
+  sh.getBandings().forEach(function (b) { b.remove(); });
+  var rows = sh.getMaxRows();
+  var table = sh.getRange(1, 1, rows, cols);
+  table.setBackground(null);
+  table.applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, true, false)
+    .setHeaderRowColor(headBg).setFirstRowColor(LOOK.paper).setSecondRowColor(LOOK.paper2);
+  table.setBorder(true, true, true, true, true, null, LOOK.paper3, SpreadsheetApp.BorderStyle.SOLID);
+  table.setBorder(true, true, true, true, null, null, LOOK.ink, SpreadsheetApp.BorderStyle.SOLID_THICK);
+  sh.getRange(1, 1, 1, cols).setFontFamily(LOOK.pixel).setFontSize(10).setFontColor(headInk).setFontWeight("bold")
+    .setBorder(null, null, true, null, null, null, LOOK.ink, SpreadsheetApp.BorderStyle.SOLID_THICK);
+  sh.setRowHeight(1, 34);
+  sh.setFrozenRows(1);
+  // Hard shadow strip beside the table
+  if (sh.getMaxColumns() <= cols) sh.insertColumnAfter(cols);
+  sh.setColumnWidth(cols + 1, 5);
+  sh.getRange(2, cols + 1, rows - 1, 1).setBackground(LOOK.ink);
+  widths.forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
+}
+
+// Log: colour each event like the card's stamps (stamp = sky, event = sun, explorer = green, free drink = ember).
+function styleLog_(sh) {
+  var ev = sh.getRange("D2:D");
+  ev.setFontFamily(LOOK.pixel).setFontSize(9);
+  var rule = function (text, bg, ink) {
+    return SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo(text).setBackground(bg).setFontColor(ink).setRanges([ev]).build();
+  };
+  sh.setConditionalFormatRules([
+    rule("stamp", LOOK.sky, LOOK.ink), rule("event_bonus", LOOK.sun, LOOK.ink), rule("explorer_bonus", LOOK.lime, LOOK.ink),
+    rule("free_drink", LOOK.ember, LOOK.ink), rule("expired", LOOK.paper3, LOOK.muted)
+  ]);
+  sh.getRange("E2:E").setHorizontalAlignment("center");
 }
 
 // ---------------------------------------------------------------------------------------------------------

@@ -74,4 +74,6 @@ whose phone lost their card and who had no screenshot shows up as two cards.
 
 - If you change `Code.gs` later, update **both** deployments: **Deploy → Manage deployments → Edit → New version**,
   so the links stay the same.
+- The Sheet is styled like the website (pixel fonts, cream and green, ink outlines). To repaint it, pick
+  **restyle** in the function menu at the top of the Apps Script editor and press **Run**. It never changes the data.
 - Please don't type in the Cards or Log tabs. To fix a mistake, ask Claude.
