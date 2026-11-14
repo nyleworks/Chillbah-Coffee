@@ -1,6 +1,8 @@
 // Site-wide settings. Replace the placeholder links with the real accounts.
 export const site = {
   title: 'Chillbah Coffee · Mobile coffee kiosk in Sabah',
+  // Link preview picture: public/og-image.png (1200x630, the hero scene).
+  ogImageAlt: 'Pixel art of the white Chillbah Hilux with its awning open, the barista beside it, mountains behind, and the words Brew, Drive, Chill',
   description: 'Hand-pulled coffee served from the back of our 4x4 Toyota Hilux. New spot most days around Sabah. Brew . Drive . Chill.',
   instagram: '#', // e.g. https://instagram.com/chillbah
   tiktok: '#', // e.g. https://www.tiktok.com/@chillbah

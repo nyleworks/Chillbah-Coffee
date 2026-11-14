@@ -5,6 +5,9 @@ import pixelifyUrl from '../assets/fonts/pixelify-sans-700.woff2?url';
 const B = import.meta.env.BASE_URL.replace(/\/?$/, '/'); // site may live in a subfolder (GitHub Pages)
 interface Props { title?: string; description?: string }
 const { title = site.title, description = site.description } = Astro.props;
+// Absolute URLs for link previews: `site` + `base` from astro.config (change there if the site moves to its own domain).
+const pageUrl = new URL(Astro.url.pathname.replace(/\/?$/, '/'), Astro.site).href;
+const ogImage = new URL(`${B}og-image.png`, Astro.site).href;
 ---
 <!doctype html>
 <html lang="en">
@@ -13,8 +16,23 @@ const { title = site.title, description = site.description } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={pageUrl} />
+    <!-- Link preview (WhatsApp, Facebook, Instagram DMs, X, Slack...). Image must be an absolute URL. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Chillbah Coffee" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={site.ogImageAlt} />
+    <meta property="og:locale" content="en_MY" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={site.ogImageAlt} />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f4ebcd" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#211812" media="(prefers-color-scheme: dark)" />
